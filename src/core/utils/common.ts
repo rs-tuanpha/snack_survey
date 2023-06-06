@@ -3,7 +3,6 @@ import CryptoJS from 'crypto-js'
 
 import app from '@/main'
 import * as store from '@/stores'
-import { ENV_CONFIG } from '../constants/app'
 
 /**
  * Create instance router
@@ -118,28 +117,6 @@ export const blockScroll = () => {
   document.body.scrollTop = 0
   document.documentElement.scrollTop = 0
   getId.className += ' stop-scrolling'
-}
-
-export const getEncryptedCode = (data: string) => {
-  const cipher = CryptoJS.AES.encrypt(data, CryptoJS.enc.Utf8.parse(ENV_CONFIG.KEY_ENCRYP), {
-    iv: CryptoJS.enc.Utf8.parse(ENV_CONFIG.IV_ENCRYP),
-    padding: CryptoJS.pad.Pkcs7,
-    mode: CryptoJS.mode.CBC
-  })
-  return cipher.toString()
-}
-
-export const getDecryptedData = (encryptedData: string) => {
-  const cipher = CryptoJS.AES.decrypt(
-    encryptedData,
-    CryptoJS.enc.Utf8.parse(ENV_CONFIG.KEY_ENCRYP),
-    {
-      iv: CryptoJS.enc.Utf8.parse(ENV_CONFIG.IV_ENCRYP),
-      padding: CryptoJS.pad.Pkcs7,
-      mode: CryptoJS.mode.CBC
-    }
-  )
-  return cipher.toString(CryptoJS.enc.Utf8)
 }
 
 export const getHashingMD5 = (message: string) => {
