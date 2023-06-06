@@ -13,6 +13,8 @@ const isLoading = computed(() => {
 
   return loading.value
 })
+console.log("App.vue running");
+
 </script>
 
 <template>
