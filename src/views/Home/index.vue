@@ -11,7 +11,7 @@ const TheWelcome = defineAsyncComponent(() => import('@/components/templates/hom
 <template>
   <main>
     <TheWelcome />
-
+    <v-btn class="btn-primary"> Vuetify add success! </v-btn>
     <div>Format number {{ formatNumber(30000.2342, 2) }}</div>
     <div>decimalTrunc {{ decimalTrunc(3000220.2342, 1) }}</div>
   </main>
