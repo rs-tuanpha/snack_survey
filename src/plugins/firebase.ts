@@ -18,6 +18,5 @@ export const firebaseApp = initializeApp({
   appId,
   measurementId
 })
-
 // used for the firestore refs
 export const db = getFirestore(firebaseApp)

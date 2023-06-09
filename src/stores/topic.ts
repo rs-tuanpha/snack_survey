@@ -27,7 +27,6 @@ const topics = useCollection(collection(db, 'topics'))
         },
         accountList: () => {
             return useCollection(collection(db, 'accounts'))
-            //return useCollection(collection(db, 'accounts'));
         }
     },
     actions: {
