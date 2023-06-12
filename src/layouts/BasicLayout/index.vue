@@ -15,7 +15,3 @@ const Header = defineAsyncComponent(() => import('@/components/organisms/Header/
     </div>
   </div>
 </template>
-
-<style scoped lang="scss">
-//@import './styles.scss';
-</style>

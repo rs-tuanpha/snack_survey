@@ -6,10 +6,7 @@ import App from './App.vue'
 import router from './router'
 import vuetify from './plugins/vuetify'
 import { firebaseApp } from './plugins/firebase'
-
-// import { VueFire } from 'vuefire'
-// import { firebaseApp } from './firebase'
-//import './assets/styles/global.scss'
+import '@vuepic/vue-datepicker/dist/main.css'
 
 const app = createApp(App)
 app.use(VueFire, {
