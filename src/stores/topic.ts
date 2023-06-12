@@ -16,12 +16,6 @@ const topics = useCollection(collection(db, 'topics'))
         openTopicList: {}
     }),
     getters: {
-        doubleCount: (state) => state.count * 2,
-        oddOrEven: (state) => {
-            if( state.count % 2 === 0 ) return 'even';
-            return 'odd';
-
-        },
         openList: () => {
             return useCollection(collection(db, 'topics'));
         },
@@ -30,12 +24,6 @@ const topics = useCollection(collection(db, 'topics'))
         }
     },
     actions: {
-        increaseCount() {
-            this.count++
-        },
-        decreaseCount() {
-            this.count--
-        },
         getOpenTopicList() {
             this.openTopicList = useCollection(collection(db, 'topics'));
         }

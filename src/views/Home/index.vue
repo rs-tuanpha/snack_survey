@@ -38,29 +38,25 @@
 						>
 						</v-autocomplete>
 						<v-btn class="bg-blue-darken-2 float-right" @click="login">Đăng nhập</v-btn>
-  					</v-card>
-
-
-					
+  					</v-card>	
 				</v-col>
 			</v-row>
 		</v-container>
 
-
-    <v-container class="">
-      	<v-row justify="center">
-        	<v-col cols="6">
-    			<v-row justify="center">
-      			<v-col v-for="item in topics" :key="item" cols="12">
-	  			<v-hover v-slot="{ isHovering, props }">
-      				<v-card :title="item.name" :text="item.description" variant="outlined"  :elevation="isHovering ? 12 : 2" v-bind="props" :class="isHovering ? 'bg-indigo-lighten-2' : ''"
-	  					target="_blank" :href="'vote-topic/'+ item.id">
-					</v-card>
-				</v-hover>
-      			</v-col>
-    			</v-row>
-  			</v-col>
-  		</v-row>
-  	</v-container>
+		<v-container class="">
+			<v-row justify="center">
+				<v-col cols="6">
+					<v-row justify="center">
+					<v-col v-for="item in topics" :key="item" cols="12">
+					<v-hover v-slot="{ isHovering, props }">
+						<v-card :title="item.name" :text="item.description" variant="outlined"  :elevation="isHovering ? 12 : 2" v-bind="props" :class="isHovering ? 'bg-indigo-lighten-2' : ''"
+							target="_blank" :href="'vote-topic/'+ item.id">
+						</v-card>
+					</v-hover>
+					</v-col>
+					</v-row>
+				</v-col>
+			</v-row>
+		</v-container>
   	</div>
 </template>
