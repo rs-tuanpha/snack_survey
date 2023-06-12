@@ -4,11 +4,11 @@
 	import Cookies from 'js-cookie'
 	const show = ref(true)
 	const login = () => {
-  		show.value = false;
+		show.value = false;
 		useTopicStore().getOpenTopicList();
 		topics.value = useTopicStore().openTopicList;
 		Cookies.set('account_info', account.value, { expires: 7 });
-    }
+  }
 	const accounts = useTopicStore().accountList;
 	const topics = ref(useTopicStore().openTopicList);
 	const account = ref(null);

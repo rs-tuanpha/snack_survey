@@ -9,12 +9,12 @@ const db = useFirestore()
         openTopicList: {}
     }),
     getters: {
-        openList: () => {
-            return useCollection(collection(db, 'topics'));
-        },
-        accountList: () => {
-            return useCollection(collection(db, 'accounts'))
-        }
+			openList: () => {
+					return useCollection(collection(db, 'topics'));
+			},
+			accountList: () => {
+					return useCollection(collection(db, 'accounts'))
+			}
     },
     actions: {
         getOpenTopicList() {
