@@ -1,12 +1,7 @@
 <script setup lang="ts">
-	import { decimalTrunc, formatNumber } from '@/core/utils/regexValidate'
-	import { defineAsyncComponent } from 'vue'
-	import { ref, computed } from 'vue'
-	import { useFirestore, useCollection } from 'vuefire'
-	import { collection } from 'firebase/firestore'
+	import { ref} from 'vue'
 	import { useTopicStore } from '@/stores/topic'
 	import Cookies from 'js-cookie'
-	const TheWelcome = defineAsyncComponent(() => import('@/components/templates/home/TheWelcome.vue'))
 	const show = ref(true)
 	const login = () => {
   		show.value = false;

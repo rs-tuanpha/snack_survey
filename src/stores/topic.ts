@@ -6,7 +6,6 @@ const db = useFirestore()
   export const useTopicStore = defineStore({
     id: 'topic',
     state: () => ({
-        count: 0,
         openTopicList: {}
     }),
     getters: {

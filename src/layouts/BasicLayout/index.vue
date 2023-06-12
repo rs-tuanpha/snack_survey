@@ -9,7 +9,6 @@ const Header = defineAsyncComponent(() => import('@/components/organisms/Header/
 
 <template>
   <div class="basic-layout">
-    <!-- <Header /> -->
     <div class="layout-root">
       <router-view></router-view>
     </div>
