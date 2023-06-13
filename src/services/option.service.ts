@@ -19,13 +19,16 @@ export const getOptionsByTopicId = async (topicId: string): Promise<IOption[]> =
 
 /**
  * create new option
- * @param {IOption} option
+ * @param {string} title
+ * @param {string} link
+ * @param {string} topicId
  */
 export const postNewOption = async (title: string, link: string, topicId: string) => {
   try {
     const docref = await addDoc(collection(db, 'options'), { title, link, topicId, voteBy: [] })
     return docref.firestore.toJSON()
-  } catch (e: any) {
-    throw new Error(e)
+  } catch (e) {
+    if (e instanceof Error) throw new Error(e.message)
+    else throw e
   }
 }

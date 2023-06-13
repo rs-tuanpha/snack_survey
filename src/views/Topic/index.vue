@@ -42,15 +42,16 @@ onMounted(() => {
 
 <template>
   <v-container>
-    <v-alert
+    <v-sheet
       v-if="!common.loading && optionStore.currentTopic?.status == 'close'"
-      variant="outlined"
-      type="warning"
-      prominent
-      border="top"
+      max-width="638"
+      width="100%"
+      class="mx-auto"
     >
-      This topic is closing
-    </v-alert>
+      <v-alert variant="outlined" type="warning" prominent class="w-100 mb-2" border="top">
+        This topic is closing
+      </v-alert>
+    </v-sheet>
 
     <v-sheet
       elevation="1"
@@ -63,7 +64,7 @@ onMounted(() => {
       <h1 class="text-h4">{{ currentTopic?.name }}</h1>
       <p class="mt-3 text-medium-emphasis text-body-1">{{ currentTopic?.description }}</p>
       <v-divider class="border-opacity-50"></v-divider>
-      <v-form @submit.prevent>
+      <v-form @submit.prevent v-if="optionStore.currentTopic?.status == 'open'">
         <v-text-field v-model="form.title" label="Vote title"></v-text-field>
         <v-text-field v-model="form.link" label="Vote link"></v-text-field>
         <v-btn type="submit" block class="mt-2" @click="handleSubmitForm">Submit</v-btn>

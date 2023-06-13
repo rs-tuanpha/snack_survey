@@ -20,7 +20,8 @@ export const getTopicById = async (id: string): Promise<ITopic> => {
     } else {
       throw new Error('401')
     }
-  } catch (e: any) {
-    throw new Error(e)
+  } catch (e) {
+    if (e instanceof Error) throw new Error(e.message)
+    else throw e
   }
 }

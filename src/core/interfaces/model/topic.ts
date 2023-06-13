@@ -3,5 +3,5 @@ export interface ITopic {
   name: string
   description: string
   status: 'open' | 'close'
-  timeline: Date
+  timeline: string
 }

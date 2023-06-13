@@ -13,10 +13,8 @@ export const useOptionsStore = defineStore('options', () => {
   const options = ref<IOption[]>([])
 
   const createOption = async ({ title, link }: { title: string; link: string }) => {
-    console.log('first')
     common.setLoading(true)
     if (currentTopic.value) {
-      console.log('title', title)
       await postNewOption(title, link, currentTopic.value.id)
     }
     common.setLoading(false)

@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { decimalTrunc, formatNumber } from '@/core/utils/regexValidate'
-import { db } from '@/plugins/firebase'
 import { collection } from 'firebase/firestore'
 import { defineAsyncComponent } from 'vue'
 import { useCollection } from 'vuefire'
+import type { ITopic } from '@/core/interfaces/model/topic'
+import { db } from '@/plugins/firebase'
 const TheWelcome = defineAsyncComponent(() => import('@/components/templates/home/TheWelcome.vue'))
-const topics = useCollection(collection(db, 'topics'))
+
+const topics = useCollection<ITopic>(collection(db, 'topics'))
 /**
  * Page view: Home
  */
