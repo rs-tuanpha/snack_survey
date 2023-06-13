@@ -3,10 +3,10 @@
   import { useTopicStore } from '@/stores/topic'
   import Cookies from 'js-cookie'
   const show = ref(true);
-	const topics = ref([]);
+  const topics = ref([]);
   const login = () => {
-		show.value = false;
-		useTopicStore().getOpenTopicList();
+    show.value = false;
+    useTopicStore().getOpenTopicList();
     topics.value = useTopicStore().resOpenTopicList;
     Cookies.set('account_info', account.value, { expires: 7 });
   }
