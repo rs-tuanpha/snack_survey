@@ -93,11 +93,11 @@ onMounted(() => {
             <p class="mb-1 text-h6">{{ option.title }}</p>
             <a :href="option.link" target="_blank">{{ stringMinify(option.link, 50) }}</a>
             <div class="d-flex mt-1">
-              <div v-for="user in option.voteBy.slice(0, 3)" :key="user.name" class="mr-1">
+              <div v-for="user in option.voteBy.slice(0, 3)" :key="user.username" class="mr-1">
                 <v-avatar color="secondary" class="m-1" size="30">
-                  <v-img v-if="user.avatar" :src="user.avatar" :alt="user.name"></v-img>
-                  <span v-else>{{ user.name.charAt(0).toLocaleUpperCase() }}</span>
-                  <v-tooltip activator="parent" location="top">{{ user.name }}</v-tooltip>
+                  <v-img v-if="user.avatar" :src="user.avatar" :alt="user.username"></v-img>
+                  <span v-else>{{ user.username.charAt(0).toLocaleUpperCase() }}</span>
+                  <v-tooltip activator="parent" location="top">{{ user.username }}</v-tooltip>
                 </v-avatar>
               </div>
               <div v-if="option.voteBy.length > 3" class="mr-1">

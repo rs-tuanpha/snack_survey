@@ -3,6 +3,7 @@ import { useFirestore, useCollection } from 'vuefire'
 import { collection } from 'firebase/firestore'
 import { reactive } from 'vue'
 import type { ITopic } from '@/core/interfaces/model/topic'
+import { getAllTopics } from '@/services/topic.service'
 
 const db = useFirestore()
 export const useTopicStore = defineStore({
@@ -17,9 +18,9 @@ export const useTopicStore = defineStore({
     }
   },
   actions: {
-    getOpenTopicList() {
-      const res = useCollection<ITopic>(collection(db, 'topics'))
-      this.openTopicList = res.value
+    async getOpenTopicList() {
+      const topics = await getAllTopics()
+      this.openTopicList = topics
     }
   }
 })

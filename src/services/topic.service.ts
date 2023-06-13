@@ -1,6 +1,6 @@
 import type { ITopic } from '@/core/interfaces/model/topic'
 import { db } from '@/plugins/firebase'
-import { doc, getDoc } from 'firebase/firestore'
+import { collection, doc, getDoc, getDocs, query } from 'firebase/firestore'
 
 /**
  * Find and return a topic in firestore
@@ -23,5 +23,18 @@ export const getTopicById = async (id: string): Promise<ITopic> => {
   } catch (e) {
     if (e instanceof Error) throw new Error(e.message)
     else throw e
+  }
+}
+
+/**
+ * Get all topic from fb
+ */
+export const getAllTopics = async (): Promise<ITopic[]> => {
+  const snapshot = await getDocs(query(collection(db, 'topics')))
+  if (snapshot.docs) {
+    const res = snapshot.docs.map((doc) => ({ ...doc.data(), id: doc.id })) as ITopic[]
+    return res
+  } else {
+    return []
   }
 }

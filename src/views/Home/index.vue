@@ -1,27 +1,39 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { useTopicStore } from '@/stores/topic'
+import { computed, ref, onMounted } from 'vue'
 import Cookies from 'js-cookie'
 
-const show = ref(true)
+import { useTopicStore } from '@/stores/topic'
+import { useAccountsStore } from '@/stores/accounts'
+import type { IUser } from '@/core/interfaces/model/user'
+
+// const show = ref(true)
 const topicStore = useTopicStore()
-const accounts = useTopicStore().accountList
+const accountsStore = useAccountsStore()
+
+const accounts = computed(() => accountsStore.accounts)
 const topics = computed(() => topicStore.openTopicList)
-const account = ref(null)
+const currentUser = computed(() => accountsStore.currentUser)
+const account = ref<IUser | null>(null)
 
 const login = () => {
-  show.value = false
-  topicStore.getOpenTopicList()
+  if (account.value) {
+    accountsStore.setCurrentUser(account.value)
+    topicStore.getOpenTopicList()
+  }
   Cookies.set('account_info', account.value, { expires: 7 })
 }
+
+onMounted(() => {
+  accountsStore.loadAccounts()
+})
 </script>
 
 <template>
   <div class="py-4">
-    <v-container class="">
+    <v-container class="" v-if="!currentUser">
       <v-row justify="center">
         <v-col cols="6">
-          <v-card class="mx-auto pa-4 pb-4" max-width="448" rounded="md" v-if="show">
+          <v-card class="mx-auto pa-4 pb-4" max-width="448" rounded="md">
             <v-autocomplete
               label="Chọn tài khoản"
               :items="accounts"
