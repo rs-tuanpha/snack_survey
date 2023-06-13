@@ -1,5 +1,5 @@
 <script setup lang="ts">
-	import { ref} from 'vue'
+	import { ref } from 'vue'
 	import { useTopicStore } from '@/stores/topic'
 	import Cookies from 'js-cookie'
 	const show = ref(true)

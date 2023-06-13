@@ -6,11 +6,9 @@ import App from './App.vue'
 import router from './router'
 import vuetify from './plugins/vuetify'
 import { firebaseApp } from './plugins/firebase'
+import '@vuepic/vue-datepicker/dist/main.css'
 
 const app = createApp(App)
-app.use(VueFire, {
-    firebaseApp,
-})
 app.use(createPinia())
 app.use(router)
 app.use(vuetify)
