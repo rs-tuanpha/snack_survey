@@ -2,16 +2,18 @@
   import { ref } from 'vue'
   import { useTopicStore } from '@/stores/topic'
   import Cookies from 'js-cookie'
+
   const show = ref(true)
+  const accounts = useTopicStore().accountList;
+  const topics = ref(useTopicStore().openTopicList);
+  const account = ref(null);
+
   const login = () => {
     show.value = false;
     useTopicStore().getOpenTopicList();
     topics.value = useTopicStore().openTopicList;
     Cookies.set('account_info', account.value, { expires: 7 });
   }
-  const accounts = useTopicStore().accountList;
-  const topics = ref(useTopicStore().openTopicList);
-  const account = ref(null);
 </script>
 
 <template>
@@ -42,10 +44,10 @@
       <v-row justify="center">
         <v-col cols="6">
           <v-row justify="center">
-          <v-col v-for="item in topics" :key="item" cols="12">
+          <v-col v-for="{id, name, description} in topics" :key="id" cols="12">
           <v-hover v-slot="{ isHovering, props }">
-            <v-card :title="item.name" :text="item.description" variant="outlined"  :elevation="isHovering ? 12 : 2" v-bind="props" :class="isHovering ? 'bg-indigo-lighten-2' : ''"
-              target="_blank" :href="'vote-topic/'+ item.id">
+            <v-card :title="name" :text="description" variant="outlined"  :elevation="isHovering ? 12 : 2" v-bind="props" :class="isHovering ? 'bg-indigo-lighten-2' : ''"
+              target="_blank" :href="'vote-topic/'+ id">
             </v-card>
           </v-hover>
           </v-col>
