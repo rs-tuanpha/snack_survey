@@ -10,6 +10,5 @@ export const firebaseApp = initializeApp({
   appId: process.env.VUE_APP_APP_ID,
   measurementId: process.env.VUE_APP_MEASURE_MEMBER_ID
 })
-
 // used for the firestore refs
 export const db = getFirestore(firebaseApp)

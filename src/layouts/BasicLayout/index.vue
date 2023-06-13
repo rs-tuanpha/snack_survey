@@ -5,5 +5,9 @@
 </script>
 
 <template>
-  <router-view></router-view>
+  <div class="basic-layout">
+    <div class="layout-root">
+      <router-view></router-view>
+    </div>
+  </div>
 </template>
