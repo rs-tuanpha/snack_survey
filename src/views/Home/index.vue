@@ -2,15 +2,15 @@
   import { ref } from 'vue'
   import { useTopicStore } from '@/stores/topic'
   import Cookies from 'js-cookie'
-  const show = ref(true)
+  const show = ref(true);
+	const topics = ref([]);
   const login = () => {
-    show.value = false;
-    useTopicStore().getOpenTopicList();
-    topics.value = useTopicStore().openTopicList;
+		show.value = false;
+		useTopicStore().getOpenTopicList();
+    topics.value = useTopicStore().resOpenTopicList;
     Cookies.set('account_info', account.value, { expires: 7 });
   }
   const accounts = useTopicStore().accountList;
-  const topics = ref(useTopicStore().openTopicList);
   const account = ref(null);
 </script>
 
