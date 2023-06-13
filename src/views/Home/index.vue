@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { decimalTrunc, formatNumber } from '@/core/utils/regexValidate'
+import { db } from '@/plugins/firebase'
+import { collection } from 'firebase/firestore'
 import { defineAsyncComponent } from 'vue'
+import { useCollection } from 'vuefire'
 const TheWelcome = defineAsyncComponent(() => import('@/components/templates/home/TheWelcome.vue'))
-
+const topics = useCollection(collection(db, 'topics'))
 /**
  * Page view: Home
  */
@@ -11,9 +14,9 @@ const TheWelcome = defineAsyncComponent(() => import('@/components/templates/hom
 <template>
   <main>
     <TheWelcome />
-    <v-btn class="btn-primary"> Vuetify add success! </v-btn>
-    <div>Format number {{ formatNumber(30000.2342, 2) }}</div>
-    <div>decimalTrunc {{ decimalTrunc(3000220.2342, 1) }}</div>
+    <RouterLink v-for="topic in topics" :to="`/vote-topic/${topic.id}`" :key="topic.id">
+      <v-btn class="btn-primary">{{ topic.name }} </v-btn>
+    </RouterLink>
   </main>
 </template>
 

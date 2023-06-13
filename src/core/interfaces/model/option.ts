@@ -5,4 +5,5 @@ export interface IOption {
   title: string
   link: string
   voteBy: IUser[]
+  topicId: string
 }
