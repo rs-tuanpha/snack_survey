@@ -5,25 +5,44 @@
 
   const show = ref(true)
   const accounts = useTopicStore().accountList;
-  const topics = ref(useTopicStore().openTopicList);
+  const topics = ref([]);
   const account = ref(null);
-
-  const login = () => {
+  const error = ref(false);
+  const message = ref('');
+  // Check existence of the account
+  if(Cookies.get('account_info')) {
     show.value = false;
     useTopicStore().getOpenTopicList();
-    topics.value = useTopicStore().openTopicList;
+    topics.value = useTopicStore().resOpenTopicList;
+  }
+  const login = () => {
+    if(account.value == '' || account.value == null) {
+      error.value = true;
+      message.value = 'Vui lòng chọn tài khoản'
+      return false;
+    }
+    show.value = false;
+    useTopicStore().getOpenTopicList();
+    topics.value = useTopicStore().resOpenTopicList;
     Cookies.set('account_info', account.value, { expires: 7 });
   }
+
+  const accountRules = [
+    value => {
+      if (value) return true
+      return 'Vui lòng chọn tài khoản'
+    },
+  ]
 </script>
 
 <template>
     <div class="py-4">
-      <v-container class="">
+      <v-container>
         <v-row justify="center">
-            <v-col cols="6">
+            <v-col sm="12" md="12" lg="12" xl="3">
             <v-card
             class="mx-auto pa-4 pb-4"
-            max-width="448"
+            min-width="350"
             rounded="md"
             v-if="show">
               <v-autocomplete
@@ -32,6 +51,9 @@
               item-title="username"
               item-value="id"
               v-model="account"
+              :error="error"
+              :rules="accountRules"
+              :error-messages="message"
             >
             </v-autocomplete>
             <v-btn class="bg-blue-darken-2 float-right" @click="login">Đăng nhập</v-btn>
@@ -40,18 +62,24 @@
       </v-row>
     </v-container>
 
-    <v-container class="">
+    <v-container>
       <v-row justify="center">
-        <v-col cols="6">
+        <v-col sm="12" md="12" lg="12" xl="6">
           <v-row justify="center">
-          <v-col v-for="{id, name, description} in topics" :key="id" cols="12">
-          <v-hover v-slot="{ isHovering, props }">
-            <v-card :title="name" :text="description" variant="outlined"  :elevation="isHovering ? 12 : 2" v-bind="props" :class="isHovering ? 'bg-indigo-lighten-2' : ''"
-              target="_blank" :href="'vote-topic/'+ id">
-            </v-card>
-          </v-hover>
-          </v-col>
+            <v-sheet class="pa-2" border rounded v-if="topics.length" min-width="350">
+              <p class="font-weight-bold">Chọn topic để vote</p>
+              <v-col v-for="{id, name, description} in topics" :key="id" cols="12" sm="12">
+              <v-hover v-slot="{ isHovering, props }">
+                <v-card :title="name" :text="description" color="indigo-lighten-5"  :elevation="isHovering ? 12 : 2" v-bind="props" :class="isHovering ? 'bg-indigo-lighten-2' : ''"
+                  target="_blank" :href="'vote-topic/'+ id">
+                </v-card>
+              </v-hover>
+              </v-col>
+            </v-sheet>
           </v-row>
+          <v-alert variant="outlined" type="warning" prominent border="top" v-if="topics.length == 0">
+            Hiện tại không có topic nào đang mở
+          </v-alert>
         </v-col>
       </v-row>
     </v-container>
