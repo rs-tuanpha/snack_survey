@@ -7,4 +7,3 @@ export interface ITopic {
     link?: boolean | null,
     option?: boolean | null
   }
-  
