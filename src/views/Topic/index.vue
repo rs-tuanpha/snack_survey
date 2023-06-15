@@ -4,28 +4,49 @@ import { doc } from 'firebase/firestore'
 import { useDocument } from 'vuefire'
 import { useRoute } from 'vue-router'
 
-import stringMinify from '@/core/utils/stringMinify'
+import { Cookies } from '@/core/utils/storage'
 import { db } from '@/plugins/firebase'
-import { getOptionsByTopicId, postNewOption } from '@/services/option.service'
+import { getAccountById } from '@/services/account.service'
+import { getOptionsByTopicId, postNewOption, voteOption } from '@/services/option.service'
+import stringMinify from '@/core/utils/stringMinify'
 import { useCommonStore } from '@/stores'
 import type { IOption } from '@/core/interfaces/model/option'
 import type { ITopic } from '@/core/interfaces/model/topic'
+import type { IUser } from '@/core/interfaces/model/user'
 
 const common = useCommonStore()
 const route = useRoute()
+const currentAccount = ref<IUser | null>(null)
 const currentTopic = useDocument<ITopic>(doc(db, 'topics', route.params.id.toString()))
 const options = ref<IOption[]>([])
+const currentVoteOption = ref<number | null>(null)
 const form = reactive({
   link: '',
   title: ''
 })
 
+const checkAccountVoteOption = (option: IOption, account: IUser) => {
+  for (let i = 0; i < option.voteBy.length; i++) {
+    if (option.voteBy[i].id === account.id) {
+      return true
+    }
+  }
+  return false
+}
+
 onMounted(async () => {
-  const res = await getOptionsByTopicId(route.params.id.toString())
-  options.value = res
+  const topicData = await getOptionsByTopicId(route.params.id.toString())
+  options.value = topicData
+
+  const accountId = Cookies.get('account_info')
+  const userData = await getAccountById(accountId)
+  currentAccount.value = userData
+  currentVoteOption.value = userData
+    ? topicData.findIndex((option) => checkAccountVoteOption(option, userData))
+    : null
 })
 
-const handleSubmitForm = async () => {
+const handleAddTopic = async () => {
   if (form.link && form.title) {
     await postNewOption(form.title, form.link, route.params.id.toString())
     options.value = await getOptionsByTopicId(route.params.id.toString())
@@ -35,6 +56,22 @@ const handleSubmitForm = async () => {
     return
   }
   alert('Please input valid information!')
+}
+
+const handleChangeVote = (optionIndex: number) => {
+  const accountIndex =
+    currentVoteOption.value !== null
+      ? options.value[currentVoteOption.value].voteBy.findIndex(
+          (account) => (account.id = currentAccount.value?.id ?? '')
+        )
+      : -1
+
+  if (accountIndex !== -1) {
+    options.value[currentVoteOption.value ?? 0].voteBy.splice(accountIndex, 1)
+  }
+
+  currentAccount.value && options.value[optionIndex].voteBy.push(currentAccount.value)
+  currentVoteOption.value = optionIndex
 }
 </script>
 
@@ -64,7 +101,7 @@ const handleSubmitForm = async () => {
       <v-form @submit.prevent v-if="currentTopic?.status == 'open'">
         <v-text-field v-model="form.title" label="Vote title"></v-text-field>
         <v-text-field v-model="form.link" label="Vote link"></v-text-field>
-        <v-btn type="submit" block class="mt-2" @click="handleSubmitForm">Submit</v-btn>
+        <v-btn type="submit" block class="mt-2" @click="handleAddTopic">Submit</v-btn>
       </v-form>
     </v-sheet>
     <v-sheet
@@ -77,7 +114,7 @@ const handleSubmitForm = async () => {
     >
       <ul>
         <li
-          v-for="option in options"
+          v-for="(option, index) in options"
           :key="option.id"
           class="h-120px d-flex align-center mb-2 px-4 py-2 elevation-1"
         >
@@ -101,10 +138,17 @@ const handleSubmitForm = async () => {
             </div>
           </div>
           <div class="h-100">
-            <v-btn class="h-100 btn-border">Vote</v-btn>
+            <v-btn
+              class="h-100 btn-border"
+              color="primary"
+              :variant="index == currentVoteOption ? 'tonal' : 'plain'"
+              @click="handleChangeVote(index)"
+              >Vote</v-btn
+            >
           </div>
         </li>
       </ul>
+      <v-btn @click="voteOption(options)">Submit</v-btn>
     </v-sheet>
   </v-container>
 </template>
