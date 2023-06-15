@@ -1,31 +1,36 @@
 <script setup lang="ts">
-  import { ref } from 'vue'
-  import { useTopicStore } from '@/stores/topic'
+  import { onMounted,ref } from 'vue'
+  import { getAccounts } from '@/services/fb.account.service'
+  import { getOpenTopicList } from '@/services/fb.topic.service'
   import Cookies from 'js-cookie'
-
-  const show = ref(true)
-  const accounts = useTopicStore().accountList;
+  const show = ref(true);
+  const accounts = getAccounts;
   const topics = ref([]);
   const account = ref(null);
   const error = ref(false);
   const message = ref('');
+  const alert = ref(false);
   // Check existence of the account
-  if(Cookies.get('account_info')) {
-    show.value = false;
-    useTopicStore().getOpenTopicList();
-    topics.value = useTopicStore().resOpenTopicList;
-  }
-  const login = () => {
+  const login = async () => {
     if(account.value == '' || account.value == null) {
       error.value = true;
       message.value = 'Vui lòng chọn tài khoản'
       return false;
     }
     show.value = false;
-    useTopicStore().getOpenTopicList();
-    topics.value = useTopicStore().resOpenTopicList;
+    topics.value = await getOpenTopicList();
     Cookies.set('account_info', account.value, { expires: 7 });
   }
+
+  onMounted(async () => {
+    if(Cookies.get('account_info')) {
+      show.value = false;
+      topics.value = await getOpenTopicList();
+      if(topics.value.length == 0) {
+        alert.value = true;
+      }
+    }
+  })
 
   const accountRules = [
     value => {
@@ -75,9 +80,9 @@
                 </v-card>
               </v-hover>
               </v-col>
-            </v-sheet>
+            </v-sheet> 
           </v-row>
-          <v-alert variant="outlined" type="warning" prominent border="top" v-if="topics.length == 0">
+          <v-alert variant="outlined" type="warning" prominent border="top" v-show="alert">
             Hiện tại không có topic nào đang mở
           </v-alert>
         </v-col>
