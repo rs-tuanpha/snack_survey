@@ -32,6 +32,7 @@
           <v-switch v-model="link" hide-details color="green-darken-1" inset :label="`Cho phép đóng góp link: ${ link ? 'Có' : 'Không'}`"></v-switch>
           <v-switch v-model="option" hide-details color="green-darken-1" inset :label="`Cho phép vote nhiều option: ${ option ? 'Có' : 'Không'}`"></v-switch>
           <v-btn type="submit" block class="mt-2 bg-blue-darken-2" @click="confirm(type)" variant="elevated">{{ txtbtn }}</v-btn>
+          <v-btn v-show="showAddBtn" icon="mdi-plus" size="small" class="mt-2 bg-blue-darken-2" @click="cancelUpdate"></v-btn>
         </v-form>
         <v-alert v-model="alert" v-show="alert != ''" border="start" variant="tonal" closable color="green-darken-1" class="mt-2"> {{ alert }}
        </v-alert>
@@ -106,7 +107,8 @@ const db = getFirestore();
       txtbtn: 'Tạo mới',
       topicId: '',
       alert: '',
-      errorDialog: false
+      errorDialog: false,
+      showAddBtn: false
     }),
   created() {
     this.topics = getTopics;
@@ -164,6 +166,7 @@ const db = getFirestore();
         this.option = docSnap.data().option;
         this.txtbtn = 'Cập nhật';
         this.type = 'update';
+        this.showAddBtn = true;
       } else {
         console.log("No such document!");
       }
@@ -219,6 +222,18 @@ const db = getFirestore();
         this.errorDialog = true;
         console.error(e.message);
       }
+    },
+    cancelUpdate() {
+      this.txtbtn = 'Tạo mới';
+      this.type = 'create';
+      this.showAddBtn = false;
+      this.status = true;
+      this.link = true;
+      this.option = true;
+      this.description = '';
+      this.name = '';
+      this.dialog = false;
+      this.date = new Date();
     }
   }
 })
