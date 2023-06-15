@@ -8,16 +8,16 @@ const db = useFirestore();
  */
 
 export const getOpenTopicList = async (): Promise<ITopic[]> => {
-    const querySnapshot = await getDocs(collection(db, "topics"));
-    const openTopicList : ITopic[] = [];
-    querySnapshot.forEach((doc) => {
-      const info = doc.data();
-      if(info.status) {
-        const topic =  {'id' : doc.id, 'name' : info.name, 'description' : info.description};
-        openTopicList.push(topic);
-      }
-    });
-    return openTopicList;
+  const querySnapshot = await getDocs(collection(db, "topics"));
+  const openTopicList : ITopic[] = [];
+  querySnapshot.forEach((doc) => {
+    const info = doc.data();
+    if(info.status) {
+      const topic =  {'id' : doc.id, 'name' : info.name, 'description' : info.description};
+      openTopicList.push(topic);
+    }
+  });
+  return openTopicList;
 }
 
 export const getTopics = useCollection(collection(db, 'topics'));
