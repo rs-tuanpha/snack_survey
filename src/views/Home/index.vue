@@ -1,45 +1,3 @@
-<script setup lang="ts">
-  import { onMounted,ref } from 'vue'
-  import { getAccounts } from '@/services/fb.account.service'
-  import { getOpenTopicList } from '@/services/fb.topic.service'
-  import Cookies from 'js-cookie'
-  const show = ref(true);
-  const accounts = getAccounts;
-  const topics = ref([]);
-  const account = ref(null);
-  const error = ref(false);
-  const message = ref('');
-  const alert = ref(false);
-  // Check existence of the account
-  const login = async () => {
-    if(account.value == '' || account.value == null) {
-      error.value = true;
-      message.value = 'Vui lòng chọn tài khoản'
-      return false;
-    }
-    show.value = false;
-    topics.value = await getOpenTopicList();
-    Cookies.set('account_info', account.value, { expires: 7 });
-  }
-
-  onMounted(async () => {
-    if(Cookies.get('account_info')) {
-      show.value = false;
-      topics.value = await getOpenTopicList();
-      if(topics.value.length == 0) {
-        alert.value = true;
-      }
-    }
-  })
-
-  const accountRules = [
-    value => {
-      if (value) return true
-      return 'Vui lòng chọn tài khoản'
-    },
-  ]
-</script>
-
 <template>
     <div class="py-4">
       <v-container>
@@ -71,7 +29,7 @@
       <v-row justify="center">
         <v-col sm="12" md="12" lg="12" xl="6">
           <v-row justify="center">
-            <v-sheet class="pa-2" border rounded v-if="topics.length" min-width="350">
+            <v-sheet class="pa-2" border rounded v-if="topics && topics.length" min-width="350">
               <p class="font-weight-bold">Chọn topic để vote</p>
               <v-col v-for="{id, name, description} in topics" :key="id" cols="12" sm="12">
               <v-hover v-slot="{ isHovering, props }">
@@ -90,3 +48,45 @@
     </v-container>
     </div>
 </template>
+<script setup lang="ts">
+  import { onMounted,ref } from 'vue'
+  import { getAccounts } from '@/services/fb.account.service'
+  import { getOpenTopicList } from '@/services/fb.topic.service'
+  import type { ITopic } from '@/core/interfaces/model/topic'
+  import Cookies from 'js-cookie'
+  const show = ref<boolean>(true);
+  const accounts = getAccounts;
+  const topics = ref<ITopic[]>([]);
+  const account = ref<null>(null);
+  const error = ref<boolean>(false);
+  const message = ref<string>('');
+  const alert = ref<boolean>(false);
+  // Check existence of the account
+  const login = async () => {
+    if(account.value === '' || account.value === null) {
+      error.value = true;
+      message.value = 'Vui lòng chọn tài khoản'
+      return false;
+    }
+    show.value = false;
+    topics.value = await getOpenTopicList();
+    Cookies.set('account_info', account.value, { expires: 7 });
+  }
+
+  onMounted(async () => {
+    if(Cookies.get('account_info')) {
+      show.value = false;
+      topics.value = await getOpenTopicList();
+      if(topics.value.length === 0) {
+        alert.value = true;
+      }
+    }
+  })
+
+  const accountRules = [
+    value => {
+      if (value) return true
+      return 'Vui lòng chọn tài khoản'
+    },
+  ]
+</script>

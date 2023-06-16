@@ -83,56 +83,46 @@ import VueDatePicker from '@vuepic/vue-datepicker';
 import { getFirestore, collection, addDoc, getDoc, doc, updateDoc, deleteDoc } from 'firebase/firestore'
 import { getTopics } from '@/services/fb.topic.service'
 const db = getFirestore();
-const date = ref(new Date());
-const name = ref('');
+const date = ref<object>(new Date());
+const name = ref<string>('');
 const nameRules = [
     value => {
       if (value) return true
       return 'Vui lòng chọn tài khoản'
     },
   ]
-const description = ref('');
-const status = ref(true);
-const link = ref(true);
-const option = ref(true);
-const format = ref('');
+const description = ref<string>('');
+const status = ref<boolean>(true);
+const link = ref<boolean>(true);
+const option = ref<boolean>(true);
+const format = ref<string>('');
 const topics = getTopics;
-const text = ref('');
-const txtbtn = ref('Tạo mới');
-const topicId = ref('');
-const topicCancelId = ref('');
-const alert = ref('');
-const errorDialog = ref(false);
-const showAddBtn = ref(false);
-const dialog = ref(false);
-const type = ref('create');
-const reset = ref(false);
-const day = date.value.getDate();
-const month = date.value.getMonth() + 1;
-const year = date.value.getFullYear();
-format.value = `${day}/${month}/${year}`;
+const text = ref<string>('');
+const txtbtn = ref<string>('Tạo mới');
+const topicId = ref<string>('');
+const topicCancelId = ref<string>('');
+const alert = ref<string>('');
+const errorDialog = ref<boolean>(false);
+const showAddBtn = ref<boolean>(false);
+const dialog = ref<boolean>(false);
+const type = ref<string>('create');
+const reset = ref<boolean>(false);
+format.value = `${date.value.getDate()}/${date.value.getMonth() + 1}/${date.value.getFullYear()}`;
 
 watch(() => date.value, () => {
   format.value =  `${date.value.getDate()}/${date.value.getMonth() + 1}/${date.value.getFullYear()}`;
 })
 
 // Methods
-function confirm(type : string) {
-  if(type === "create") {
-    text.value = 'Bạn có muốn thêm topic không?';
+const confirm = (type : string) => {
+  switch(type) {
+    case "create": text.value = 'Bạn có muốn thêm topic không?'; break;
+    case "update": text.value = 'Bạn có muốn cập nhật topic không?'; break;
   }
-  if(type === "update") {
-    text.value = 'Bạn có muốn cập nhật topic không?';
-  }
-  if(type === "delete") {
-    text.value = 'Bạn có muốn xóa topic không?';
-  }
-  if(name.value !== '') {
-    dialog.value = true; 
-  }
+  dialog.value = true;
 }
 
-function confirmDelete(topicVal : string) {
+const confirmDelete = (topicVal : string) => {
   text.value = 'Bạn có muốn xóa topic không?';
   dialog.value = true;
   type.value = 'delete';
@@ -142,7 +132,7 @@ function confirmDelete(topicVal : string) {
   topicCancelId.value = topicVal;
 }
 
-function cancelUpdate() {
+const cancelUpdate = () => {
   txtbtn.value = 'Tạo mới';
   type.value = 'create';
   showAddBtn.value = false;
@@ -185,30 +175,28 @@ const handleTopic = async (type : string) => {
     'link' : link.value,
     'option' : option.value
   }
-  if(type === 'create') {
-    try {
-      await addDoc(collection(db, "topics"), topic);
-      dialog.value = false;
-      alert.value = 'Thêm mới thành công';
-      status.value = true;
-      link.value = true;
-      option.value = true;
-      description.value = '';
-      name.value = '';
-      date.value = new Date();
-      setTimeout( ()=> {
-        alert.value = '';
-      }, 2000)
-    } catch(e) {
-      errorDialog.value = true;
-      console.error(e.message);
-    }
-  }
-  if(type === 'update') {
-    update(topic)
-  }
-  if(type === 'delete') {
-    deleteTopic();
+  switch (type) {
+    case 'create':
+      try {
+        await addDoc(collection(db, "topics"), topic);
+        dialog.value = false;
+        alert.value = 'Thêm mới thành công';
+        status.value = true;
+        link.value = true;
+        option.value = true;
+        description.value = '';
+        name.value = '';
+        date.value = new Date();
+        setTimeout( ()=> {
+          alert.value = '';
+        }, 2000)
+      } catch(e) {
+        errorDialog.value = true;
+        console.error(e.message);
+      }
+    break;
+    case 'update': update(topic); break;
+    case 'delete': deleteTopic(); break;
   }
 }
 
