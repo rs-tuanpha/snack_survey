@@ -25,12 +25,12 @@
       <v-sheet class="pa-2" border rounded>
         <p class="font-weight-black text-center">Topic</p>
         <v-form fast-fail @submit.prevent>
-          <v-text-field v-model="name" label="Tên" :rules="nameRules" variant="outlined"></v-text-field>
-          <v-text-field v-model="description" label="Mô tả" variant="outlined"></v-text-field>
-          <VueDatePicker v-model="date" ></VueDatePicker>
-          <v-switch v-model="status" hide-details color="green-darken-1" inset :label="`Trạng thái: ${ status ? 'Mở' : 'Đóng'}`"></v-switch>
-          <v-switch v-model="link" hide-details color="green-darken-1" inset :label="`Cho phép đóng góp link: ${ link ? 'Có' : 'Không'}`"></v-switch>
-          <v-switch v-model="option" hide-details color="green-darken-1" inset :label="`Cho phép vote nhiều option: ${ option ? 'Có' : 'Không'}`"></v-switch>
+          <v-text-field v-model="topicInfo.name" label="Tên" :rules="nameRules" variant="outlined"></v-text-field>
+          <v-text-field v-model="topicInfo.description" label="Mô tả" variant="outlined"></v-text-field>
+          <VueDatePicker v-model="topicInfo.date" ></VueDatePicker>
+          <v-switch v-model="topicInfo.status" hide-details color="green-darken-1" inset :label="`Trạng thái: ${ status ? 'Mở' : 'Đóng'}`"></v-switch>
+          <v-switch v-model="topicInfo.link" hide-details color="green-darken-1" inset :label="`Cho phép đóng góp link: ${ link ? 'Có' : 'Không'}`"></v-switch>
+          <v-switch v-model="topicInfo.option" hide-details color="green-darken-1" inset :label="`Cho phép vote nhiều option: ${ option ? 'Có' : 'Không'}`"></v-switch>
           <v-btn type="submit" block class="mt-2 bg-blue-darken-2" @click="confirm(type)" variant="elevated">{{ txtbtn }}</v-btn>
           <v-btn v-show="showAddBtn" icon="mdi-plus" size="small" class="mt-2 bg-blue-darken-2" @click="cancelUpdate"></v-btn>
         </v-form>
@@ -78,23 +78,18 @@
 </v-container>
 </template>
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, reactive } from 'vue'
 import VueDatePicker from '@vuepic/vue-datepicker';
 import { getFirestore, collection, addDoc, getDoc, doc, updateDoc, deleteDoc } from 'firebase/firestore'
 import { getTopics } from '@/services/fb.topic.service'
+import type { ITopic } from '@/core/interfaces/model/topic'
 const db = getFirestore();
-const date = ref<object>(new Date());
-const name = ref<string>('');
 const nameRules = [
     value => {
       if (value) return true
       return 'Vui lòng chọn tài khoản'
     },
   ]
-const description = ref<string>('');
-const status = ref<boolean>(true);
-const link = ref<boolean>(true);
-const option = ref<boolean>(true);
 const format = ref<string>('');
 const topics = getTopics;
 const text = ref<string>('');
@@ -107,10 +102,12 @@ const showAddBtn = ref<boolean>(false);
 const dialog = ref<boolean>(false);
 const type = ref<string>('create');
 const reset = ref<boolean>(false);
-format.value = `${date.value.getDate()}/${date.value.getMonth() + 1}/${date.value.getFullYear()}`;
+const topicInfo : ITopic = reactive({id: '', name: '', description: '', date: new Date(), status: true, link: true, option: true});
 
-watch(() => date.value, () => {
-  format.value =  `${date.value.getDate()}/${date.value.getMonth() + 1}/${date.value.getFullYear()}`;
+format.value = `${topicInfo.date.getDate()}/${topicInfo.date.getMonth() + 1}/${topicInfo.date.getFullYear()}`;
+
+watch(() => topicInfo.date, () => {
+  format.value =  `${topicInfo.date.getDate()}/${topicInfo.date.getMonth() + 1}/${topicInfo.date.getFullYear()}`;
 })
 
 // Methods
@@ -136,13 +133,13 @@ const cancelUpdate = () => {
   txtbtn.value = 'Tạo mới';
   type.value = 'create';
   showAddBtn.value = false;
-  status.value = true;
-  link.value = true;
-  option.value = true;
-  description.value = '';
-  name.value = '';
   dialog.value = false;
-  date.value = new Date();
+  topicInfo.name = '';
+  topicInfo.description = '';
+  topicInfo.date = new Date();
+  topicInfo.status = true;
+  topicInfo.link = true;
+  topicInfo.option = true;
 }
 
 const edit = async (topicVal : string) => {
@@ -150,14 +147,14 @@ const edit = async (topicVal : string) => {
   const docRef = doc(db, "topics", topicVal);
   const docSnap = await getDoc(docRef);
   if (docSnap.exists()) {
-    name.value = docSnap.data().name;
-    description.value = docSnap.data().description;
     let dateString = docSnap.data().date;
     topicId.value = docSnap.id;
-    date.value = dateString.toDate();
-    status.value = docSnap.data().status;
-    link.value = docSnap.data().link;
-    option.value = docSnap.data().option;
+    topicInfo.name = docSnap.data().name;
+    topicInfo.description = docSnap.data().description;
+    topicInfo.date = dateString.toDate();
+    topicInfo.status = docSnap.data().status;
+    topicInfo.link = docSnap.data().link;
+    topicInfo.option = docSnap.data().option;
     txtbtn.value = 'Cập nhật';
     type.value = 'update';
     showAddBtn.value = true;
@@ -167,26 +164,19 @@ const edit = async (topicVal : string) => {
 }
 
 const handleTopic = async (type : string) => {
-  let topic = {
-    'name' : name.value,
-    'description' : description.value,
-    'date' : date.value,
-    'status' : status.value,
-    'link' : link.value,
-    'option' : option.value
-  }
   switch (type) {
     case 'create':
       try {
-        await addDoc(collection(db, "topics"), topic);
+        await addDoc(collection(db, "topics"), topicInfo);
         dialog.value = false;
         alert.value = 'Thêm mới thành công';
-        status.value = true;
-        link.value = true;
-        option.value = true;
-        description.value = '';
-        name.value = '';
-        date.value = new Date();
+        topicInfo.name = '';
+        topicInfo.description = '';
+        topicInfo.date = new Date();
+        topicInfo.status = true;
+        topicInfo.link = true;
+        topicInfo.option = true;
+
         setTimeout( ()=> {
           alert.value = '';
         }, 2000)
@@ -195,7 +185,7 @@ const handleTopic = async (type : string) => {
         console.error(e.message);
       }
     break;
-    case 'update': update(topic); break;
+    case 'update': update(topicInfo); break;
     case 'delete': deleteTopic(); break;
   }
 }
