@@ -64,7 +64,7 @@
             <tr v-for="item in topics" :key="item.id"> 
               <td>{{ item.name }}</td>
               <td>{{ item.description }}</td>
-              <td>{{ item.status == true ? 'Mở' : 'Đóng' }}</td>
+              <td>{{ item.status === true ? 'Mở' : 'Đóng' }}</td>
               <td>
                 <v-btn class="text-none w-auto ma-1" color="blue-darken-2" @click="edit(item.id)">Sửa</v-btn>
                 <v-btn class="text-none w-auto ma-1" color="red-darken-1" @click="confirmDelete(item.id)">Xóa</v-btn>
@@ -77,164 +77,167 @@
   </v-row>
 </v-container>
 </template>
-<script lang="ts">
-import { defineComponent } from 'vue'
+<script setup lang="ts">
+import { ref, watch } from 'vue'
 import VueDatePicker from '@vuepic/vue-datepicker';
 import { getFirestore, collection, addDoc, getDoc, doc, updateDoc, deleteDoc } from 'firebase/firestore'
-import type { ITopic } from '@/core/interfaces/model/topic'
 import { getTopics } from '@/services/fb.topic.service'
 const db = getFirestore();
-  export default defineComponent({
-    components: { VueDatePicker },
-    data: () => ({
-      date: new Date(),
-      name: '',
-      nameRules: [
-          value => {
-          if (value?.length > 0) return true
-            return 'Vui lòng nhập tên topic'
-          },
-      ],
-      description:  '',
-      status: true,
-      link: true,
-      option: true,
-      dialog: false,
-      format: '',
-      topics: [],
-      text: '',
-      type : 'create',
-      txtbtn: 'Tạo mới',
-      topicId: '',
-      alert: '',
-      errorDialog: false,
-      showAddBtn: false
-    }),
-  created() {
-    this.topics = getTopics;
-    const day = this.date.getDate();
-    const month = this.date.getMonth() + 1;
-    const year = this.date.getFullYear();
-    this.format =  `${day}/${month}/${year}`;
-  },
-  watch: {
-    date() {
-      const day = this.date.getDate();
-      const month = this.date.getMonth() + 1;
-      const year = this.date.getFullYear();
-      this.format =  `${day}/${month}/${year}`;
-    }
-  },
-  methods: {
-    confirm(type : string) {
-      if(type == "create") {
-        this.text = 'Bạn có muốn thêm topic không?';
-      }
-      if(type == "update") {
-        this.text = 'Bạn có muốn cập nhật topic không?';
-      }
-      if(type == "delete") {
-        this.text = 'Bạn có muốn xóa topic không?';
-      }
-      if(this.name != '') {
-        this.dialog = true; 
-      }
+const date = ref(new Date());
+const name = ref('');
+const nameRules = [
+    value => {
+      if (value) return true
+      return 'Vui lòng chọn tài khoản'
     },
-    confirmEdit() {
-      if(this.name != '') {
-        this.dialog = true; 
-      }
-    },
-    confirmDelete(topicId : string) {
-      this.text = 'Bạn có muốn xóa topic không?';
-      this.dialog = true;
-      this.type = 'delete';
-      this.topicId = topicId
-    },
-    async edit(topicId : string) {
-      // Find the topic by topic id
-      const docRef = doc(db, "topics", topicId);
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        this.name = docSnap.data().name;
-        this.description = docSnap.data().description;
-        var date = docSnap.data().date;
-        this.topicId = docSnap.id;
-        this.date = date.toDate();
-        this.status = docSnap.data().status;
-        this.link = docSnap.data().link;
-        this.option = docSnap.data().option;
-        this.txtbtn = 'Cập nhật';
-        this.type = 'update';
-        this.showAddBtn = true;
-      } else {
-        console.log("No such document!");
-      }
-    },
-    async handleTopic(type : string) {
-      let topic = {
-        'name' : this.name,
-        'description' : this.description,
-        'date' : this.date,
-        'status' : this.status,
-        'link' : this.link,
-        'option' : this.option
-      }
-      if(type == 'create') {
-        try {
-          await addDoc(collection(db, "topics"), topic);
-          this.alert = 'Thêm mới thành công';
-          this.status = true;
-          this.link = true;
-          this.option = true;
-          this.description = '';
-          this.name = '';
-          this.dialog = false;
-          this.date = new Date();
-        } catch(e) {
-          this.errorDialog = true;
-          console.error(e.message);
-        }
-      }
-      if(type == 'update') {
-        this.update(topic)
-      }
-      if(type == 'delete') {
-        this.deleteTopic();
-      }
-    },
-    async update(topic : object) {
-      const topicRef = doc(db, "topics", this.topicId);
-      try {
-        await updateDoc(topicRef, topic);
-        this.dialog = false;
-        this.alert = 'Cập nhật thành công';
-      } catch(e) {
-        this.errorDialog = true;
-        console.error(e.message);
-      }
-    },
-    async deleteTopic() {
-      try {
-        await deleteDoc(doc(db, "topics", this.topicId));
-        this.dialog = false;
-      } catch(e) {
-        this.errorDialog = true;
-        console.error(e.message);
-      }
-    },
-    cancelUpdate() {
-      this.txtbtn = 'Tạo mới';
-      this.type = 'create';
-      this.showAddBtn = false;
-      this.status = true;
-      this.link = true;
-      this.option = true;
-      this.description = '';
-      this.name = '';
-      this.dialog = false;
-      this.date = new Date();
+  ]
+const description = ref('');
+const status = ref(true);
+const link = ref(true);
+const option = ref(true);
+const format = ref('');
+const topics = getTopics;
+const text = ref('');
+const txtbtn = ref('Tạo mới');
+const topicId = ref('');
+const topicCancelId = ref('');
+const alert = ref('');
+const errorDialog = ref(false);
+const showAddBtn = ref(false);
+const dialog = ref(false);
+const type = ref('create');
+const reset = ref(false);
+const day = date.value.getDate();
+const month = date.value.getMonth() + 1;
+const year = date.value.getFullYear();
+format.value = `${day}/${month}/${year}`;
+
+watch(() => date.value, () => {
+  format.value =  `${date.value.getDate()}/${date.value.getMonth() + 1}/${date.value.getFullYear()}`;
+})
+
+// Methods
+function confirm(type : string) {
+  if(type === "create") {
+    text.value = 'Bạn có muốn thêm topic không?';
+  }
+  if(type === "update") {
+    text.value = 'Bạn có muốn cập nhật topic không?';
+  }
+  if(type === "delete") {
+    text.value = 'Bạn có muốn xóa topic không?';
+  }
+  if(name.value !== '') {
+    dialog.value = true; 
+  }
+}
+
+function confirmDelete(topicVal : string) {
+  text.value = 'Bạn có muốn xóa topic không?';
+  dialog.value = true;
+  type.value = 'delete';
+  if(topicId.value === topicVal) {
+    reset.value = true;
+  }
+  topicCancelId.value = topicVal;
+}
+
+function cancelUpdate() {
+  txtbtn.value = 'Tạo mới';
+  type.value = 'create';
+  showAddBtn.value = false;
+  status.value = true;
+  link.value = true;
+  option.value = true;
+  description.value = '';
+  name.value = '';
+  dialog.value = false;
+  date.value = new Date();
+}
+
+const edit = async (topicVal : string) => {
+  // Find the topic by topic id
+  const docRef = doc(db, "topics", topicVal);
+  const docSnap = await getDoc(docRef);
+  if (docSnap.exists()) {
+    name.value = docSnap.data().name;
+    description.value = docSnap.data().description;
+    let dateString = docSnap.data().date;
+    topicId.value = docSnap.id;
+    date.value = dateString.toDate();
+    status.value = docSnap.data().status;
+    link.value = docSnap.data().link;
+    option.value = docSnap.data().option;
+    txtbtn.value = 'Cập nhật';
+    type.value = 'update';
+    showAddBtn.value = true;
+  } else {
+    console.log("No such document!");
+  }
+}
+
+const handleTopic = async (type : string) => {
+  let topic = {
+    'name' : name.value,
+    'description' : description.value,
+    'date' : date.value,
+    'status' : status.value,
+    'link' : link.value,
+    'option' : option.value
+  }
+  if(type === 'create') {
+    try {
+      await addDoc(collection(db, "topics"), topic);
+      dialog.value = false;
+      alert.value = 'Thêm mới thành công';
+      status.value = true;
+      link.value = true;
+      option.value = true;
+      description.value = '';
+      name.value = '';
+      date.value = new Date();
+      setTimeout( ()=> {
+        alert.value = '';
+      }, 2000)
+    } catch(e) {
+      errorDialog.value = true;
+      console.error(e.message);
     }
   }
-})
+  if(type === 'update') {
+    update(topic)
+  }
+  if(type === 'delete') {
+    deleteTopic();
+  }
+}
+
+const update = async (topic : object) => {
+  const topicRef = doc(db, "topics", topicId.value);
+  try {
+    await updateDoc(topicRef, topic);
+    dialog.value = false;
+    alert.value = 'Cập nhật thành công';
+    setTimeout( ()=> {
+      alert.value = '';
+    }, 2000)
+  } catch(e) {
+    errorDialog.value = true;
+    console.error(e.message);
+  }
+}
+
+const deleteTopic = async () => {
+  try {
+    await deleteDoc(doc(db, "topics", topicCancelId.value));
+    dialog.value = false;
+    alert.value = '';
+    if(reset.value === true) {
+      cancelUpdate();
+    }
+  } catch(e) {
+    errorDialog.value = true;
+    console.error(e.message);
+  }
+}
 </script>
