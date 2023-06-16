@@ -19,7 +19,7 @@ const routes = [
       },
       {
         path: 'topic/admin',
-        name: 'topic',
+        name: 'topicAmin',
         component: () => import('@/views/Topic/Admin/index.vue')
       }
     ]
