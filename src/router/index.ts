@@ -21,6 +21,11 @@ const routes = [
         path: 'topic-admin',
         name: 'topicAmin',
         component: () => import('@/views/Topic/Admin/index.vue')
+      },
+      {
+        path: '/vote-topic/:id',
+        name: 'topic',
+        component: () => import('@/views/Topic/index.vue')
       }
     ]
   }
