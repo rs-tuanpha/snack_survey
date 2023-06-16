@@ -78,7 +78,7 @@ const handleChangeVote = (optionIndex: number) => {
 <template>
   <v-container>
     <v-sheet
-      v-if="!common.loading && currentTopic?.status == 'close'"
+      v-if="!common.loading && currentTopic?.status === 'close'"
       max-width="638"
       width="100%"
       class="mx-auto"
@@ -98,7 +98,7 @@ const handleChangeVote = (optionIndex: number) => {
       <h1 class="text-h4">{{ currentTopic?.name }}</h1>
       <p class="mt-3 text-medium-emphasis text-body-1">{{ currentTopic?.description }}</p>
       <v-divider class="border-opacity-50"></v-divider>
-      <v-form @submit.prevent v-if="currentTopic?.status == 'open'">
+      <v-form @submit.prevent v-if="currentTopic?.status === 'open'">
         <v-text-field v-model="form.title" label="Vote title"></v-text-field>
         <v-text-field v-model="form.link" label="Vote link"></v-text-field>
         <v-btn type="submit" block class="mt-2" @click="handleAddTopic">Submit</v-btn>
@@ -141,7 +141,7 @@ const handleChangeVote = (optionIndex: number) => {
             <v-btn
               class="h-100 btn-border"
               color="primary"
-              :variant="index == currentVoteOption ? 'tonal' : 'plain'"
+              :variant="index === currentVoteOption ? 'tonal' : 'plain'"
               @click="handleChangeVote(index)"
               >Vote</v-btn
             >

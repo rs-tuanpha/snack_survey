@@ -1,5 +1,4 @@
 import type { IOption } from '@/core/interfaces/model/option'
-import type { IUser } from '@/core/interfaces/model/user'
 import { db } from '@/plugins/firebase'
 import { addDoc, collection, doc, getDocs, query, setDoc, where } from 'firebase/firestore'
 
