@@ -18,7 +18,7 @@ const routes = [
         component: () => import('@/views/About/index.vue')
       },
       {
-        path: 'topic-admin',
+        path: 'topic',
         name: 'topicAmin',
         component: () => import('@/views/Topic/Admin/index.vue')
       },
