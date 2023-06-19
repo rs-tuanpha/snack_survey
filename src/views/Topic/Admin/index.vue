@@ -32,9 +32,9 @@
           <v-switch v-model="topicInfo.link" hide-details color="green-darken-1" inset :label="`Cho phép đóng góp link: ${ link ? 'Có' : 'Không'}`"></v-switch>
           <v-switch v-model="topicInfo.option" hide-details color="green-darken-1" inset :label="`Cho phép vote nhiều option: ${ option ? 'Có' : 'Không'}`"></v-switch>
           <v-btn type="submit" block class="mt-2 bg-blue-darken-2" @click="confirm(type)" variant="elevated">{{ txtbtn }}</v-btn>
-          <v-btn v-show="showAddBtn" icon="mdi-plus" size="small" class="mt-2 bg-blue-darken-2" @click="cancelUpdate"></v-btn>
+          <v-btn v-if="showAddBtn" icon="mdi-plus" size="small" class="mt-2 bg-blue-darken-2" @click="cancelUpdate"></v-btn>
         </v-form>
-        <v-alert v-model="alert" v-show="alert != ''" border="start" variant="tonal" closable color="green-darken-1" class="mt-2"> {{ alert }}
+        <v-alert v-model="alert" v-if="alert" border="start" variant="tonal" closable color="green-darken-1" class="mt-2"> {{ alert }}
        </v-alert>
       </v-sheet>
     </v-col>
@@ -85,7 +85,7 @@ import { getTopics } from '@/services/fb.topic.service'
 import type { ITopic } from '@/core/interfaces/model/topic'
 const db = getFirestore();
 const nameRules = [
-    value => {
+    (value : boolean) => {
       if (value) return true
       return 'Vui lòng chọn tài khoản'
     },

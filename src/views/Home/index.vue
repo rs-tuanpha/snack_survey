@@ -40,7 +40,7 @@
               </v-col>
             </v-sheet> 
           </v-row>
-          <v-alert variant="outlined" type="warning" prominent border="top" v-show="alert">
+          <v-alert variant="outlined" type="warning" prominent border="top" v-if="alert">
             Hiện tại không có topic nào đang mở
           </v-alert>
         </v-col>
@@ -63,7 +63,7 @@
   const alert = ref<boolean>(false);
   // Check existence of the account
   const login = async () => {
-    if(account.value === '' || account.value === null) {
+    if(!account.value) {
       error.value = true;
       message.value = 'Vui lòng chọn tài khoản'
       return false;
