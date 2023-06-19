@@ -59,10 +59,9 @@ const handleAddTopic = async () => {
     form.title = ''
     alert('Create Option success!')
     sortOptionByVotes()
-    const curAccount = currentAccount.value
-    if (curAccount)
+    if (currentAccount.value)
       currentVoteOption.value = options.value.findIndex((option) =>
-        checkAccountVoteOption(option, curAccount)
+        checkAccountVoteOption(option, currentAccount.value!)
       )
     return
   }
