@@ -34,9 +34,14 @@ const checkAccountVoteOption = (option: IOption, account: IUser) => {
   return false
 }
 
+const sortOptionByVotes = () => {
+  options.value = options.value.sort((a, b) => (a?.voteBy.length < b?.voteBy.length ? 1 : -1))
+}
+
 onMounted(async () => {
   const topicData = await getOptionsByTopicId(route.params.id.toString())
   options.value = topicData
+  sortOptionByVotes()
 
   const accountId = Cookies.get('account_info')
   const userData = await getAccountById(accountId)
@@ -53,6 +58,11 @@ const handleAddTopic = async () => {
     form.link = ''
     form.title = ''
     alert('Create Option success!')
+    sortOptionByVotes()
+    if (currentAccount.value)
+      currentVoteOption.value = options.value.findIndex((option) =>
+        checkAccountVoteOption(option, currentAccount.value!)
+      )
     return
   }
   alert('Please input valid information!')
@@ -60,9 +70,9 @@ const handleAddTopic = async () => {
 
 const handleChangeVote = (optionIndex: number) => {
   const accountIndex =
-    currentVoteOption.value !== null
+    currentVoteOption?.value !== null && options?.value?.[currentVoteOption.value]?.voteBy?.length
       ? options.value[currentVoteOption.value].voteBy.findIndex(
-          (account) => (account.id = currentAccount.value?.id ?? '')
+          (account) => account.id === currentAccount.value?.id
         )
       : -1
 
@@ -72,6 +82,16 @@ const handleChangeVote = (optionIndex: number) => {
 
   currentAccount.value && options.value[optionIndex].voteBy.push(currentAccount.value)
   currentVoteOption.value = optionIndex
+}
+
+const handleSubmitForm = async () => {
+  await voteOption(options.value)
+
+  sortOptionByVotes()
+  if (currentAccount.value)
+    currentVoteOption.value = options.value.findIndex((option) =>
+      checkAccountVoteOption(option, currentAccount.value!)
+    )
 }
 </script>
 
@@ -148,7 +168,7 @@ const handleChangeVote = (optionIndex: number) => {
           </div>
         </li>
       </ul>
-      <v-btn @click="voteOption(options)">Submit</v-btn>
+      <v-btn @click="handleSubmitForm">Submit</v-btn>
     </v-sheet>
   </v-container>
 </template>
