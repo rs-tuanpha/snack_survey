@@ -21,16 +21,16 @@
       </v-card>
     </v-dialog>
 
-    <v-col sm="12" md="12" lg="12" xl="3">
+    <v-col sm="12" md="6" lg="4" xl="3">
       <v-sheet class="pa-2" border rounded>
         <p class="font-weight-black text-center">Topic</p>
         <v-form fast-fail @submit.prevent>
           <v-text-field v-model="topicInfo.name" label="Tên" :rules="nameRules" variant="outlined"></v-text-field>
           <v-text-field v-model="topicInfo.description" label="Mô tả" variant="outlined"></v-text-field>
           <VueDatePicker v-model="topicInfo.date" ></VueDatePicker>
-          <v-switch v-model="topicInfo.status" hide-details color="green-darken-1" inset :label="`Trạng thái: ${ status ? 'Mở' : 'Đóng'}`"></v-switch>
-          <v-switch v-model="topicInfo.link" hide-details color="green-darken-1" inset :label="`Cho phép đóng góp link: ${ link ? 'Có' : 'Không'}`"></v-switch>
-          <v-switch v-model="topicInfo.option" hide-details color="green-darken-1" inset :label="`Cho phép vote nhiều option: ${ option ? 'Có' : 'Không'}`"></v-switch>
+          <v-switch v-model="topicInfo.status" hide-details color="green-darken-1" inset :label="`Trạng thái: ${ topicInfo.status ? 'Mở' : 'Đóng'}`"></v-switch>
+          <v-switch v-model="topicInfo.link" hide-details color="green-darken-1" inset :label="`Cho phép đóng góp link: ${ topicInfo.link ? 'Có' : 'Không'}`"></v-switch>
+          <v-switch v-model="topicInfo.option" hide-details color="green-darken-1" inset :label="`Cho phép vote nhiều option: ${ topicInfo.option ? 'Có' : 'Không'}`"></v-switch>
           <v-btn type="submit" block class="mt-2 bg-blue-darken-2" @click="confirm(type)" variant="elevated">{{ txtbtn }}</v-btn>
           <v-btn v-if="showAddBtn" icon="mdi-plus" size="small" class="mt-2 bg-blue-darken-2" @click="cancelUpdate"></v-btn>
         </v-form>
@@ -41,7 +41,7 @@
   </v-row>
 
   <v-row justify="center">
-    <v-col sm="12" md="12" lg="12" xl="6">
+    <v-col sm="12" md="12" lg="12" xl="8">
       <v-sheet class="pa-2" border rounded>
         <v-table fixed-header height="300px">
           <thead>
@@ -104,10 +104,10 @@ const type = ref<string>('create');
 const reset = ref<boolean>(false);
 const topicInfo : ITopic = reactive({id: '', name: '', description: '', date: new Date(), status: true, link: true, option: true});
 
-format.value = `${topicInfo.date.getDate()}/${topicInfo.date.getMonth() + 1}/${topicInfo.date.getFullYear()}`;
+format.value = `${(topicInfo.date as Date).getDate()}/${(topicInfo.date as Date).getMonth() + 1}/${(topicInfo.date as Date).getFullYear()}`;
 
 watch(() => topicInfo.date, () => {
-  format.value =  `${topicInfo.date.getDate()}/${topicInfo.date.getMonth() + 1}/${topicInfo.date.getFullYear()}`;
+  format.value =  `${(topicInfo.date as Date).getDate()}/${(topicInfo.date as Date).getMonth() + 1}/${(topicInfo.date as Date).getFullYear()}`;
 })
 
 // Methods
@@ -201,7 +201,9 @@ const update = async (topic : object) => {
     }, 2000)
   } catch(e) {
     errorDialog.value = true;
-    console.error(e.message);
+    if (e instanceof Error) {
+      console.error(e.message);
+    }
   }
 }
 
@@ -215,7 +217,9 @@ const deleteTopic = async () => {
     }
   } catch(e) {
     errorDialog.value = true;
-    console.error(e.message);
+    if (e instanceof Error) {
+      console.error(e.message);
+    }
   }
 }
 </script>

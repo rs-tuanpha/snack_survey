@@ -2,7 +2,15 @@
     <div class="py-4">
       <v-container>
         <v-row justify="center">
-            <v-col sm="12" md="12" lg="12" xl="3">
+          <v-col sm="12" md="6" lg="4" xl="3">
+            <v-row align="center" class="spacer" no-gutters justify="center" v-if="!show">
+              <v-col sm="12" md="10" lg="8" align="center">
+                <v-avatar size="36px" :icon="(accountInfo.avatar !== 'undefined') ? '' : 'mdi-account-circle' ">
+                  <v-img alt="Avatar" :src="accountInfo.avatar"></v-img>
+                </v-avatar>
+                <i> Tài khoản: </i><strong>{{ accountInfo.username }}</strong>
+              </v-col>
+            </v-row>
             <v-card
             class="mx-auto pa-4 pb-4"
             min-width="350"
@@ -10,7 +18,7 @@
             v-if="show">
               <v-autocomplete
               label="Chọn tài khoản"
-              :items="accounts"
+              :items="getAccounts"
               item-title="username"
               item-value="id"
               v-model="account"
@@ -20,14 +28,14 @@
             >
             </v-autocomplete>
             <v-btn class="bg-blue-darken-2 float-right" @click="login">Đăng nhập</v-btn>
-            </v-card>	
+            </v-card>
         </v-col>
       </v-row>
     </v-container>
 
     <v-container>
       <v-row justify="center">
-        <v-col sm="12" md="12" lg="12" xl="6">
+        <v-col sm="12" md="6" lg="6" xl="6">
           <v-row justify="center">
             <v-sheet class="pa-2" border rounded v-if="topics && topics.length" min-width="350">
               <p class="font-weight-bold">Chọn topic để vote</p>
@@ -49,18 +57,17 @@
     </div>
 </template>
 <script setup lang="ts">
-  import { onMounted,ref } from 'vue'
+  import { onMounted, ref, reactive } from 'vue'
   import { getAccounts } from '@/services/fb.account.service'
   import { getOpenTopicList } from '@/services/fb.topic.service'
   import type { ITopic } from '@/core/interfaces/model/topic'
-  import Cookies from 'js-cookie'
   const show = ref<boolean>(true);
-  const accounts = getAccounts;
   const topics = ref<ITopic[]>([]);
   const account = ref<null>(null);
   const error = ref<boolean>(false);
   const message = ref<string>('');
   const alert = ref<boolean>(false);
+  const accountInfo : {username: string | null, avatar: string | null} = reactive({username : '', avatar : ''});
   // Check existence of the account
   const login = async () => {
     if(!account.value) {
@@ -70,21 +77,31 @@
     }
     show.value = false;
     topics.value = await getOpenTopicList();
-    Cookies.set('account_info', account.value, { expires: 7 });
+    localStorage.setItem('account_info', account.value);
+    for (const item in getAccounts.value) {
+      if(getAccounts.value[item].id === account.value) {
+        accountInfo.avatar = getAccounts.value[item].avatar;
+        accountInfo.username = getAccounts.value[item].username;
+        localStorage.setItem("account_avatar", getAccounts.value[item].avatar);
+        localStorage.setItem("account_username", getAccounts.value[item].username);
+      }
+    }
   }
 
   onMounted(async () => {
-    if(Cookies.get('account_info')) {
+    if(localStorage.getItem('account_info') && localStorage.getItem('account_username')) {
       show.value = false;
       topics.value = await getOpenTopicList();
       if(topics.value.length === 0) {
         alert.value = true;
       }
+      accountInfo.avatar = localStorage.getItem('account_avatar');
+      accountInfo.username = localStorage.getItem('account_username');
     }
   })
 
   const accountRules = [
-    value => {
+    (value : boolean) => {
       if (value) return true
       return 'Vui lòng chọn tài khoản'
     },
