@@ -5,5 +5,6 @@ export interface ITopic {
     date?: Date,
     status?: boolean | null | string,
     link?: boolean | null,
-    option?: boolean | null
+    option?: boolean | null,
+    team?: string | null
 }
