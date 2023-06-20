@@ -20,6 +20,7 @@ const currentAccount = ref<IUser | null>(null)
 const currentTopic = useDocument<ITopic>(doc(db, 'topics', route.params.id.toString()))
 const options = ref<IOption[]>([])
 const currentVoteOption = ref<number | null>(null)
+const currentVoteMultiOption = ref<number[]>([])
 const form = reactive({
   link: '',
   title: ''
@@ -46,6 +47,12 @@ onMounted(async () => {
   const accountId = Cookies.get('account_info')
   const userData = await getAccountById(accountId)
   currentAccount.value = userData
+  if (currentTopic.value?.option && userData) {
+    topicData.forEach((option, index) => {
+      checkAccountVoteOption(option, userData) && currentVoteMultiOption.value.push(index)
+    })
+    return
+  }
   currentVoteOption.value = userData
     ? topicData.findIndex((option) => checkAccountVoteOption(option, userData))
     : null
@@ -59,16 +66,42 @@ const handleAddTopic = async () => {
     form.title = ''
     alert('Create Option success!')
     sortOptionByVotes()
-    if (currentAccount.value)
+    if (currentTopic.value?.option && currentAccount.value) {
+      options.value.forEach((option, index) => {
+        checkAccountVoteOption(option, currentAccount.value!) &&
+          currentVoteMultiOption.value.push(index)
+      })
+    } else {
       currentVoteOption.value = options.value.findIndex((option) =>
         checkAccountVoteOption(option, currentAccount.value!)
       )
+    }
     return
   }
   alert('Please input valid information!')
 }
 
 const handleChangeVote = (optionIndex: number) => {
+  // handle vote multiple
+  if (currentTopic.value?.option) {
+    let isUnvote = -1
+    for (let i = 0; i < options.value[optionIndex].voteBy.length; i++) {
+      if (options.value[optionIndex].voteBy[i].id === currentAccount.value?.id) {
+        isUnvote = i
+        break
+      }
+    }
+
+    if (isUnvote !== -1) {
+      options.value[optionIndex].voteBy.splice(isUnvote, 1)
+      currentVoteMultiOption.value.splice(currentVoteMultiOption.value.indexOf(optionIndex), 1)
+    } else {
+      options.value[optionIndex].voteBy.push(currentAccount.value!)
+      currentVoteMultiOption.value.push(optionIndex)
+    }
+    return
+  }
+  // Handle vote 1
   const accountIndex =
     currentVoteOption?.value !== null && options?.value?.[currentVoteOption.value]?.voteBy?.length
       ? options.value[currentVoteOption.value].voteBy.findIndex(
@@ -78,6 +111,10 @@ const handleChangeVote = (optionIndex: number) => {
 
   if (accountIndex !== -1) {
     options.value[currentVoteOption.value ?? 0].voteBy.splice(accountIndex, 1)
+    if (optionIndex === currentVoteOption.value) {
+      currentVoteOption.value = null
+      return
+    }
   }
 
   currentAccount.value && options.value[optionIndex].voteBy.push(currentAccount.value)
@@ -88,17 +125,25 @@ const handleSubmitForm = async () => {
   await voteOption(options.value)
 
   sortOptionByVotes()
-  if (currentAccount.value)
-    currentVoteOption.value = options.value.findIndex((option) =>
-      checkAccountVoteOption(option, currentAccount.value!)
-    )
+  currentVoteMultiOption.value = []
+
+  if (currentTopic.value?.option && currentAccount.value) {
+    options.value.forEach((option, index) => {
+      checkAccountVoteOption(option, currentAccount.value!) &&
+        currentVoteMultiOption.value.push(index)
+    })
+    return
+  }
+  currentVoteOption.value = options.value.findIndex((option) =>
+    checkAccountVoteOption(option, currentAccount.value!)
+  )
 }
 </script>
 
 <template>
   <v-container>
     <v-sheet
-      v-if="!common.loading && currentTopic?.status === 'close'"
+      v-if="!common.loading && !currentTopic?.status"
       max-width="638"
       width="100%"
       class="mx-auto"
@@ -118,7 +163,7 @@ const handleSubmitForm = async () => {
       <h1 class="text-h4">{{ currentTopic?.name }}</h1>
       <p class="mt-3 text-medium-emphasis text-body-1">{{ currentTopic?.description }}</p>
       <v-divider class="border-opacity-50"></v-divider>
-      <v-form @submit.prevent v-if="currentTopic?.status === 'open'">
+      <v-form @submit.prevent v-if="currentTopic?.link">
         <v-text-field v-model="form.title" label="Vote title"></v-text-field>
         <v-text-field v-model="form.link" label="Vote link"></v-text-field>
         <v-btn type="submit" block class="mt-2" @click="handleAddTopic">Submit</v-btn>
@@ -154,6 +199,9 @@ const handleSubmitForm = async () => {
               </div>
               <div v-if="option.voteBy.length > 3" class="mr-1">
                 <v-avatar color="secondary" class="m-1" size="30"> ... </v-avatar>
+                <v-tooltip activator="parent" location="top">{{
+                  `${option.voteBy.length - 3} others people`
+                }}</v-tooltip>
               </div>
             </div>
           </div>
@@ -161,7 +209,15 @@ const handleSubmitForm = async () => {
             <v-btn
               class="h-100 btn-border"
               color="primary"
-              :variant="index === currentVoteOption ? 'tonal' : 'plain'"
+              :variant="
+                (
+                  currentTopic?.option
+                    ? currentVoteMultiOption.includes(index)
+                    : index === currentVoteOption
+                )
+                  ? 'tonal'
+                  : 'plain'
+              "
               @click="handleChangeVote(index)"
               >Vote</v-btn
             >

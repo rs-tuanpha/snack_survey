@@ -7,7 +7,7 @@ import router from './router'
 import vuetify from './plugins/vuetify'
 import { firebaseApp } from './plugins/firebase'
 import '@vuepic/vue-datepicker/dist/main.css'
-import "@mdi/font/css/materialdesignicons.css";
+import '@mdi/font/css/materialdesignicons.css'
 
 const app = createApp(App)
 app.use(createPinia())
