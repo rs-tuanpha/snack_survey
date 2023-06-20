@@ -31,11 +31,15 @@
           <v-switch v-model="topicInfo.status" hide-details color="green-darken-1" inset :label="`Trạng thái: ${ topicInfo.status ? 'Mở' : 'Đóng'}`"></v-switch>
           <v-switch v-model="topicInfo.link" hide-details color="green-darken-1" inset :label="`Cho phép đóng góp link: ${ topicInfo.link ? 'Có' : 'Không'}`"></v-switch>
           <v-switch v-model="topicInfo.option" hide-details color="green-darken-1" inset :label="`Cho phép vote nhiều option: ${ topicInfo.option ? 'Có' : 'Không'}`"></v-switch>
+          <v-radio-group inline v-model="topicInfo.team">
+            <v-radio label="BE" value="BE"></v-radio>
+            <v-radio label="FE" value="FE"></v-radio>
+            <v-radio label="All" value="All"></v-radio>
+          </v-radio-group>
           <v-btn type="submit" block class="mt-2 bg-blue-darken-2" @click="confirm(type)" variant="elevated">{{ txtbtn }}</v-btn>
           <v-btn v-if="showAddBtn" icon="mdi-plus" size="small" class="mt-2 bg-blue-darken-2" @click="cancelUpdate"></v-btn>
         </v-form>
-        <v-alert v-model="alert" v-if="alert" border="start" variant="tonal" closable color="green-darken-1" class="mt-2"> {{ alert }}
-       </v-alert>
+        <v-alert v-if="alert" border="start" variant="tonal" closable :color="colorAlert" class="mt-2"> {{ alert }}</v-alert>
       </v-sheet>
     </v-col>
   </v-row>
@@ -102,8 +106,8 @@ const showAddBtn = ref<boolean>(false);
 const dialog = ref<boolean>(false);
 const type = ref<string>('create');
 const reset = ref<boolean>(false);
-const topicInfo : ITopic = reactive({id: '', name: '', description: '', date: new Date(), status: true, link: true, option: true});
-
+const topicInfo : ITopic = reactive({id: '', name: '', description: '', date: new Date(), status: true, link: true, option: true, team: 'All'});
+const colorAlert = ref<string>('green-darken-1');
 format.value = `${(topicInfo.date as Date).getDate()}/${(topicInfo.date as Date).getMonth() + 1}/${(topicInfo.date as Date).getFullYear()}`;
 
 watch(() => topicInfo.date, () => {
@@ -113,6 +117,15 @@ watch(() => topicInfo.date, () => {
 // Methods
 const confirm = (type : string) => {
   if(!topicInfo.name) {
+    return false;
+  }
+  if(topicInfo.date && topicInfo.date < new Date()) {
+    colorAlert.value = 'red-lighten-1';
+    alert.value = 'Thời gian phải lớn hơn hiện tại';
+    setTimeout( ()=> {
+      alert.value = '';
+      colorAlert.value = 'green-darken-1';
+    }, 2000)
     return false;
   }
   switch(type) {
@@ -143,6 +156,7 @@ const cancelUpdate = () => {
   topicInfo.status = true;
   topicInfo.link = true;
   topicInfo.option = true;
+  topicInfo.team = 'All';
 }
 
 const edit = async (topicVal : string) => {
@@ -158,6 +172,7 @@ const edit = async (topicVal : string) => {
     topicInfo.status = docSnap.data().status;
     topicInfo.link = docSnap.data().link;
     topicInfo.option = docSnap.data().option;
+    topicInfo.team = docSnap.data().team;
     txtbtn.value = 'Cập nhật';
     type.value = 'update';
     showAddBtn.value = true;
@@ -179,7 +194,7 @@ const handleTopic = async (type : string) => {
         topicInfo.status = true;
         topicInfo.link = true;
         topicInfo.option = true;
-
+        topicInfo.team = 'All';
         setTimeout( ()=> {
           alert.value = '';
         }, 2000)

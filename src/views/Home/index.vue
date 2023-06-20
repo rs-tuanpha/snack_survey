@@ -2,10 +2,10 @@
     <div class="py-4">
       <v-container>
         <v-row justify="center">
-          <v-col sm="12" md="6" lg="4" xl="3">
+          <v-col sm="12" md="6" lg="6" xl="3">
             <v-row align="center" class="spacer" no-gutters justify="center" v-if="!show">
               <v-col sm="12" md="10" lg="8" align="center">
-                <v-avatar size="36px" :icon="(accountInfo.avatar !== 'undefined') ? '' : 'mdi-account-circle' ">
+                <v-avatar size="36px" :icon="(accountInfo.avatar !== '') ? '' : 'mdi-account-circle' ">
                   <v-img alt="Avatar" :src="accountInfo.avatar"></v-img>
                 </v-avatar>
                 <i> Tài khoản: </i><strong>{{ accountInfo.username }}</strong>
@@ -67,7 +67,7 @@
   const error = ref<boolean>(false);
   const message = ref<string>('');
   const alert = ref<boolean>(false);
-  const accountInfo : {username: string | null, avatar: string | null} = reactive({username : '', avatar : ''});
+  const accountInfo : {username: string | null, avatar: string | null, team: string | null} = reactive({username : '', avatar : '', team: ''});
   // Check existence of the account
   const login = async () => {
     if(!account.value) {
@@ -76,14 +76,20 @@
       return false;
     }
     show.value = false;
-    topics.value = await getOpenTopicList();
+    
     localStorage.setItem('account_info', account.value);
     for (const item in getAccounts.value) {
       if(getAccounts.value[item].id === account.value) {
         accountInfo.avatar = getAccounts.value[item].avatar;
         accountInfo.username = getAccounts.value[item].username;
+        accountInfo.team = getAccounts.value[item].team;
         localStorage.setItem("account_avatar", getAccounts.value[item].avatar);
         localStorage.setItem("account_username", getAccounts.value[item].username);
+        localStorage.setItem("account_team", getAccounts.value[item].team);
+        topics.value = await getOpenTopicList(getAccounts.value[item].team);
+        if(topics.value.length === 0) {
+          alert.value = true;
+        }
       }
     }
   }
@@ -91,12 +97,13 @@
   onMounted(async () => {
     if(localStorage.getItem('account_info') && localStorage.getItem('account_username')) {
       show.value = false;
-      topics.value = await getOpenTopicList();
+      topics.value = await getOpenTopicList(localStorage.getItem('account_team'));
       if(topics.value.length === 0) {
         alert.value = true;
       }
       accountInfo.avatar = localStorage.getItem('account_avatar');
       accountInfo.username = localStorage.getItem('account_username');
+      accountInfo.team = localStorage.getItem('account_team');
     }
   })
 
