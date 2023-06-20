@@ -27,7 +27,7 @@ const routes = [
 ]
 
 const router = createRouter({
-  history: createWebHistory('/snack_survey/'),
+  history: createWebHistory(),
   routes: routes,
   // Always scroll to top
   scrollBehavior() {
