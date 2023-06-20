@@ -1,10 +1,10 @@
 export interface ITopic {
-    id: string,
-    name: string,
-    description: string,
-    date?: Date,
-    status?: boolean | null | string,
-    link?: boolean | null,
-    option?: boolean | null,
-    team?: string | null
+  id: string
+  name: string
+  description: string
+  date?: string
+  status?: boolean | null | string
+  link?: boolean | null
+  option?: boolean | null
+  team?: string | null
 }
