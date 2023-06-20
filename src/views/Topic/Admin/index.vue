@@ -112,6 +112,9 @@ watch(() => topicInfo.date, () => {
 
 // Methods
 const confirm = (type : string) => {
+  if(!topicInfo.name) {
+    return false;
+  }
   switch(type) {
     case "create": text.value = 'Bạn có muốn thêm topic không?'; break;
     case "update": text.value = 'Bạn có muốn cập nhật topic không?'; break;
@@ -182,7 +185,9 @@ const handleTopic = async (type : string) => {
         }, 2000)
       } catch(e) {
         errorDialog.value = true;
-        console.error(e.message);
+        if (e instanceof Error) {
+          console.error(e.message);
+        }
       }
     break;
     case 'update': update(topicInfo); break;
