@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
-import { Timestamp, doc } from 'firebase/firestore'
+import { doc } from 'firebase/firestore'
 import { useDocument } from 'vuefire'
 import { useRoute, useRouter } from 'vue-router'
 
