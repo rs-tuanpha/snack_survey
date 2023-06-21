@@ -15,11 +15,11 @@ const routes = [
       {
         path: 'topic',
         name: 'topicAmin',
-        component: () => import('@/views/Topic/Admin/index.vue')
+        component: () => import('@/views/Admin/index.vue')
       },
       {
         path: '/vote-topic/:id',
-        name: 'topic',
+        name: 'topicVote',
         component: () => import('@/views/Topic/index.vue')
       }
     ]

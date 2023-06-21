@@ -2,8 +2,6 @@
 import { onMounted, reactive, ref } from 'vue'
 import { doc } from 'firebase/firestore'
 import { useDocument } from 'vuefire'
-import { useRoute, useRouter } from 'vue-router'
-
 import { db } from '@/plugins/firebase'
 import { getAccountById } from '@/services/account.service'
 import { getOptionsByTopicId, postNewOption, voteOption } from '@/services/option.service'
@@ -13,11 +11,25 @@ import type { IOption } from '@/core/interfaces/model/option'
 import type { ITopic } from '@/core/interfaces/model/topic'
 import type { IUser } from '@/core/interfaces/model/user'
 
+/**
+ * Common hook for all components
+ * @store 
+ *  storeGetters,
+ *  storeDispatch,
+ * @Router
+ *  getRouter,
+ *  getQuery,
+ *  getParams,
+ *  handleRouter  
+ */
+import useCommon from '@/core/hooks/useCommon'
+const { getParams, handleRouter } = useCommon('useCommonStore')
+const { id } = getParams();
+/** end common hook */
+
 const common = useCommonStore()
-const route = useRoute()
-const router = useRouter()
 const currentAccount = ref<IUser | null>(null)
-const currentTopic = useDocument<ITopic>(doc(db, 'topics', route.params.id.toString()))
+const currentTopic = useDocument<ITopic>(doc(db, 'topics', id.toString()))
 const options = ref<IOption[]>([])
 const currentVoteOption = ref<number | null>(null)
 const currentVoteMultiOption = ref<number[]>([])
@@ -40,14 +52,14 @@ const sortOptionByVotes = () => {
 }
 
 onMounted(async () => {
-  const topicData = await getOptionsByTopicId(route.params.id.toString())
+  const topicData = await getOptionsByTopicId(id.toString())
   options.value = topicData
   sortOptionByVotes()
 
   const accountId = localStorage.getItem('account_info')
   if (!accountId) {
     alert('Vui lòng đăng nhập tài khoản của bạn')
-    router.push('/')
+    handleRouter.pushPath('/');
     return
   }
   const userData = await getAccountById(accountId!)
@@ -65,8 +77,8 @@ onMounted(async () => {
 
 const handleAddTopic = async () => {
   if (form.link && form.title) {
-    await postNewOption(form.title, form.link, route.params.id.toString())
-    options.value = await getOptionsByTopicId(route.params.id.toString())
+    await postNewOption(form.title, form.link, id.toString())
+    options.value = await getOptionsByTopicId(id.toString())
     form.link = ''
     form.title = ''
     alert('Create Option success!')
