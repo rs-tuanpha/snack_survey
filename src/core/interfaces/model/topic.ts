@@ -2,7 +2,7 @@ export interface ITopic {
   id: string
   name: string
   description: string
-  date?: string
+  date?: Date
   status?: boolean | null | string
   link?: boolean | null
   option?: boolean | null
