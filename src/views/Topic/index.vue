@@ -2,9 +2,8 @@
 import { onMounted, reactive, ref } from 'vue'
 import { doc } from 'firebase/firestore'
 import { useDocument } from 'vuefire'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
-import { Cookies } from '@/core/utils/storage'
 import { db } from '@/plugins/firebase'
 import { getAccountById } from '@/services/account.service'
 import { getOptionsByTopicId, postNewOption, voteOption } from '@/services/option.service'
@@ -16,6 +15,7 @@ import type { IUser } from '@/core/interfaces/model/user'
 
 const common = useCommonStore()
 const route = useRoute()
+const router = useRouter()
 const currentAccount = ref<IUser | null>(null)
 const currentTopic = useDocument<ITopic>(doc(db, 'topics', route.params.id.toString()))
 const options = ref<IOption[]>([])
@@ -44,8 +44,13 @@ onMounted(async () => {
   options.value = topicData
   sortOptionByVotes()
 
-  const accountId = Cookies.get('account_info')
-  const userData = await getAccountById(accountId)
+  const accountId = localStorage.getItem('account_info')
+  if (!accountId) {
+    alert('Vui lòng đăng nhập tài khoản của bạn')
+    router.push('/')
+    return
+  }
+  const userData = await getAccountById(accountId!)
   currentAccount.value = userData
   if (currentTopic.value?.option && userData) {
     topicData.forEach((option, index) => {
@@ -149,7 +154,7 @@ const handleSubmitForm = async () => {
       class="mx-auto"
     >
       <v-alert variant="outlined" type="warning" prominent class="w-100 mb-2" border="top">
-        This topic is closing
+        Topic này đã đóng, vui lòng trở lại sau
       </v-alert>
     </v-sheet>
     <v-sheet
@@ -161,12 +166,22 @@ const handleSubmitForm = async () => {
       border
     >
       <h1 class="text-h4">{{ currentTopic?.name }}</h1>
-      <p class="mt-3 text-medium-emphasis text-body-1">{{ currentTopic?.description }}</p>
+      <v-row>
+        <v-col sm="8">
+          <p>{{ currentTopic?.description }}</p></v-col
+        >
+        <v-col sm="4">
+          <p class="mt-3 text-medium-emphasis text-body-1">
+            Thời hạn:
+            {{ currentTopic?.date }}
+          </p>
+        </v-col>
+      </v-row>
       <v-divider class="border-opacity-50"></v-divider>
       <v-form @submit.prevent v-if="currentTopic?.link">
         <v-text-field v-model="form.title" label="Vote title"></v-text-field>
         <v-text-field v-model="form.link" label="Vote link"></v-text-field>
-        <v-btn type="submit" block class="mt-2" @click="handleAddTopic">Submit</v-btn>
+        <v-btn type="submit" block class="mt-2" @click="handleAddTopic">Tạo topic</v-btn>
       </v-form>
     </v-sheet>
     <v-sheet
@@ -207,8 +222,9 @@ const handleSubmitForm = async () => {
           </div>
           <div class="h-100">
             <v-btn
-              class="h-100 btn-border"
+              class="h-100 btn-border btn-width-primary"
               color="primary"
+              block
               :variant="
                 (
                   currentTopic?.option
@@ -219,12 +235,22 @@ const handleSubmitForm = async () => {
                   : 'plain'
               "
               @click="handleChangeVote(index)"
-              >Vote</v-btn
+              >{{
+                `${
+                  (
+                    currentTopic?.option
+                      ? currentVoteMultiOption.includes(index)
+                      : index === currentVoteOption
+                  )
+                    ? 'Unvote'
+                    : 'Vote'
+                }`
+              }}</v-btn
             >
           </div>
         </li>
       </ul>
-      <v-btn @click="handleSubmitForm">Submit</v-btn>
+      <v-btn @click="handleSubmitForm">Gửi</v-btn>
     </v-sheet>
   </v-container>
 </template>
