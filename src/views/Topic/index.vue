@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
-import { doc } from 'firebase/firestore'
+import { Timestamp, doc } from 'firebase/firestore'
 import { useDocument } from 'vuefire'
 import { useRoute, useRouter } from 'vue-router'
 
@@ -173,7 +173,8 @@ const handleSubmitForm = async () => {
         <v-col sm="4">
           <p class="mt-3 text-medium-emphasis text-body-1">
             Thời hạn:
-            {{ currentTopic?.date }}
+            <!-- {{ new Date((currentTopic?.date as any).seconds * 1000).toLocaleDateString() }} -->
+            {{ new Date((currentTopic?.date as any).seconds * 1000).toLocaleDateString() }}
           </p>
         </v-col>
       </v-row>
