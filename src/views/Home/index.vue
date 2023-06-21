@@ -42,7 +42,7 @@
               <v-col v-for="{id, name, description} in topics" :key="id" cols="12" sm="12">
               <v-hover v-slot="{ isHovering, props }">
                 <v-card :title="name" :text="description" color="indigo-lighten-5"  :elevation="isHovering ? 12 : 2" v-bind="props" :class="isHovering ? 'bg-indigo-lighten-2' : ''"
-                  target="_blank" :href="'vote-topic/'+ id">
+                @click="goTopic(id)">
                 </v-card>
               </v-hover>
               </v-col>
@@ -61,6 +61,10 @@
   import { getAccounts } from '@/services/fb.account.service'
   import { getOpenTopicList } from '@/services/fb.topic.service'
   import type { ITopic } from '@/core/interfaces/model/topic'
+
+  import useCommon from '@/core/hooks/useCommon'
+  const { handleRouter } = useCommon('useCommonStore')
+
   const show = ref<boolean>(true);
   const topics = ref<ITopic[]>([]);
   const account = ref<null>(null);
@@ -113,4 +117,8 @@
       return 'Vui lòng chọn tài khoản'
     },
   ]
+
+  const goTopic = (id: string) => {
+    handleRouter.pushName('topic', { params: {id: id}})
+  }
 </script>
