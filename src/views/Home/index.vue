@@ -42,7 +42,7 @@
               <v-col v-for="{id, name, description} in topics" :key="id" cols="12" sm="12">
               <v-hover v-slot="{ isHovering, props }">
                 <v-card :title="name" :text="description" color="indigo-lighten-5"  :elevation="isHovering ? 12 : 2" v-bind="props" :class="isHovering ? 'bg-indigo-lighten-2' : ''"
-                @click="goTopic(id)">
+                @click="goTopicVote(id)">
                 </v-card>
               </v-hover>
               </v-col>
@@ -118,7 +118,7 @@
     },
   ]
 
-  const goTopic = (id: string) => {
-    handleRouter.pushName('topic', { params: {id: id}})
+  const goTopicVote = (id: string) => {
+    handleRouter.pushName('topicVote', { params: {id: id}})
   }
 </script>

@@ -4,7 +4,7 @@
 
 import { storeToRefs } from 'pinia'
 import * as store from '@/stores'
-import { useRoute, type RouteLocationNormalized, useRouter } from 'vue-router'
+import { useRoute, type RouteLocationNormalized, useRouter, type RouteParams, type LocationQuery } from 'vue-router'
 
 const useCommon = (initStoreName: string) => {
   /**
@@ -45,11 +45,11 @@ const useCommon = (initStoreName: string) => {
   }
 
   const getQuery = () => {
-    return getRouter('query')
+    return getRouter('query') as LocationQuery
   }
 
   const getParams = () => {
-    return getRouter('params')
+    return getRouter('params') as RouteParams
   }
 
   const handleRouter = {
