@@ -173,7 +173,6 @@ const handleSubmitForm = async () => {
         <v-col sm="4">
           <p class="mt-3 text-medium-emphasis text-body-1">
             Thời hạn:
-            <!-- {{ new Date((currentTopic?.date as any).seconds * 1000).toLocaleDateString() }} -->
             {{ new Date((currentTopic?.date as any).seconds * 1000).toLocaleDateString() }}
           </p>
         </v-col>
