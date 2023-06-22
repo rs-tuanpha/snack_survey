@@ -1,38 +1,43 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { doc } from 'firebase/firestore'
 import { useDocument } from 'vuefire'
 import { db } from '@/plugins/firebase'
 import { getAccountById } from '@/services/account.service'
 import { getOptionsByTopicId, postNewOption, voteOption } from '@/services/option.service'
 import stringMinify from '@/core/utils/stringMinify'
-import { useCommonStore } from '@/stores'
 import type { IOption } from '@/core/interfaces/model/option'
 import type { ITopic } from '@/core/interfaces/model/topic'
 import type { IUser } from '@/core/interfaces/model/user'
 
 /**
  * Common hook for all components
- * @store 
+ * @store
  *  storeGetters,
  *  storeDispatch,
  * @Router
  *  getRouter,
  *  getQuery,
  *  getParams,
- *  handleRouter  
+ *  handleRouter
  */
 import useCommon from '@/core/hooks/useCommon'
 const { getParams, handleRouter } = useCommon('useCommonStore')
-const { id } = getParams();
+const { id } = getParams()
 /** end common hook */
 
-const common = useCommonStore()
+const common = useCommon('Option')
 const currentAccount = ref<IUser | null>(null)
 const currentTopic = useDocument<ITopic>(doc(db, 'topics', id.toString()))
 const options = ref<IOption[]>([])
 const currentVoteOption = ref<number | null>(null)
 const currentVoteMultiOption = ref<number[]>([])
+const isTopicOutdate = computed(
+  () =>
+    !currentTopic?.value?.status ||
+    (currentTopic?.value?.date &&
+      new Date((currentTopic?.value?.date as any)?.seconds * 1000) < new Date())
+)
 const form = reactive({
   link: '',
   title: ''
@@ -59,7 +64,7 @@ onMounted(async () => {
   const accountId = localStorage.getItem('account_info')
   if (!accountId) {
     alert('Vui lòng đăng nhập tài khoản của bạn')
-    handleRouter.pushPath('/');
+    handleRouter.pushPath('/')
     return
   }
   const userData = await getAccountById(accountId!)
@@ -155,20 +160,28 @@ const handleSubmitForm = async () => {
     checkAccountVoteOption(option, currentAccount.value!)
   )
 }
+
+const handleCloseOutdateTopicDialog = () => {
+  common.handleRouter.pushPath('/')
+}
 </script>
 
 <template>
   <v-container>
-    <v-sheet
-      v-if="!common.loading && !currentTopic?.status"
-      max-width="638"
-      width="100%"
-      class="mx-auto"
-    >
-      <v-alert variant="outlined" type="warning" prominent class="w-100 mb-2" border="top">
-        Topic này đã đóng, vui lòng trở lại sau
-      </v-alert>
-    </v-sheet>
+    <v-dialog v-model="isTopicOutdate" width="auto">
+      <v-card>
+        <v-alert
+          type="error"
+          title="Lỗi!"
+          text="Topic này đã đóng, vui lòng quay lại sau!"
+          variant="tonal"
+        ></v-alert>
+        <v-card-actions>
+          <v-btn color="primary" block @click="handleCloseOutdateTopicDialog">Về trang chủ</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <v-sheet
       elevation="1"
       max-width="638"
@@ -190,7 +203,7 @@ const handleSubmitForm = async () => {
         </v-col>
       </v-row>
       <v-divider class="border-opacity-50"></v-divider>
-      <v-form @submit.prevent v-if="currentTopic?.link">
+      <v-form @submit.prevent v-if="!isTopicOutdate">
         <v-text-field v-model="form.title" label="Vote title"></v-text-field>
         <v-text-field v-model="form.link" label="Vote link"></v-text-field>
         <v-btn type="submit" block class="mt-2" @click="handleAddTopic">Tạo topic</v-btn>
