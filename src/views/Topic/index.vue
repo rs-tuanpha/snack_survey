@@ -58,7 +58,6 @@ onMounted(async () => {
 
   const accountId = localStorage.getItem('account_info')
   if (!accountId) {
-    alert('Vui lòng đăng nhập tài khoản của bạn')
     handleRouter.pushPath('/');
     return
   }
@@ -81,7 +80,10 @@ const handleAddTopic = async () => {
     options.value = await getOptionsByTopicId(id.toString())
     form.link = ''
     form.title = ''
-    alert('Create Option success!')
+    alert.value = 'Tạo thành công';
+    setTimeout( ()=> {
+      alert.value = '';
+    }, 2000)
     sortOptionByVotes()
     if (currentTopic.value?.option && currentAccount.value) {
       options.value.forEach((option, index) => {
@@ -95,7 +97,6 @@ const handleAddTopic = async () => {
     }
     return
   }
-  alert('Please input valid information!')
 }
 
 const handleChangeVote = (optionIndex: number) => {
@@ -155,6 +156,22 @@ const handleSubmitForm = async () => {
     checkAccountVoteOption(option, currentAccount.value!)
   )
 }
+
+  const titleRules = [
+      (value : boolean) => {
+        if (value) return true
+        return 'Vui lòng nhập tiêu đề'
+      },
+    ]
+  const linkRules = [
+    (value : boolean) => {
+      if (value) return true
+      return 'Vui lòng nhập link'
+    },
+  ]
+  const alert = ref<string>('');
+  const colorAlert = ref<string>('green-darken-1');
+
 </script>
 
 <template>
@@ -169,14 +186,7 @@ const handleSubmitForm = async () => {
         Topic này đã đóng, vui lòng trở lại sau
       </v-alert>
     </v-sheet>
-    <v-sheet
-      elevation="1"
-      max-width="638"
-      rounded="lg"
-      width="100%"
-      class="border-top-violet pa-6 mx-auto"
-      border
-    >
+    <v-sheet elevation="1" max-width="638" rounded width="100%" class="border-top-violet pa-3 mx-auto" border>
       <h1 class="text-h4">{{ currentTopic?.name }}</h1>
       <v-row>
         <v-col sm="8">
@@ -189,19 +199,29 @@ const handleSubmitForm = async () => {
           </p>
         </v-col>
       </v-row>
-      <v-divider class="border-opacity-50"></v-divider>
-      <v-form @submit.prevent v-if="currentTopic?.link">
-        <v-text-field v-model="form.title" label="Vote title"></v-text-field>
-        <v-text-field v-model="form.link" label="Vote link"></v-text-field>
-        <v-btn type="submit" block class="mt-2" @click="handleAddTopic">Tạo topic</v-btn>
-      </v-form>
+
+      <v-expansion-panels>
+        <v-expansion-panel>
+          <v-expansion-panel-title expand-icon="mdi-plus" collapse-icon="mdi-minus">
+            Thêm option
+          </v-expansion-panel-title>
+          <v-expansion-panel-text>
+          <v-form @submit.prevent v-if="currentTopic?.link">
+            <v-alert v-if="alert" border="start" variant="tonal" closable :color="colorAlert" class="mb-2"> {{ alert }}</v-alert>
+            <v-text-field v-model="form.title" label="Tiêu đề" single-line :rules="titleRules" variant="outlined"></v-text-field>
+            <v-text-field v-model="form.link" label="Link" single-line :rules="linkRules" variant="outlined"></v-text-field>
+            <v-btn type="submit" @click="handleAddTopic" class="mb-2 float-right" color="blue-darken-2" size="large" variant="flat" min-width="100">Thêm mới option</v-btn>
+          </v-form>
+          </v-expansion-panel-text>
+        </v-expansion-panel>
+      </v-expansion-panels>
     </v-sheet>
     <v-sheet
       elevation="1"
       max-width="638"
       rounded="lg"
       width="100%"
-      class="mt-3 pa-6 mx-auto"
+      class="mt-3 pa-3 mx-auto"
       border
     >
       <ul>
@@ -232,33 +252,12 @@ const handleSubmitForm = async () => {
               </div>
             </div>
           </div>
-          <div class="h-100">
-            <v-btn
-              class="h-100 btn-border btn-width-primary"
-              color="primary"
-              block
-              :variant="
-                (
-                  currentTopic?.option
-                    ? currentVoteMultiOption.includes(index)
-                    : index === currentVoteOption
-                )
-                  ? 'tonal'
-                  : 'plain'
-              "
-              @click="handleChangeVote(index)"
-              >{{
-                `${
-                  (
-                    currentTopic?.option
-                      ? currentVoteMultiOption.includes(index)
-                      : index === currentVoteOption
-                  )
-                    ? 'Unvote'
-                    : 'Vote'
-                }`
-              }}</v-btn
-            >
+          <div class="d-flex align-self-center">
+              <v-icon icon="mdi-thumb-up" size="x-large" 
+              :color="( 
+                currentTopic?.option ? currentVoteMultiOption.includes(index) : index === currentVoteOption
+                ) ? 'red-darken-1'  : 'blue-darken-3'" 
+              @click="handleChangeVote(index)"></v-icon>
           </div>
         </li>
       </ul>

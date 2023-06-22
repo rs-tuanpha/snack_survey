@@ -25,13 +25,19 @@
       <v-sheet class="pa-2" border rounded>
         <p class="font-weight-black text-center">Topic</p>
         <v-form fast-fail @submit.prevent>
-          <v-text-field v-model="topicInfo.name" label="Tên" :rules="nameRules" variant="outlined"></v-text-field>
-          <v-text-field v-model="topicInfo.description" label="Mô tả" variant="outlined"></v-text-field>
-          <VueDatePicker v-model="topicInfo.date" ></VueDatePicker>
+          <v-text-field v-model="topicInfo.name" label="Tên" :rules="nameRules"></v-text-field>
+          <v-text-field v-model="topicInfo.description" label="Mô tả"></v-text-field>
+          <div class="d-flex">
+            <p class="font-weight-medium pr-2 pt-1"><v-chip color="primary" label>
+            <v-icon start icon="mdi-clock-time-eight-outline"></v-icon>Deadline</v-chip></p>
+            <VueDatePicker v-model="topicInfo.date" ></VueDatePicker>
+          </div>
+          
           <v-switch v-model="topicInfo.status" hide-details color="green-darken-1" inset :label="`Trạng thái: ${ topicInfo.status ? 'Mở' : 'Đóng'}`"></v-switch>
           <v-switch v-model="topicInfo.link" hide-details color="green-darken-1" inset :label="`Cho phép đóng góp link: ${ topicInfo.link ? 'Có' : 'Không'}`"></v-switch>
           <v-switch v-model="topicInfo.option" hide-details color="green-darken-1" inset :label="`Cho phép vote nhiều option: ${ topicInfo.option ? 'Có' : 'Không'}`"></v-switch>
           <v-radio-group inline v-model="topicInfo.team">
+          <v-chip color="primary" label><v-icon start icon="mdi-account-circle-outline"></v-icon>Team</v-chip>
             <v-radio label="BE" value="BE"></v-radio>
             <v-radio label="FE" value="FE"></v-radio>
             <v-radio label="All" value="All"></v-radio>
@@ -53,9 +59,6 @@
               <th class="text-left">
                 Tên topic
               </th>
-              <th class="text-left w-50">
-                Mô tả
-              </th>
               <th class="text-left">
                 Trạng thái
               </th>
@@ -67,7 +70,6 @@
           <tbody>
             <tr v-for="item in topics" :key="item.id"> 
               <td>{{ item.name }}</td>
-              <td>{{ item.description }}</td>
               <td>{{ item.status === true ? 'Mở' : 'Đóng' }}</td>
               <td>
                 <v-btn class="text-none w-auto ma-1" color="blue-darken-2" @click="edit(item.id)">Sửa</v-btn>

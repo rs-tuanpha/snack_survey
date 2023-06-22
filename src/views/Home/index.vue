@@ -9,6 +9,7 @@
                   <v-img alt="Avatar" :src="accountInfo.avatar"></v-img>
                 </v-avatar>
                 <i> Tài khoản: </i><strong>{{ accountInfo.username }}</strong>
+                <p><a href="#" @click="logout">Logout</a></p>
               </v-col>
             </v-row>
             <v-card
@@ -120,5 +121,12 @@
 
   const goTopicVote = (id: string) => {
     handleRouter.pushName('topicVote', { params: {id: id}})
+  }
+
+  const logout = () => {
+    localStorage.clear();
+    topics.value = [];
+    show.value = true;
+    alert.value = false;
   }
 </script>
