@@ -58,7 +58,6 @@ onMounted(async () => {
 
   const accountId = localStorage.getItem('account_info')
   if (!accountId) {
-    //alert('Vui lòng đăng nhập tài khoản của bạn')
     handleRouter.pushPath('/');
     return
   }
