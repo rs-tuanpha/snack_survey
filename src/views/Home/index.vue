@@ -124,10 +124,7 @@
   }
 
   const logout = () => {
-    localStorage.removeItem('account_info');
-    localStorage.removeItem('account_avatar');
-    localStorage.removeItem('account_username');
-    localStorage.removeItem('account_team');
+    localStorage.clear();
     topics.value = [];
     show.value = true;
     alert.value = false;
