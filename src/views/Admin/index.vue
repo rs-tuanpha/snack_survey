@@ -21,6 +21,36 @@
       </v-card>
     </v-dialog>
 
+    <v-dialog v-model="addOptionDlg" max-width="400">
+      <v-card class="pb-4">
+        <v-card-text>
+          <p class="font-weight-black text-center">Option</p>
+          <v-form fast-fail @submit.prevent>
+            <v-text-field v-model="option.title" label="Tiêu đề" :rules="titleRules"></v-text-field>
+            <v-text-field v-model="option.link" label="Link" :rules="linkRules"></v-text-field>
+            <v-btn type="submit" block class="mt-2 bg-blue-darken-2" @click="createOption" variant="elevated"> {{ txtOptionBtn }}</v-btn>
+          </v-form>
+        <v-alert v-if="alertOption" border="start" variant="tonal" closable :color="colorAlert" class="mt-2"> {{ alertOption }}</v-alert>
+        </v-card-text>
+      </v-card>
+    </v-dialog>
+
+    <v-dialog v-model="listOptionDlg" width="auto" min-width="400">
+      <v-card class="">
+        <v-list density="compact" v-if="options.length">
+          <v-list-subheader>Danh sách option</v-list-subheader>
+            <v-list-item v-for="(item, i) in options" :key="i" :value="item" color="primary">
+              <template v-slot:append>
+                <v-icon icon="mdi-circle-edit-outline" color="green" class="pl-0 ml-0" @click="showEdittingOption(item.id)"></v-icon>
+                <v-icon icon="mdi-close" color="red" class="pl-0 ml-2" @click="deleteOption(item.id)"></v-icon>
+              </template>
+            <v-list-item-title :v-text="item.title">{{ item.title }}</v-list-item-title>
+          </v-list-item>
+        </v-list>
+        <v-alert type="warning" v-else title="" text="Không có option nào được thêm!"></v-alert>
+      </v-card>
+    </v-dialog>
+
     <v-col sm="12" md="6" lg="4" xl="3">
       <v-sheet class="pa-2" border rounded>
         <p class="font-weight-black text-center">Topic</p>
@@ -43,7 +73,7 @@
             <v-radio label="All" value="All"></v-radio>
           </v-radio-group>
           <v-btn type="submit" block class="mt-2 bg-blue-darken-2" @click="confirm(type)" variant="elevated">{{ txtbtn }}</v-btn>
-          <v-btn v-if="showAddBtn" icon="mdi-plus" size="small" class="mt-2 bg-blue-darken-2" @click="cancelUpdate"></v-btn>
+          <v-btn v-if="showAddBtn" prepend-icon="mdi-plus" class="mt-2 bg-blue-darken-2" @click="cancelUpdate">Thêm mới</v-btn>
         </v-form>
         <v-alert v-if="alert" border="start" variant="tonal" closable :color="colorAlert" class="mt-2"> {{ alert }}</v-alert>
       </v-sheet>
@@ -53,27 +83,33 @@
   <v-row justify="center">
     <v-col sm="12" md="12" lg="12" xl="8">
       <v-sheet class="pa-2" border rounded>
-        <v-table fixed-header height="300px">
+        <v-table fixed-header  :height="topics.length > 10 ? '400px' : ''">
           <thead>
             <tr>
+              <th class="text-left">
+                STT
+              </th>
               <th class="text-left">
                 Tên topic
               </th>
               <th class="text-left">
                 Trạng thái
               </th>
-              <th class="text-left">
+              <th class="text-left" width="400">
                 Tác vụ
               </th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="item in topics" :key="item.id"> 
+            <tr v-for="item, index in  topics" :key="item.id">
+              <td>{{ index + 1 }}</td> 
               <td>{{ item.name }}</td>
               <td>{{ item.status === true ? 'Mở' : 'Đóng' }}</td>
               <td>
                 <v-btn class="text-none w-auto ma-1" color="blue-darken-2" @click="edit(item.id)">Sửa</v-btn>
                 <v-btn class="text-none w-auto ma-1" color="red-darken-1" @click="confirmDelete(item.id)">Xóa</v-btn>
+                <v-btn class="text-none w-auto ma-1" color="blue-darken-2" @click="showOptionFrm(item.id)">+Option</v-btn>
+                <v-btn class="text-none w-auto ma-1" color="blue-darken-2" @click="showOptionList(item.id)">List Option</v-btn>
               </td>
             </tr>
           </tbody>
@@ -89,6 +125,8 @@ import VueDatePicker from '@vuepic/vue-datepicker';
 import { getFirestore, collection, addDoc, getDoc, doc, updateDoc, deleteDoc } from 'firebase/firestore'
 import { getTopics } from '@/services/fb.topic.service'
 import type { ITopic } from '@/core/interfaces/model/topic'
+import type { IOption } from '@/core/interfaces/model/option'
+import { getOptionsByTopicId, postNewOption, getOptionById } from '@/services/option.service'
 const db = getFirestore();
 const nameRules = [
     (value : boolean) => {
@@ -96,6 +134,18 @@ const nameRules = [
       return 'Vui lòng chọn tài khoản'
     },
   ]
+const titleRules = [
+  (value : boolean) => {
+    if (value) return true
+    return 'Vui lòng nhập tiêu đề'
+  },
+]
+const linkRules = [
+  (value : boolean) => {
+    if (value) return true
+    return 'Vui lòng nhập link'
+  },
+]
 const format = ref<string>('');
 const topics = getTopics;
 const text = ref<string>('');
@@ -110,6 +160,13 @@ const type = ref<string>('create');
 const reset = ref<boolean>(false);
 const topicInfo : ITopic = reactive({id: '', name: '', description: '', date: new Date(), status: true, link: true, option: true, team: 'All'});
 const colorAlert = ref<string>('green-darken-1');
+const addOptionDlg = ref<boolean>(false);
+const option = reactive({title: '', link: ''})
+const alertOption = ref<string>('');
+const options = ref<IOption[]>([]);
+const listOptionDlg = ref<boolean>(false);
+const txtOptionBtn = ref<string>('Tạo mới');
+const optionId = ref<string>('');
 format.value = `${(topicInfo.date as Date).getDate()}/${(topicInfo.date as Date).getMonth() + 1}/${(topicInfo.date as Date).getFullYear()}`;
 
 watch(() => topicInfo.date, () => {
@@ -121,7 +178,7 @@ const confirm = (type : string) => {
   if(!topicInfo.name) {
     return false;
   }
-  if(topicInfo.date && topicInfo.date < new Date()) {
+  if(topicInfo.date && topicInfo.date < new Date() && type === 'create') {
     colorAlert.value = 'red-lighten-1';
     alert.value = 'Thời gian phải lớn hơn hiện tại';
     setTimeout( ()=> {
@@ -244,4 +301,66 @@ const deleteTopic = async () => {
     }
   }
 }
+
+const showOptionFrm = (itemId : string) => {
+  addOptionDlg.value = true;
+  topicId.value = itemId;
+  option.title = '';
+  option.link = '';
+  txtOptionBtn.value = 'Tạo mới';
+  type.value = '';
+}
+
+const createOption = async () => {
+  try {
+    if(option.title && option.link) {
+      if(type.value !== 'updateOption') {
+        alertOption.value = 'Tạo mới thành công';
+        await postNewOption(option.title, option.link, topicId.value);
+      } else {
+        const topicRef = doc(db, "options", optionId.value);
+        await updateDoc(topicRef, option);
+        alertOption.value = 'Cập nhật thành công';
+        options.value = await getOptionsByTopicId(topicId.value);
+      }
+      setTimeout( ()=> {
+        option.title = '';
+        option.link = '';
+        alertOption.value = '';
+        txtOptionBtn.value = 'Tạo mới';
+      }, 2000)
+    }    
+  } catch(e) {
+    if (e instanceof Error) {
+      console.error(e.message);
+    }
+  }
+}
+
+const showOptionList = async (itemId : string) => {
+  topicId.value = itemId;
+  listOptionDlg.value = true;
+  options.value = await getOptionsByTopicId(itemId);
+}
+
+const deleteOption = async (optionId : string) => {
+  await deleteDoc(doc(db, "options", optionId));
+  options.value = await getOptionsByTopicId(topicId.value);
+}
+
+const showEdittingOption = async (id : string) => {
+  addOptionDlg.value = true;
+  const info = await getOptionById(id);
+  option.title = info.title;
+  option.link = info.link;
+  txtOptionBtn.value = 'Cập nhật';
+  type.value = 'updateOption';
+  optionId.value = id;
+}
 </script>
+<style scoped>
+.topic-tbl {
+  max-height: 300px;
+  overflow: auto;
+}
+</style>
