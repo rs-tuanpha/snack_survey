@@ -5,7 +5,9 @@ import { useDocument } from 'vuefire'
 import { db } from '@/plugins/firebase'
 import { getAccountById } from '@/services/account.service'
 import { getOptionsByTopicId, postNewOption, voteOption } from '@/services/option.service'
+import { REG_URL_FORMAT } from '@/core/utils/regexValidate'
 import stringMinify from '@/core/utils/stringMinify'
+import useCommon from '@/core/hooks/useCommon'
 import { useCommonStore } from '@/stores'
 import type { IOption } from '@/core/interfaces/model/option'
 import type { ITopic } from '@/core/interfaces/model/topic'
@@ -13,30 +15,51 @@ import type { IUser } from '@/core/interfaces/model/user'
 
 /**
  * Common hook for all components
- * @store 
+ * @store
  *  storeGetters,
  *  storeDispatch,
  * @Router
  *  getRouter,
  *  getQuery,
  *  getParams,
- *  handleRouter  
+ *  handleRouter
  */
-import useCommon from '@/core/hooks/useCommon'
-const { getParams, handleRouter } = useCommon('useCommonStore')
-const { id } = getParams();
 /** end common hook */
 
+const { getParams, handleRouter } = useCommon('useCommonStore')
+const { id } = getParams()
 const common = useCommonStore()
 const currentAccount = ref<IUser | null>(null)
 const currentTopic = useDocument<ITopic>(doc(db, 'topics', id.toString()))
 const options = ref<IOption[]>([])
 const currentVoteOption = ref<number | null>(null)
 const currentVoteMultiOption = ref<number[]>([])
+const alert = ref<string>('')
+const colorAlert = ref<string>('green-darken-1')
 const form = reactive({
   link: '',
   title: ''
 })
+const titleRules = [
+  (value: string) => {
+    if (value !== '') return true
+    return 'Vui lòng nhập tiêu đề'
+  }
+]
+const linkRules = [
+  (value: string) => {
+    if (value === '' || !REG_URL_FORMAT.test(value)) {
+      return 'Vui lòng nhập link hợp lệ'
+    }
+
+    for (const option of options.value) {
+      if (option.link === value) {
+        return 'Link đã tồn tại, vui lòng nhập link khác'
+      }
+    }
+    return true
+  }
+]
 
 const checkAccountVoteOption = (option: IOption, account: IUser) => {
   for (let i = 0; i < option.voteBy.length; i++) {
@@ -58,7 +81,7 @@ onMounted(async () => {
 
   const accountId = localStorage.getItem('account_info')
   if (!accountId) {
-    handleRouter.pushPath('/');
+    handleRouter.pushPath('/')
     return
   }
   const userData = await getAccountById(accountId!)
@@ -80,9 +103,9 @@ const handleAddTopic = async () => {
     options.value = await getOptionsByTopicId(id.toString())
     form.link = ''
     form.title = ''
-    alert.value = 'Tạo thành công';
-    setTimeout( ()=> {
-      alert.value = '';
+    alert.value = 'Tạo thành công'
+    setTimeout(() => {
+      alert.value = ''
     }, 2000)
     sortOptionByVotes()
     if (currentTopic.value?.option && currentAccount.value) {
@@ -156,22 +179,6 @@ const handleSubmitForm = async () => {
     checkAccountVoteOption(option, currentAccount.value!)
   )
 }
-
-  const titleRules = [
-      (value : boolean) => {
-        if (value) return true
-        return 'Vui lòng nhập tiêu đề'
-      },
-    ]
-  const linkRules = [
-    (value : boolean) => {
-      if (value) return true
-      return 'Vui lòng nhập link'
-    },
-  ]
-  const alert = ref<string>('');
-  const colorAlert = ref<string>('green-darken-1');
-
 </script>
 
 <template>
@@ -186,7 +193,14 @@ const handleSubmitForm = async () => {
         Topic này đã đóng, vui lòng trở lại sau
       </v-alert>
     </v-sheet>
-    <v-sheet elevation="1" max-width="638" rounded width="100%" class="border-top-violet pa-3 mx-auto" border>
+    <v-sheet
+      elevation="1"
+      max-width="638"
+      rounded
+      width="100%"
+      class="border-top-violet pa-3 mx-auto"
+      border
+    >
       <h1 class="text-h4">{{ currentTopic?.name }}</h1>
       <v-row>
         <v-col sm="8">
@@ -206,12 +220,42 @@ const handleSubmitForm = async () => {
             Thêm option
           </v-expansion-panel-title>
           <v-expansion-panel-text>
-          <v-form @submit.prevent v-if="currentTopic?.link">
-            <v-alert v-if="alert" border="start" variant="tonal" closable :color="colorAlert" class="mb-2"> {{ alert }}</v-alert>
-            <v-text-field v-model="form.title" label="Tiêu đề" single-line :rules="titleRules" variant="outlined"></v-text-field>
-            <v-text-field v-model="form.link" label="Link" single-line :rules="linkRules" variant="outlined"></v-text-field>
-            <v-btn type="submit" @click="handleAddTopic" class="mb-2 float-right" color="blue-darken-2" size="large" variant="flat" min-width="100">Thêm mới option</v-btn>
-          </v-form>
+            <v-form @submit.prevent v-if="currentTopic?.link">
+              <v-alert
+                v-if="alert"
+                border="start"
+                variant="tonal"
+                closable
+                :color="colorAlert"
+                class="mb-2"
+              >
+                {{ alert }}</v-alert
+              >
+              <v-text-field
+                v-model="form.title"
+                label="Tiêu đề"
+                single-line
+                :rules="titleRules"
+                variant="outlined"
+              ></v-text-field>
+              <v-text-field
+                v-model="form.link"
+                label="Link"
+                single-line
+                :rules="linkRules"
+                variant="outlined"
+              ></v-text-field>
+              <v-btn
+                type="submit"
+                @click="handleAddTopic"
+                class="mb-2 float-right"
+                color="blue-darken-2"
+                size="large"
+                variant="flat"
+                min-width="100"
+                >Thêm mới option</v-btn
+              >
+            </v-form>
           </v-expansion-panel-text>
         </v-expansion-panel>
       </v-expansion-panels>
@@ -253,11 +297,20 @@ const handleSubmitForm = async () => {
             </div>
           </div>
           <div class="d-flex align-self-center">
-              <v-icon icon="mdi-thumb-up" size="x-large" 
-              :color="( 
-                currentTopic?.option ? currentVoteMultiOption.includes(index) : index === currentVoteOption
-                ) ? 'red-darken-1'  : 'blue-darken-3'" 
-              @click="handleChangeVote(index)"></v-icon>
+            <v-icon
+              icon="mdi-thumb-up"
+              size="x-large"
+              :color="
+                (
+                  currentTopic?.option
+                    ? currentVoteMultiOption.includes(index)
+                    : index === currentVoteOption
+                )
+                  ? 'red-darken-1'
+                  : 'blue-darken-3'
+              "
+              @click="handleChangeVote(index)"
+            ></v-icon>
           </div>
         </li>
       </ul>
