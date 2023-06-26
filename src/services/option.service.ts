@@ -18,6 +18,21 @@ export const getOptionsByTopicId = async (topicId: string): Promise<IOption[]> =
 }
 
 /**
+ * Get list all options
+ * @param {}
+ * @return {Promise<IOption[]>}
+ */
+export const getAllOptions = async (): Promise<IOption[]> => {
+  const snapshot = await getDocs(query(collection(db, 'options')))
+  if (snapshot.docs) {
+    const res = snapshot.docs.map((doc) => ({ ...doc.data() })) as IOption[]
+    return res
+  } else {
+    return []
+  }
+}
+
+/**
  * create new option
  * @param {string} title
  * @param {string} link
@@ -38,9 +53,8 @@ export const voteOption = async (newOptionList: IOption[]) => {
     newOptionList.forEach((option) => {
       setDoc(doc(db, 'options', option.id), option)
     })
-    alert('Submit vote success!')
+    return 1;
   } catch (e) {
-    alert('Submit vote failed.\nPlease try again!')
     if (e instanceof Error) throw new Error(e.message)
     else throw e
   }

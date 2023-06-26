@@ -40,14 +40,23 @@
           <v-row justify="center">
             <v-sheet class="pa-2" border rounded v-if="topics && topics.length" min-width="350">
               <p class="font-weight-bold">Chọn topic để vote</p>
-              <v-col v-for="{id, name, description} in topics" :key="id" cols="12" sm="12">
+              <v-col v-for="{id, name, voteBy} in topics" :key="id" cols="12" sm="12">
               <v-hover v-slot="{ isHovering, props }">
-                <v-card :title="name" :text="description" color="indigo-lighten-5"  :elevation="isHovering ? 12 : 2" v-bind="props" :class="isHovering ? 'bg-indigo-lighten-2' : ''"
-                @click="goTopicVote(id)">
+                <v-card color="indigo-lighten-5"  :elevation="isHovering ? 12 : 2" v-bind="props" :class="isHovering ? 'bg-indigo-lighten-2' : ''"
+                @click="goTopicVote(id)"
+                >
+                <template v-slot:title>
+                  <div class="d-flex justify-space-between">
+                    <div>{{ name }}</div>
+                    <v-avatar color="primary" v-if="voteBy" @click.stop="onClickAvatar(voteBy)">
+                      {{ voteBy.length }}
+                    </v-avatar>
+                  </div>
+                </template>
                 </v-card>
               </v-hover>
               </v-col>
-            </v-sheet> 
+            </v-sheet>
           </v-row>
           <v-alert variant="outlined" type="warning" prominent border="top" v-if="alert">
             Hiện tại không có topic nào đang mở
@@ -55,24 +64,51 @@
         </v-col>
       </v-row>
     </v-container>
+    <v-dialog
+      v-model="dialog"
+      width="auto"
+    >
+      <v-card>
+        <v-card-title>Danh sách vote</v-card-title>
+        <v-divider></v-divider>
+        <v-card-text max-height="300px" class=" pa-3">
+          <div v-for="user in listVoteBy" :key="user.username" class="mr-1">
+            <div class="mt-1">
+              <v-avatar color="secondary" class="m-1" size="30">
+              <v-img v-if="user.avatar" :src="user.avatar" :alt="user.username"></v-img>
+              <span v-else>{{ user.username.charAt(0).toLocaleUpperCase() }}</span>
+              <v-tooltip activator="parent" location="top">{{ user.username }}</v-tooltip>
+              </v-avatar>
+              <span class="ml-1">{{ user.username }}</span>
+            </div>
+          </div>
+        </v-card-text>
+      </v-card>
+    </v-dialog>
     </div>
 </template>
 <script setup lang="ts">
   import { onMounted, ref, reactive } from 'vue'
   import { getAccounts } from '@/services/fb.account.service'
   import { getOpenTopicList } from '@/services/fb.topic.service'
+  import { getAllOptions } from '@/services/option.service'
   import type { ITopic } from '@/core/interfaces/model/topic'
+  import type { IOption } from '@/core/interfaces/model/option'
+  import type { IUser } from '@/core/interfaces/model/user'
 
   import useCommon from '@/core/hooks/useCommon'
   const { handleRouter } = useCommon('useCommonStore')
 
   const show = ref<boolean>(true);
   const topics = ref<ITopic[]>([]);
+  const options = ref<IOption[]>([]);
   const account = ref<null>(null);
   const error = ref<boolean>(false);
+  const dialog = ref<boolean>(false);
   const message = ref<string>('');
   const alert = ref<boolean>(false);
   const accountInfo : {username: string | null, avatar: string | null, team: string | null} = reactive({username : '', avatar : '', team: ''});
+  const listVoteBy = ref<IUser[]>([]);
   // Check existence of the account
   const login = async () => {
     if(!account.value) {
@@ -95,6 +131,7 @@
         if(topics.value.length === 0) {
           alert.value = true;
         }
+        getTopicOptions();
       }
     }
   }
@@ -106,6 +143,7 @@
       if(topics.value.length === 0) {
         alert.value = true;
       }
+      getTopicOptions();
       accountInfo.avatar = localStorage.getItem('account_avatar');
       accountInfo.username = localStorage.getItem('account_username');
       accountInfo.team = localStorage.getItem('account_team');
@@ -119,6 +157,30 @@
     },
   ]
 
+  const getTopicOptions = async () => {
+    const topicData = await getAllOptions();
+      options.value = topicData;
+      topics.value.forEach((topic) => {
+        const result = options.value.filter((option) => option.topicId === topic.id);
+        const map: {[key: string]: IUser} = {};
+        const combinedArray = [];
+        result.forEach((option) => {
+          option.voteBy.forEach((obj) => {
+            if (!map[obj?.id]) {
+              map[obj?.id] = obj;
+            }
+          });
+        });
+        for (const id in map) {
+          // eslint-disable-next-line no-prototype-builtins
+          if (map.hasOwnProperty(id)) {
+            combinedArray.push(map[id]);
+          }
+        }
+        topic.voteBy = combinedArray;
+      })
+  }
+
   const goTopicVote = (id: string) => {
     handleRouter.pushName('topicVote', { params: {id: id}})
   }
@@ -128,5 +190,11 @@
     topics.value = [];
     show.value = true;
     alert.value = false;
+  }
+  const onClickAvatar = (voteBy: IUser[]) => {
+    if (voteBy.length > 0) {
+      listVoteBy.value = voteBy;
+      dialog.value = true;
+    }
   }
 </script>
