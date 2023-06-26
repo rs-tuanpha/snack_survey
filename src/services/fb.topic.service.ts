@@ -1,5 +1,5 @@
 import { useFirestore, useCollection } from 'vuefire'
-import { collection, getDocs } from 'firebase/firestore'
+import { collection, getDocs, query, orderBy } from 'firebase/firestore'
 import type { ITopic } from '@/core/interfaces/model/topic'
 const db = useFirestore();
 /**
@@ -20,4 +20,4 @@ export const getOpenTopicList = async (team : string|null): Promise<ITopic[]> =>
   return openTopicList;
 }
 
-export const getTopics = useCollection(collection(db, 'topics'));
+export const getTopics = useCollection(query(collection(db, 'topics'), orderBy("date", "desc")));

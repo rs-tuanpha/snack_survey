@@ -1,6 +1,6 @@
 import type { IOption } from '@/core/interfaces/model/option'
 import { db } from '@/plugins/firebase'
-import { addDoc, collection, doc, getDocs, query, setDoc, where } from 'firebase/firestore'
+import { addDoc, collection, doc, getDocs, query, setDoc, where, getDoc } from 'firebase/firestore'
 
 /**
  * Get list option by topic id
@@ -58,4 +58,9 @@ export const voteOption = async (newOptionList: IOption[]) => {
     if (e instanceof Error) throw new Error(e.message)
     else throw e
   }
+}
+
+export const getOptionById = async (optionId: string): Promise<IOption> => {
+  const docSnap = await getDoc(doc(db, "options", optionId));
+  return docSnap.data() as IOption;
 }
