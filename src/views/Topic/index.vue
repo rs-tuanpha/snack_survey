@@ -36,6 +36,7 @@ const currentVoteOption = ref<number | null>(null)
 const currentVoteMultiOption = ref<number[]>([])
 const alert = ref<string>('')
 const colorAlert = ref<string>('green-darken-1')
+const showOverlay = ref<boolean>(false);
 const form = reactive({
   link: '',
   title: ''
@@ -62,8 +63,8 @@ const linkRules = [
 ]
 
 const checkAccountVoteOption = (option: IOption, account: IUser) => {
-  for (let i = 0; i < option.voteBy.length; i++) {
-    if (option.voteBy[i].id === account.id) {
+  for (const element of option.voteBy) {
+    if (element.id === account.id) {
       return true
     }
   }
@@ -123,6 +124,7 @@ const handleAddTopic = async () => {
 }
 
 const handleChangeVote = (optionIndex: number) => {
+  showOverlay.value = !showOverlay.value;
   // handle vote multiple
   if (currentTopic.value?.option) {
     let isUnvote = -1
@@ -140,6 +142,7 @@ const handleChangeVote = (optionIndex: number) => {
       options.value[optionIndex].voteBy.push(currentAccount.value!)
       currentVoteMultiOption.value.push(optionIndex)
     }
+    handleSubmitForm();
     return
   }
   // Handle vote 1
@@ -154,6 +157,7 @@ const handleChangeVote = (optionIndex: number) => {
     options.value[currentVoteOption.value ?? 0].voteBy.splice(accountIndex, 1)
     if (optionIndex === currentVoteOption.value) {
       currentVoteOption.value = null
+      handleSubmitForm();
       return
     }
   }
@@ -163,22 +167,49 @@ const handleChangeVote = (optionIndex: number) => {
 }
 
 const handleSubmitForm = async () => {
-  await voteOption(options.value)
+  try {
+    const res = await voteOption(options.value);
+    showOverlay.value = !showOverlay.value;
+    alertVote.value = 'Cập nhật thành công';
+  
+  } catch (error) {
+    alertVote.value = 'Cập nhật thất bại';
+  } finally {
+    setTimeout( ()=> {
+      alertVote.value = '';
+    }, 2000)
+    sortOptionByVotes()
+    currentVoteMultiOption.value = []
 
-  sortOptionByVotes()
-  currentVoteMultiOption.value = []
-
-  if (currentTopic.value?.option && currentAccount.value) {
-    options.value.forEach((option, index) => {
-      checkAccountVoteOption(option, currentAccount.value!) &&
-        currentVoteMultiOption.value.push(index)
-    })
-    return
+    if (currentTopic.value?.option && currentAccount.value) {
+      options.value.forEach((option, index) => {
+        checkAccountVoteOption(option, currentAccount.value!) &&
+          currentVoteMultiOption.value.push(index)
+      })
+      
+    }
+    currentVoteOption.value = options.value.findIndex((option) =>
+      checkAccountVoteOption(option, currentAccount.value!)
+    )
   }
-  currentVoteOption.value = options.value.findIndex((option) =>
-    checkAccountVoteOption(option, currentAccount.value!)
-  )
 }
+
+  const titleRules = [
+      (value : boolean) => {
+        if (value) return true
+        return 'Vui lòng nhập tiêu đề'
+      },
+    ]
+  const linkRules = [
+    (value : boolean) => {
+      if (value) return true
+      return 'Vui lòng nhập link'
+    },
+  ]
+  const alert = ref<string>('');
+  const alertVote = ref<string>('');
+  const colorAlert = ref<string>('green-darken-1');
+
 </script>
 
 <template>
@@ -268,6 +299,7 @@ const handleSubmitForm = async () => {
       class="mt-3 pa-3 mx-auto"
       border
     >
+      <v-alert v-if="alertVote" border="start" variant="tonal" closable :color="colorAlert" class="mb-2"> {{ alertVote }}</v-alert>
       <ul>
         <li
           v-for="(option, index) in options"
@@ -309,13 +341,25 @@ const handleSubmitForm = async () => {
                   ? 'red-darken-1'
                   : 'blue-darken-3'
               "
-              @click="handleChangeVote(index)"
+              @click.prevent="handleChangeVote(index)"
             ></v-icon>
           </div>
         </li>
       </ul>
-      <v-btn @click="handleSubmitForm">Gửi</v-btn>
+
     </v-sheet>
+      <div>
+        <v-overlay
+        :model-value="showOverlay"
+        class="align-center justify-center"
+      >
+        <v-progress-circular
+          color="primary"
+          indeterminate
+          size="64"
+        ></v-progress-circular>
+      </v-overlay>
+      </div>
   </v-container>
 </template>
 <style scoped lang="scss">
