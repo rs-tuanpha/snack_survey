@@ -36,7 +36,7 @@ const currentVoteOption = ref<number | null>(null)
 const currentVoteMultiOption = ref<number[]>([])
 const alert = ref<string>('')
 const colorAlert = ref<string>('green-darken-1')
-const showOverlay = ref<boolean>(false);
+const showOverlay = ref<boolean>(false)
 const form = reactive({
   link: '',
   title: ''
@@ -124,7 +124,7 @@ const handleAddTopic = async () => {
 }
 
 const handleChangeVote = (optionIndex: number) => {
-  showOverlay.value = !showOverlay.value;
+  showOverlay.value = !showOverlay.value
   // handle vote multiple
   if (currentTopic.value?.option) {
     let isUnvote = -1
@@ -142,7 +142,7 @@ const handleChangeVote = (optionIndex: number) => {
       options.value[optionIndex].voteBy.push(currentAccount.value!)
       currentVoteMultiOption.value.push(optionIndex)
     }
-    handleSubmitForm();
+    handleSubmitForm()
     return
   }
   // Handle vote 1
@@ -157,7 +157,7 @@ const handleChangeVote = (optionIndex: number) => {
     options.value[currentVoteOption.value ?? 0].voteBy.splice(accountIndex, 1)
     if (optionIndex === currentVoteOption.value) {
       currentVoteOption.value = null
-      handleSubmitForm();
+      handleSubmitForm()
       return
     }
   }
@@ -168,15 +168,14 @@ const handleChangeVote = (optionIndex: number) => {
 
 const handleSubmitForm = async () => {
   try {
-    const res = await voteOption(options.value);
-    showOverlay.value = !showOverlay.value;
-    alertVote.value = 'Cập nhật thành công';
-  
+    const res = await voteOption(options.value)
+    showOverlay.value = !showOverlay.value
+    alertVote.value = 'Cập nhật thành công'
   } catch (error) {
-    alertVote.value = 'Cập nhật thất bại';
+    alertVote.value = 'Cập nhật thất bại'
   } finally {
-    setTimeout( ()=> {
-      alertVote.value = '';
+    setTimeout(() => {
+      alertVote.value = ''
     }, 2000)
     sortOptionByVotes()
     currentVoteMultiOption.value = []
@@ -186,30 +185,17 @@ const handleSubmitForm = async () => {
         checkAccountVoteOption(option, currentAccount.value!) &&
           currentVoteMultiOption.value.push(index)
       })
-      
     }
     currentVoteOption.value = options.value.findIndex((option) =>
       checkAccountVoteOption(option, currentAccount.value!)
     )
   }
 }
-
-  const titleRules = [
-      (value : boolean) => {
-        if (value) return true
-        return 'Vui lòng nhập tiêu đề'
-      },
-    ]
-  const linkRules = [
-    (value : boolean) => {
-      if (value) return true
-      return 'Vui lòng nhập link'
-    },
-  ]
-  const alert = ref<string>('');
-  const alertVote = ref<string>('');
-  const colorAlert = ref<string>('green-darken-1');
-
+const handleSelectAddOption = () => {
+  form.link = ''
+  form.title = ''
+}
+const alertVote = ref<string>('')
 </script>
 
 <template>
@@ -246,8 +232,12 @@ const handleSubmitForm = async () => {
       </v-row>
 
       <v-expansion-panels>
-        <v-expansion-panel>
-          <v-expansion-panel-title expand-icon="mdi-plus" collapse-icon="mdi-minus">
+        <v-expansion-panel group:select="handleSelectAddOption">
+          <v-expansion-panel-title
+            expand-icon="mdi-plus"
+            collapse-icon="mdi-minus"
+            @click="handleSelectAddOption"
+          >
             Thêm option
           </v-expansion-panel-title>
           <v-expansion-panel-text>
@@ -299,7 +289,16 @@ const handleSubmitForm = async () => {
       class="mt-3 pa-3 mx-auto"
       border
     >
-      <v-alert v-if="alertVote" border="start" variant="tonal" closable :color="colorAlert" class="mb-2"> {{ alertVote }}</v-alert>
+      <v-alert
+        v-if="alertVote"
+        border="start"
+        variant="tonal"
+        closable
+        :color="colorAlert"
+        class="mb-2"
+      >
+        {{ alertVote }}</v-alert
+      >
       <ul>
         <li
           v-for="(option, index) in options"
@@ -346,20 +345,12 @@ const handleSubmitForm = async () => {
           </div>
         </li>
       </ul>
-
     </v-sheet>
-      <div>
-        <v-overlay
-        :model-value="showOverlay"
-        class="align-center justify-center"
-      >
-        <v-progress-circular
-          color="primary"
-          indeterminate
-          size="64"
-        ></v-progress-circular>
+    <div>
+      <v-overlay :model-value="showOverlay" class="align-center justify-center">
+        <v-progress-circular color="primary" indeterminate size="64"></v-progress-circular>
       </v-overlay>
-      </div>
+    </div>
   </v-container>
 </template>
 <style scoped lang="scss">
