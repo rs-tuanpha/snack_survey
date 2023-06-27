@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
-import { doc } from 'firebase/firestore'
+import { onMounted, reactive, ref, computed } from 'vue'
+import { doc, updateDoc } from 'firebase/firestore'
 import { useDocument } from 'vuefire'
 import { db } from '@/plugins/firebase'
 import { getAccountById } from '@/services/account.service'
@@ -36,7 +36,85 @@ const currentVoteOption = ref<number | null>(null)
 const currentVoteMultiOption = ref<number[]>([])
 const alert = ref<string>('')
 const colorAlert = ref<string>('green-darken-1')
+const alertVote = ref<string>('');
+const alertVoteType = ref<string>('success');
 const showOverlay = ref<boolean>(false);
+const currentTime = ref(new Date().getTime());
+const listVoteBy = ref<IUser[]>([]);
+const dialog = ref<boolean>(false);
+//Bien timeRemaining tinh thoi gian con lai
+const timeRemaining = computed(() => {
+  if (currentTopic.value?.date) {
+    const difference = new Date((currentTopic.value?.date as any)?.seconds * 1000).getTime() - currentTime.value;
+    if (difference <= 0) {
+      update();
+      return {
+        days: 0,
+        hours: 0,
+        minutes: 0,
+        seconds: 0,
+      };
+    }
+
+    const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+    
+    return {
+      days,
+      hours,
+      minutes,
+      seconds,
+    };
+  }
+  return {
+    days: -1,
+    hours: -1,
+    minutes: -1,
+    seconds: -1,
+  };
+});
+// Bien countdown de format + hien thoi gian con lai lay tu timeRemaining
+const countdown = computed(() => {
+  const { days, hours, minutes, seconds } = timeRemaining.value;
+  const parts = [];
+
+  if (days > 0) {
+    parts.push(`${days} ngày`);
+  }
+
+  if (hours > 0) {
+    parts.push(`${hours} giờ`);
+  }
+
+  if (minutes > 0) {
+    parts.push(`${minutes} phút`);
+  }
+
+  if (seconds > 0) {
+    parts.push(`${seconds} giây`);
+  }
+
+  return parts.join(', ');
+});
+// Ham update status topic khi den deadline
+const update = async () => {
+  const topicInfo = currentTopic.value ?? {id: '', name: '', description: '', date: new Date(), status: true, link: true, option: true, team: 'All'};
+  topicInfo.status = false;
+  const topicRef = doc(db, "topics", topicInfo.id);
+  try {
+    await updateDoc(topicRef, topicInfo as object);
+    alert.value = 'Cập nhật thành công';
+    setTimeout( ()=> {
+      alert.value = '';
+    }, 2000)
+  } catch(e) {
+    if (e instanceof Error) {
+      console.error(e.message);
+    }
+  }
+}
 const form = reactive({
   link: '',
   title: ''
@@ -76,6 +154,9 @@ const sortOptionByVotes = () => {
 }
 
 onMounted(async () => {
+  setInterval(() => {
+    currentTime.value = new Date().getTime();
+  }, 1000);
   const topicData = await getOptionsByTopicId(id.toString())
   options.value = topicData
   sortOptionByVotes()
@@ -124,6 +205,14 @@ const handleAddTopic = async () => {
 }
 
 const handleChangeVote = (optionIndex: number) => {
+  if (!currentTopic.value?.status) {
+    alertVote.value = 'Cập nhật thất bại';
+    alertVoteType.value = 'error'
+    setTimeout( ()=> {
+      alertVote.value = '';
+    }, 2000)
+    return;
+  }
   showOverlay.value = !showOverlay.value;
   // handle vote multiple
   if (currentTopic.value?.option) {
@@ -169,11 +258,16 @@ const handleChangeVote = (optionIndex: number) => {
 const handleSubmitForm = async () => {
   try {
     const res = await voteOption(options.value);
-    showOverlay.value = !showOverlay.value;
-    alertVote.value = 'Cập nhật thành công';
+    if (res) {
+      showOverlay.value = !showOverlay.value;
+      alertVote.value = 'Cập nhật thành công';
+      alertVoteType.value = 'success'
+    }
   
   } catch (error) {
+    showOverlay.value = !showOverlay.value;
     alertVote.value = 'Cập nhật thất bại';
+    alertVoteType.value = 'error'
   } finally {
     setTimeout( ()=> {
       alertVote.value = '';
@@ -193,23 +287,10 @@ const handleSubmitForm = async () => {
     )
   }
 }
-
-  const titleRules = [
-      (value : boolean) => {
-        if (value) return true
-        return 'Vui lòng nhập tiêu đề'
-      },
-    ]
-  const linkRules = [
-    (value : boolean) => {
-      if (value) return true
-      return 'Vui lòng nhập link'
-    },
-  ]
-  const alert = ref<string>('');
-  const alertVote = ref<string>('');
-  const colorAlert = ref<string>('green-darken-1');
-
+const onClickSeeMore = (option: IOption) => {
+  listVoteBy.value = option.voteBy;
+  dialog.value = true;
+}
 </script>
 
 <template>
@@ -233,17 +314,21 @@ const handleSubmitForm = async () => {
       border
     >
       <h1 class="text-h4">{{ currentTopic?.name }}</h1>
-      <v-row>
+        <v-col sm="8">
+          <p class="mt-3 text-body-1">
+            Thời hạn:
+            {{ new Date((currentTopic?.date as any)?.seconds * 1000).toLocaleDateString() + " " 
+            + new Date((currentTopic?.date as any)?.seconds * 1000).toLocaleTimeString() }}
+          </p>
+          <p class="font-weight-medium pr-2 pt-1"><v-chip color="primary" label>
+            <v-icon start icon="mdi-clock-time-eight-outline"></v-icon>Deadline</v-chip>
+            <span class="text-red ml-1">{{ countdown }}</span>
+          </p>
+        </v-col>
+        <v-divider></v-divider>
         <v-col sm="8">
           <p>{{ currentTopic?.description }}</p></v-col
         >
-        <v-col sm="4">
-          <p class="mt-3 text-medium-emphasis text-body-1">
-            Thời hạn:
-            {{ new Date((currentTopic?.date as any)?.seconds * 1000).toLocaleDateString() }}
-          </p>
-        </v-col>
-      </v-row>
 
       <v-expansion-panels>
         <v-expansion-panel>
@@ -299,7 +384,7 @@ const handleSubmitForm = async () => {
       class="mt-3 pa-3 mx-auto"
       border
     >
-      <v-alert v-if="alertVote" border="start" variant="tonal" closable :color="colorAlert" class="mb-2"> {{ alertVote }}</v-alert>
+      <v-alert v-if="alertVote" border="start" variant="tonal" closable :type="alertVoteType" class="mb-2"> {{ alertVote }}</v-alert>
       <ul>
         <li
           v-for="(option, index) in options"
@@ -313,17 +398,24 @@ const handleSubmitForm = async () => {
             <p class="mb-1 text-h6">{{ option.title }}</p>
             <a :href="option.link" target="_blank">{{ stringMinify(option.link, 50) }}</a>
             <div class="d-flex mt-1">
-              <div v-for="user in option.voteBy.slice(0, 3)" :key="user.username" class="mr-1">
+              <div v-for="user in option.voteBy.slice(0, 5)" :key="user.username" class="mr-1">
                 <v-avatar color="secondary" class="m-1" size="30">
                   <v-img v-if="user.avatar" :src="user.avatar" :alt="user.username"></v-img>
                   <span v-else>{{ user.username.charAt(0).toLocaleUpperCase() }}</span>
                   <v-tooltip activator="parent" location="top">{{ user.username }}</v-tooltip>
                 </v-avatar>
               </div>
-              <div v-if="option.voteBy.length > 3" class="mr-1">
-                <v-avatar color="secondary" class="m-1" size="30"> ... </v-avatar>
+              <div v-if="option.voteBy.length > 5" class="mr-1">
+                <v-avatar 
+                  color="light-blue-darken-2"
+                  class="m-1 cursor-pointer"
+                  size="30"
+                  @click.stop="onClickSeeMore(option)"
+                >
+                  {{ option.voteBy.length - 5 }}<sup>+</sup>
+                </v-avatar>
                 <v-tooltip activator="parent" location="top">{{
-                  `${option.voteBy.length - 3} others people`
+                  `${option.voteBy.length - 5} others people`
                 }}</v-tooltip>
               </div>
             </div>
@@ -361,6 +453,27 @@ const handleSubmitForm = async () => {
       </v-overlay>
       </div>
   </v-container>
+  <v-dialog
+      v-model="dialog"
+      width="auto"
+    >
+      <v-card>
+        <v-card-title>Danh sách vote</v-card-title>
+        <v-divider></v-divider>
+        <v-card-text max-height="300px" class=" pa-3">
+          <div v-for="user in listVoteBy" :key="user.username" class="mr-1">
+            <div class="mt-1">
+              <v-avatar color="secondary" class="m-1" size="30">
+              <v-img v-if="user.avatar" :src="user.avatar" :alt="user.username"></v-img>
+              <span v-else>{{ user.username.charAt(0).toLocaleUpperCase() }}</span>
+              <v-tooltip activator="parent" location="top">{{ user.username }}</v-tooltip>
+              </v-avatar>
+              <span class="ml-1">{{ user.username }}</span>
+            </div>
+          </div>
+        </v-card-text>
+      </v-card>
+    </v-dialog>
 </template>
 <style scoped lang="scss">
 @import './styles.scss';
