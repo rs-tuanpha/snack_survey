@@ -215,6 +215,14 @@ const handleAddTopic = async () => {
 }
 
 const handleChangeVote = (optionIndex: number) => {
+  if (!currentTopic.value?.status) {
+    alertVote.value = 'Cập nhật thất bại'
+    alertVoteType.value = 'error'
+    setTimeout(() => {
+      alertVote.value = ''
+    }, 2000)
+    return
+  }
   showOverlay.value = !showOverlay.value
   // handle vote multiple
   if (currentTopic.value?.option) {
@@ -260,10 +268,15 @@ const handleChangeVote = (optionIndex: number) => {
 const handleSubmitForm = async () => {
   try {
     const res = await voteOption(options.value)
-    showOverlay.value = !showOverlay.value
-    alertVote.value = 'Cập nhật thành công'
+    if (res) {
+      showOverlay.value = !showOverlay.value
+      alertVote.value = 'Cập nhật thành công'
+      alertVoteType.value = 'success'
+    }
   } catch (error) {
+    showOverlay.value = !showOverlay.value
     alertVote.value = 'Cập nhật thất bại'
+    alertVoteType.value = 'error'
   } finally {
     setTimeout(() => {
       alertVote.value = ''
