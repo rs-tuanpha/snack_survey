@@ -261,8 +261,6 @@ const handleSubmitForm = async () => {
     const res = await voteOption(options.value)
     if (res) {
       showOverlay.value = !showOverlay.value
-      alertVote.value = 'Cập nhật thành công'
-      alertVoteType.value = 'success'
     }
   } catch (error) {
     showOverlay.value = !showOverlay.value
