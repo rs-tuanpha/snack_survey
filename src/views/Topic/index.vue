@@ -328,7 +328,7 @@ const onClickSeeMore = (option: IOption) => {
         </p>
       </v-col>
       <v-divider></v-divider>
-      <v-col sm="8">
+      <v-col sm="12">
         <p>{{ currentTopic?.description }}</p></v-col
       >
 
