@@ -130,10 +130,12 @@
               <v-radio label="FE" value="FE"></v-radio>
               <v-radio label="All" value="All"></v-radio>
             </v-radio-group>
-            <v-btn
+            <div class="btn-wrapper">
+              <v-btn
               type="submit"
-              block
+              :block="!showAddBtn"
               class="mt-2 bg-blue-darken-2"
+              :class="showAddBtn ? 'bg-green-darken-2 mr-2' : 'bg-blue-darken-2'"
               @click="confirm(type)"
               variant="elevated"
               >{{ txtbtn }}</v-btn
@@ -145,6 +147,7 @@
               @click="cancelUpdate"
               >Thêm mới</v-btn
             >
+            </div>
           </v-form>
           <v-alert
             v-if="alert"
@@ -469,5 +472,8 @@ const showEdittingOption = async (id: string) => {
 .topic-tbl {
   max-height: 300px;
   overflow: auto;
+}
+.btn-wrapper {
+  text-align: center;
 }
 </style>
