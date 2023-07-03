@@ -347,7 +347,7 @@ const handleTopic = async (type: string) => {
   switch (type) {
     case 'create':
       try {
-        await addDoc(collection(db, 'topics'), topicInfo)
+        await addDoc(collection(db, 'topics'), { ...topicInfo, updatedAt: new Date() })
         dialog.value = false
         alert.value = 'Thêm mới thành công'
         topicInfo.name = ''
@@ -368,7 +368,7 @@ const handleTopic = async (type: string) => {
       }
       break
     case 'update':
-      update(topicInfo)
+      update({ ...topicInfo, updatedAt: new Date() })
       break
     case 'delete':
       deleteTopic()
