@@ -115,10 +115,6 @@ const update = async () => {
   const topicRef = doc(db, 'topics', topicInfo.id)
   try {
     await updateDoc(topicRef, topicInfo as object)
-    alert.value = 'Cập nhật thành công'
-    setTimeout(() => {
-      alert.value = ''
-    }, 2000)
   } catch (e) {
     if (e instanceof Error) {
       console.error(e.message)
@@ -129,12 +125,7 @@ const form = reactive({
   link: '',
   title: ''
 })
-const titleRules = [
-  (value: string) => {
-    if (value !== '') return true
-    return 'Vui lòng nhập tiêu đề'
-  }
-]
+
 const linkRules = [
   (value: string) => {
     if (value === '' || !REG_URL_FORMAT.test(value)) {
@@ -195,10 +186,10 @@ const handleAddTopic = async () => {
     options.value = await getOptionsByTopicId(id.toString())
     form.link = ''
     form.title = ''
-    alert.value = 'Tạo thành công'
-    setTimeout(() => {
-      alert.value = ''
-    }, 2000)
+    // alert.value = 'Tạo thành công'
+    // setTimeout(() => {
+    //   alert.value = ''
+    // }, 2000)
     sortOptionByVotes()
     if (currentTopic.value?.option && currentAccount.value) {
       options.value.forEach((option, index) => {
@@ -331,9 +322,8 @@ const onClickSeeMore = (option: IOption) => {
         </p>
         <p class="font-weight-medium pt-1">
           <v-chip color="primary" label class="chip-with-icon">
-              <v-icon icon="mdi-clock-time-eight-outline"></v-icon>
-            </v-chip
-          >
+            <v-icon icon="mdi-clock-time-eight-outline"></v-icon>
+          </v-chip>
           <span class="text-red ml-1">{{ countdown }}</span>
         </p>
       </v-col>
@@ -363,7 +353,6 @@ const onClickSeeMore = (option: IOption) => {
                 v-model="form.title"
                 label="Tiêu đề"
                 single-line
-                :rules="titleRules"
                 variant="outlined"
               ></v-text-field>
               <v-text-field
