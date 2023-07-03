@@ -9,7 +9,9 @@
                   <v-img alt="Avatar" :src="accountInfo.avatar"></v-img>
                 </v-avatar>
                 <i> Tài khoản: </i><strong>{{ accountInfo.username }}</strong>
-                <p><a href="#" @click="logout">Logout</a></p>
+              </v-col>
+              <v-col sm="12" md="10" lg="8" align="center">
+                <v-btn class="bg-blue-darken-2" @click="logout">Logout</v-btn>
               </v-col>
             </v-row>
             <v-card

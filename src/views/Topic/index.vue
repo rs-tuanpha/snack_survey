@@ -42,7 +42,7 @@ const showOverlay = ref<boolean>(false)
 const currentTime = ref(new Date().getTime())
 const listVoteBy = ref<IUser[]>([])
 const dialog = ref<boolean>(false)
-//Bien timeRemaining tinh thoi gian con lai
+//timeRemaining variable calculating the remaining time
 const timeRemaining = computed(() => {
   if (currentTopic.value?.date) {
     const difference =
@@ -76,7 +76,7 @@ const timeRemaining = computed(() => {
     seconds: -1
   }
 })
-// Bien countdown de format + hien thoi gian con lai lay tu timeRemaining
+// countdown variable gets the time from timeRemaining and format it to show on screen
 const countdown = computed(() => {
   const { days, hours, minutes, seconds } = timeRemaining.value
   const parts = []
@@ -99,7 +99,7 @@ const countdown = computed(() => {
 
   return parts.join(', ')
 })
-// Ham update status topic khi den deadline
+// update the topic's status when the deadline approaches
 const update = async () => {
   const topicInfo = currentTopic.value ?? {
     id: '',
@@ -320,10 +320,10 @@ const onClickSeeMore = (option: IOption) => {
             new Date((currentTopic?.date as any)?.seconds * 1000).toLocaleTimeString()
           }}
         </p>
-        <p class="font-weight-medium pr-2 pt-1">
-          <v-chip color="primary" label>
-            <v-icon start icon="mdi-clock-time-eight-outline"></v-icon>Deadline</v-chip
-          >
+        <p class="font-weight-medium pt-1">
+          <v-chip color="primary" label class="chip-with-icon">
+            <v-icon icon="mdi-clock-time-eight-outline"></v-icon>
+          </v-chip>
           <span class="text-red ml-1">{{ countdown }}</span>
         </p>
       </v-col>
