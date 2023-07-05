@@ -138,7 +138,7 @@
                 :class="showAddBtn ? 'bg-green-darken-2 mr-2' : 'bg-blue-darken-2'"
                 @click="confirm(type)"
                 variant="elevated"
-                >{{ txtbtn }}</v-btn
+                >{{ textBtn }}</v-btn
               >
               <v-btn
                 v-if="showAddBtn"
@@ -193,7 +193,7 @@
                   <v-btn
                     class="text-none w-auto ma-1"
                     color="blue-darken-2"
-                    @click="showOptionFrm(item.id)"
+                    @click="showOptionForm(item.id)"
                     >+Option</v-btn
                   >
                   <v-btn
@@ -234,7 +234,7 @@ const db = getFirestore()
 const format = ref<string>('')
 const topics = getTopics
 const text = ref<string>('')
-const txtbtn = ref<string>('Tạo mới')
+const textBtn = ref<string>('Tạo mới')
 const topicId = ref<string>('')
 const topicCancelId = ref<string>('')
 const alert = ref<string>('')
@@ -311,7 +311,7 @@ const confirmDelete = (topicVal: string) => {
 }
 
 const cancelUpdate = () => {
-  txtbtn.value = 'Tạo mới'
+  textBtn.value = 'Tạo mới'
   type.value = 'create'
   showAddBtn.value = false
   dialog.value = false
@@ -338,7 +338,7 @@ const edit = async (topicVal: string) => {
     topicInfo.link = docSnap.data().link
     topicInfo.option = docSnap.data().option
     topicInfo.team = docSnap.data().team
-    txtbtn.value = 'Cập nhật'
+    textBtn.value = 'Cập nhật'
     type.value = 'update'
     showAddBtn.value = true
   } else {
@@ -413,7 +413,7 @@ const deleteTopic = async () => {
   }
 }
 
-const showOptionFrm = (itemId: string) => {
+const showOptionForm = (itemId: string) => {
   addOptionDlg.value = true
   topicId.value = itemId
   option.title = ''
