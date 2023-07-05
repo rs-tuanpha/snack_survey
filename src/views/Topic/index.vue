@@ -36,82 +36,88 @@ const currentVoteOption = ref<number | null>(null)
 const currentVoteMultiOption = ref<number[]>([])
 const alert = ref<string>('')
 const colorAlert = ref<string>('green-darken-1')
-const alertVote = ref<string>('');
-const alertVoteType = ref<string>('success');
-const showOverlay = ref<boolean>(false);
-const currentTime = ref(new Date().getTime());
-const listVoteBy = ref<IUser[]>([]);
-const dialog = ref<boolean>(false);
-//Bien timeRemaining tinh thoi gian con lai
+const alertVote = ref<string>('')
+const alertVoteType = ref<string>('success')
+const showOverlay = ref<boolean>(false)
+const currentTime = ref(new Date().getTime())
+const listVoteBy = ref<IUser[]>([])
+const dialog = ref<boolean>(false)
+//timeRemaining variable calculating the remaining time
 const timeRemaining = computed(() => {
   if (currentTopic.value?.date) {
-    const difference = new Date((currentTopic.value?.date as any)?.seconds * 1000).getTime() - currentTime.value;
+    const difference =
+      new Date((currentTopic.value?.date as any)?.seconds * 1000).getTime() - currentTime.value
     if (difference <= 0) {
-      update();
+      update()
       return {
         days: 0,
         hours: 0,
         minutes: 0,
-        seconds: 0,
-      };
+        seconds: 0
+      }
     }
 
-    const days = Math.floor(difference / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((difference % (1000 * 60)) / 1000);
-    
+    const days = Math.floor(difference / (1000 * 60 * 60 * 24))
+    const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+    const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60))
+    const seconds = Math.floor((difference % (1000 * 60)) / 1000)
+
     return {
       days,
       hours,
       minutes,
-      seconds,
-    };
+      seconds
+    }
   }
   return {
     days: -1,
     hours: -1,
     minutes: -1,
-    seconds: -1,
-  };
-});
-// Bien countdown de format + hien thoi gian con lai lay tu timeRemaining
+    seconds: -1
+  }
+})
+// countdown variable gets the time from timeRemaining and format it to show on screen
 const countdown = computed(() => {
-  const { days, hours, minutes, seconds } = timeRemaining.value;
-  const parts = [];
+  const { days, hours, minutes, seconds } = timeRemaining.value
+  const parts = []
 
   if (days > 0) {
-    parts.push(`${days} ngày`);
+    parts.push(`${days} ngày`)
   }
 
   if (hours > 0) {
-    parts.push(`${hours} giờ`);
+    parts.push(`${hours} giờ`)
   }
 
   if (minutes > 0) {
-    parts.push(`${minutes} phút`);
+    parts.push(`${minutes} phút`)
   }
 
   if (seconds > 0) {
-    parts.push(`${seconds} giây`);
+    parts.push(`${seconds} giây`)
   }
 
-  return parts.join(', ');
-});
-// Ham update status topic khi den deadline
+  return parts.join(', ')
+})
+// update the topic's status when the deadline approaches
 const update = async () => {
-  const topicInfo = currentTopic.value ?? {id: '', name: '', description: '', date: new Date(), status: true, link: true, option: true, team: 'All'};
-  topicInfo.status = false;
-  const topicRef = doc(db, "topics", topicInfo.id);
+  const topicInfo = currentTopic.value ?? {
+    id: '',
+    name: '',
+    description: '',
+    date: new Date(),
+    status: true,
+    link: true,
+    option: true,
+    team: 'All'
+  }
+  topicInfo.status = false
+  const topicRef = doc(db, 'topics', topicInfo.id)
   try {
-    await updateDoc(topicRef, topicInfo as object);
-    alert.value = 'Cập nhật thành công';
-    setTimeout( ()=> {
-      alert.value = '';
-    }, 2000)
-  } catch(e) {
+    await updateDoc(topicRef, topicInfo as object)
+  } catch (e) {
     if (e instanceof Error) {
-      console.error(e.message);
+      console.error(e.message)
     }
   }
 }
@@ -119,12 +125,7 @@ const form = reactive({
   link: '',
   title: ''
 })
-const titleRules = [
-  (value: string) => {
-    if (value !== '') return true
-    return 'Vui lòng nhập tiêu đề'
-  }
-]
+
 const linkRules = [
   (value: string) => {
     if (value === '' || !REG_URL_FORMAT.test(value)) {
@@ -155,8 +156,8 @@ const sortOptionByVotes = () => {
 
 onMounted(async () => {
   setInterval(() => {
-    currentTime.value = new Date().getTime();
-  }, 1000);
+    currentTime.value = new Date().getTime()
+  }, 1000)
   const topicData = await getOptionsByTopicId(id.toString())
   options.value = topicData
   sortOptionByVotes()
@@ -185,10 +186,10 @@ const handleAddTopic = async () => {
     options.value = await getOptionsByTopicId(id.toString())
     form.link = ''
     form.title = ''
-    alert.value = 'Tạo thành công'
-    setTimeout(() => {
-      alert.value = ''
-    }, 2000)
+    // alert.value = 'Tạo thành công'
+    // setTimeout(() => {
+    //   alert.value = ''
+    // }, 2000)
     sortOptionByVotes()
     if (currentTopic.value?.option && currentAccount.value) {
       options.value.forEach((option, index) => {
@@ -206,14 +207,14 @@ const handleAddTopic = async () => {
 
 const handleChangeVote = (optionIndex: number) => {
   if (!currentTopic.value?.status) {
-    alertVote.value = 'Cập nhật thất bại';
+    alertVote.value = 'Cập nhật thất bại'
     alertVoteType.value = 'error'
-    setTimeout( ()=> {
-      alertVote.value = '';
+    setTimeout(() => {
+      alertVote.value = ''
     }, 2000)
-    return;
+    return
   }
-  showOverlay.value = !showOverlay.value;
+  showOverlay.value = !showOverlay.value
   // handle vote multiple
   if (currentTopic.value?.option) {
     let isUnvote = -1
@@ -231,7 +232,7 @@ const handleChangeVote = (optionIndex: number) => {
       options.value[optionIndex].voteBy.push(currentAccount.value!)
       currentVoteMultiOption.value.push(optionIndex)
     }
-    handleSubmitForm();
+    handleSubmitForm()
     return
   }
   // Handle vote 1
@@ -246,7 +247,7 @@ const handleChangeVote = (optionIndex: number) => {
     options.value[currentVoteOption.value ?? 0].voteBy.splice(accountIndex, 1)
     if (optionIndex === currentVoteOption.value) {
       currentVoteOption.value = null
-      handleSubmitForm();
+      handleSubmitForm()
       return
     }
   }
@@ -257,20 +258,17 @@ const handleChangeVote = (optionIndex: number) => {
 
 const handleSubmitForm = async () => {
   try {
-    const res = await voteOption(options.value);
+    const res = await voteOption(options.value)
     if (res) {
-      showOverlay.value = !showOverlay.value;
-      alertVote.value = 'Cập nhật thành công';
-      alertVoteType.value = 'success'
+      showOverlay.value = !showOverlay.value
     }
-  
   } catch (error) {
-    showOverlay.value = !showOverlay.value;
-    alertVote.value = 'Cập nhật thất bại';
+    showOverlay.value = !showOverlay.value
+    alertVote.value = 'Cập nhật thất bại'
     alertVoteType.value = 'error'
   } finally {
-    setTimeout( ()=> {
-      alertVote.value = '';
+    setTimeout(() => {
+      alertVote.value = ''
     }, 2000)
     sortOptionByVotes()
     currentVoteMultiOption.value = []
@@ -280,7 +278,6 @@ const handleSubmitForm = async () => {
         checkAccountVoteOption(option, currentAccount.value!) &&
           currentVoteMultiOption.value.push(index)
       })
-      
     }
     currentVoteOption.value = options.value.findIndex((option) =>
       checkAccountVoteOption(option, currentAccount.value!)
@@ -288,8 +285,8 @@ const handleSubmitForm = async () => {
   }
 }
 const onClickSeeMore = (option: IOption) => {
-  listVoteBy.value = option.voteBy;
-  dialog.value = true;
+  listVoteBy.value = option.voteBy
+  dialog.value = true
 }
 </script>
 
@@ -314,21 +311,26 @@ const onClickSeeMore = (option: IOption) => {
       border
     >
       <h1 class="text-h4">{{ currentTopic?.name }}</h1>
-        <v-col sm="8">
-          <p class="mt-3 text-body-1">
-            Thời hạn:
-            {{ new Date((currentTopic?.date as any)?.seconds * 1000).toLocaleDateString() + " " 
-            + new Date((currentTopic?.date as any)?.seconds * 1000).toLocaleTimeString() }}
-          </p>
-          <p class="font-weight-medium pr-2 pt-1"><v-chip color="primary" label>
-            <v-icon start icon="mdi-clock-time-eight-outline"></v-icon>Deadline</v-chip>
-            <span class="text-red ml-1">{{ countdown }}</span>
-          </p>
-        </v-col>
-        <v-divider></v-divider>
-        <v-col sm="8">
-          <p>{{ currentTopic?.description }}</p></v-col
-        >
+      <v-col sm="8">
+        <p class="mt-3 text-body-1">
+          Thời hạn:
+          {{
+            new Date((currentTopic?.date as any)?.seconds * 1000).toLocaleDateString() +
+            ' ' +
+            new Date((currentTopic?.date as any)?.seconds * 1000).toLocaleTimeString()
+          }}
+        </p>
+        <p class="font-weight-medium pt-1">
+          <v-chip color="primary" label class="chip-with-icon">
+            <v-icon icon="mdi-clock-time-eight-outline"></v-icon>
+          </v-chip>
+          <span class="text-red ml-1">{{ countdown }}</span>
+        </p>
+      </v-col>
+      <v-divider></v-divider>
+      <v-col sm="12">
+        <p>{{ currentTopic?.description }}</p></v-col
+      >
 
       <v-expansion-panels>
         <v-expansion-panel>
@@ -351,7 +353,6 @@ const onClickSeeMore = (option: IOption) => {
                 v-model="form.title"
                 label="Tiêu đề"
                 single-line
-                :rules="titleRules"
                 variant="outlined"
               ></v-text-field>
               <v-text-field
@@ -384,7 +385,16 @@ const onClickSeeMore = (option: IOption) => {
       class="mt-3 pa-3 mx-auto"
       border
     >
-      <v-alert v-if="alertVote" border="start" variant="tonal" closable :type="alertVoteType" class="mb-2"> {{ alertVote }}</v-alert>
+      <v-alert
+        v-if="alertVote"
+        border="start"
+        variant="tonal"
+        closable
+        :type="alertVoteType"
+        class="mb-2"
+      >
+        {{ alertVote }}</v-alert
+      >
       <ul>
         <li
           v-for="(option, index) in options"
@@ -406,7 +416,7 @@ const onClickSeeMore = (option: IOption) => {
                 </v-avatar>
               </div>
               <div v-if="option.voteBy.length > 5" class="mr-1">
-                <v-avatar 
+                <v-avatar
                   color="light-blue-darken-2"
                   class="m-1 cursor-pointer"
                   size="30"
@@ -438,42 +448,31 @@ const onClickSeeMore = (option: IOption) => {
           </div>
         </li>
       </ul>
-
     </v-sheet>
-      <div>
-        <v-overlay
-        :model-value="showOverlay"
-        class="align-center justify-center"
-      >
-        <v-progress-circular
-          color="primary"
-          indeterminate
-          size="64"
-        ></v-progress-circular>
+    <div>
+      <v-overlay :model-value="showOverlay" class="align-center justify-center">
+        <v-progress-circular color="primary" indeterminate size="64"></v-progress-circular>
       </v-overlay>
-      </div>
+    </div>
   </v-container>
-  <v-dialog
-      v-model="dialog"
-      width="auto"
-    >
-      <v-card>
-        <v-card-title>Danh sách vote</v-card-title>
-        <v-divider></v-divider>
-        <v-card-text max-height="300px" class=" pa-3">
-          <div v-for="user in listVoteBy" :key="user.username" class="mr-1">
-            <div class="mt-1">
-              <v-avatar color="secondary" class="m-1" size="30">
+  <v-dialog v-model="dialog" width="auto">
+    <v-card>
+      <v-card-title>Danh sách vote</v-card-title>
+      <v-divider></v-divider>
+      <v-card-text max-height="300px" class="pa-3">
+        <div v-for="user in listVoteBy" :key="user.username" class="mr-1">
+          <div class="mt-1">
+            <v-avatar color="secondary" class="m-1" size="30">
               <v-img v-if="user.avatar" :src="user.avatar" :alt="user.username"></v-img>
               <span v-else>{{ user.username.charAt(0).toLocaleUpperCase() }}</span>
               <v-tooltip activator="parent" location="top">{{ user.username }}</v-tooltip>
-              </v-avatar>
-              <span class="ml-1">{{ user.username }}</span>
-            </div>
+            </v-avatar>
+            <span class="ml-1">{{ user.username }}</span>
           </div>
-        </v-card-text>
-      </v-card>
-    </v-dialog>
+        </div>
+      </v-card-text>
+    </v-card>
+  </v-dialog>
 </template>
 <style scoped lang="scss">
 @import './styles.scss';

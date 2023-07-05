@@ -2,14 +2,22 @@
     <div class="py-4">
       <v-container>
         <v-row justify="center">
-          <v-col sm="12" md="6" lg="6" xl="3">
+          <v-col sm="12" md="6" lg="6" xl="4">
             <v-row align="center" class="spacer" no-gutters justify="center" v-if="!show">
               <v-col sm="12" md="10" lg="8" align="center">
                 <v-avatar size="36px" :icon="(accountInfo.avatar !== '') ? '' : 'mdi-account-circle' ">
                   <v-img alt="Avatar" :src="accountInfo.avatar"></v-img>
                 </v-avatar>
                 <i> Tài khoản: </i><strong>{{ accountInfo.username }}</strong>
-                <p><a href="#" @click="logout">Logout</a></p>
+                <v-btn
+                  class="ma-2 logout-btn"
+                  color="red"
+                  @click="logout"
+                >
+                  <v-icon
+                    icon="mdi-logout-variant"
+                  ></v-icon>
+                </v-btn>
               </v-col>
             </v-row>
             <v-card
@@ -198,3 +206,6 @@
     }
   }
 </script>
+<style scoped lang="scss">
+@import './styles.scss';
+</style>

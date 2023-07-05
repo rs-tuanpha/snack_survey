@@ -30,11 +30,7 @@
           <v-card-text>
             <p class="font-weight-black text-center">Option</p>
             <v-form fast-fail @submit.prevent>
-              <v-text-field
-                v-model="option.title"
-                label="Tiêu đề"
-                :rules="titleRules"
-              ></v-text-field>
+              <v-text-field v-model="option.title" label="Tiêu đề"></v-text-field>
               <v-text-field v-model="option.link" label="Link" :rules="linkRules"></v-text-field>
               <v-btn
                 type="submit"
@@ -90,11 +86,8 @@
         <v-sheet class="pa-2" border rounded>
           <p class="font-weight-black text-center">Topic</p>
           <v-form fast-fail @submit.prevent>
-            <v-text-field v-model="topicInfo.name" label="Tên" :rules="titleRules"></v-text-field>
-            <div class="pb-1">
-              <p class="text-subtitle-1">Mô tả</p>
-              <Editor v-model="topicInfo.description" />
-            </div>
+            <v-text-field v-model="topicInfo.name" label="Tên" :rules="nameRules"></v-text-field>
+            <v-text-field v-model="topicInfo.description" label="Mô tả"></v-text-field>
             <div class="d-flex">
               <p class="font-weight-medium pr-2 pt-1">
                 <v-chip color="primary" label>
@@ -227,26 +220,10 @@ import { getTopics } from '@/services/fb.topic.service'
 import type { ITopic } from '@/core/interfaces/model/topic'
 import type { IOption } from '@/core/interfaces/model/option'
 import { getOptionsByTopicId, postNewOption, getOptionById } from '@/services/option.service'
-import Editor from '@/components/molecules/Editor/index.vue'
+import { descriptionRules, linkRules, nameRules } from './Admin.validate'
+
+// State
 const db = getFirestore()
-const nameRules = [
-  (value: boolean) => {
-    if (value) return true
-    return 'Vui lòng chọn tài khoản'
-  }
-]
-const titleRules = [
-  (value: boolean) => {
-    if (value) return true
-    return 'Vui lòng nhập tiêu đề'
-  }
-]
-const linkRules = [
-  (value: boolean) => {
-    if (value) return true
-    return 'Vui lòng nhập link'
-  }
-]
 const format = ref<string>('')
 const topics = getTopics
 const text = ref<string>('')
@@ -281,6 +258,7 @@ format.value = `${(topicInfo.date as Date).getDate()}/${(topicInfo.date as Date)
   topicInfo.date as Date
 ).getFullYear()}`
 
+// Composition API
 watch(
   () => topicInfo.date,
   () => {
@@ -365,7 +343,7 @@ const handleTopic = async (type: string) => {
   switch (type) {
     case 'create':
       try {
-        await addDoc(collection(db, 'topics'), topicInfo)
+        await addDoc(collection(db, 'topics'), { ...topicInfo, updatedAt: new Date() })
         dialog.value = false
         alert.value = 'Thêm mới thành công'
         topicInfo.name = ''
@@ -386,7 +364,7 @@ const handleTopic = async (type: string) => {
       }
       break
     case 'update':
-      update(topicInfo)
+      update({ ...topicInfo, updatedAt: new Date() })
       break
     case 'delete':
       deleteTopic()
@@ -487,5 +465,8 @@ const showEdittingOption = async (id: string) => {
 .topic-tbl {
   max-height: 300px;
   overflow: auto;
+}
+.btn-wrapper {
+  text-align: center;
 }
 </style>
