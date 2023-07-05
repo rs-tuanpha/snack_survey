@@ -13,7 +13,7 @@ const routes = [
         component: () => import('@/views/Home/index.vue')
       },
       {
-        path: 'topic',
+        path: process.env.VUE_APP_ADMIN_PATH!,
         name: 'topicAmin',
         component: () => import('@/views/Admin/index.vue')
       },
