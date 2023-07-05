@@ -290,6 +290,10 @@ const onClickSeeMore = (option: IOption) => {
   listVoteBy.value = option.voteBy
   dialog.value = true
 }
+const handleSelectAddOption = () => {
+  form.link = ''
+  form.title = ''
+}
 </script>
 
 <template>
@@ -336,7 +340,11 @@ const onClickSeeMore = (option: IOption) => {
 
       <v-expansion-panels v-if="currentTopic?.link">
         <v-expansion-panel>
-          <v-expansion-panel-title expand-icon="mdi-plus" collapse-icon="mdi-minus">
+          <v-expansion-panel-title
+            expand-icon="mdi-plus"
+            collapse-icon="mdi-minus"
+            @click="handleSelectAddOption"
+          >
             Thêm option
           </v-expansion-panel-title>
           <v-expansion-panel-text>
