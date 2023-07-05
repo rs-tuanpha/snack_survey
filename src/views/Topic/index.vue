@@ -42,7 +42,8 @@ const showOverlay = ref<boolean>(false)
 const currentTime = ref(new Date().getTime())
 const listVoteBy = ref<IUser[]>([])
 const dialog = ref<boolean>(false)
-//Bien timeRemaining tinh thoi gian con lai
+
+//timeRemaining variable calculating the remaining time
 const timeRemaining = computed(() => {
   if (currentTopic.value?.date) {
     const difference =
@@ -76,7 +77,8 @@ const timeRemaining = computed(() => {
     seconds: -1
   }
 })
-// Bien countdown de format + hien thoi gian con lai lay tu timeRemaining
+
+// countdown variable gets the time from timeRemaining and format it to show on screen
 const countdown = computed(() => {
   const { days, hours, minutes, seconds } = timeRemaining.value
   const parts = []
@@ -99,7 +101,8 @@ const countdown = computed(() => {
 
   return parts.join(', ')
 })
-// Ham update status topic khi den deadline
+
+// update the topic's status when the deadline approaches
 const update = async () => {
   const topicInfo = currentTopic.value ?? {
     id: '',
@@ -115,10 +118,6 @@ const update = async () => {
   const topicRef = doc(db, 'topics', topicInfo.id)
   try {
     await updateDoc(topicRef, topicInfo as object)
-    alert.value = 'Cập nhật thành công'
-    setTimeout(() => {
-      alert.value = ''
-    }, 2000)
   } catch (e) {
     if (e instanceof Error) {
       console.error(e.message)
@@ -129,12 +128,8 @@ const form = reactive({
   link: '',
   title: ''
 })
-const titleRules = [
-  (value: string) => {
-    if (value !== '') return true
-    return 'Vui lòng nhập tiêu đề'
-  }
-]
+
+// validate link rules
 const linkRules = [
   (value: string) => {
     if (value === '' || !REG_URL_FORMAT.test(value)) {
@@ -150,6 +145,7 @@ const linkRules = [
   }
 ]
 
+// Check is account vote the option
 const checkAccountVoteOption = (option: IOption, account: IUser) => {
   for (const element of option.voteBy) {
     if (element.id === account.id) {
@@ -170,7 +166,7 @@ onMounted(async () => {
   const topicData = await getOptionsByTopicId(id.toString())
   options.value = topicData
   sortOptionByVotes()
-
+  // get account Id in localstorage and fetch data from firebase
   const accountId = localStorage.getItem('account_info')
   if (!accountId) {
     handleRouter.pushPath('/')
@@ -190,15 +186,11 @@ onMounted(async () => {
 })
 
 const handleAddTopic = async () => {
-  if (form.link && form.title) {
+  if (form.link) {
     await postNewOption(form.title, form.link, id.toString())
     options.value = await getOptionsByTopicId(id.toString())
     form.link = ''
     form.title = ''
-    alert.value = 'Tạo thành công'
-    setTimeout(() => {
-      alert.value = ''
-    }, 2000)
     sortOptionByVotes()
     if (currentTopic.value?.option && currentAccount.value) {
       options.value.forEach((option, index) => {
@@ -265,13 +257,12 @@ const handleChangeVote = (optionIndex: number) => {
   currentVoteOption.value = optionIndex
 }
 
+// Update data for option list
 const handleSubmitForm = async () => {
   try {
     const res = await voteOption(options.value)
     if (res) {
       showOverlay.value = !showOverlay.value
-      alertVote.value = 'Cập nhật thành công'
-      alertVoteType.value = 'success'
     }
   } catch (error) {
     showOverlay.value = !showOverlay.value
@@ -335,19 +326,19 @@ const handleSelectAddOption = () => {
             new Date((currentTopic?.date as any)?.seconds * 1000).toLocaleTimeString()
           }}
         </p>
-        <p class="font-weight-medium pr-2 pt-1">
-          <v-chip color="primary" label>
-            <v-icon start icon="mdi-clock-time-eight-outline"></v-icon>Deadline</v-chip
-          >
+        <p class="font-weight-medium pt-1">
+          <v-chip color="primary" label class="chip-with-icon">
+            <v-icon icon="mdi-clock-time-eight-outline"></v-icon>
+          </v-chip>
           <span class="text-red ml-1">{{ countdown }}</span>
         </p>
       </v-col>
       <v-divider></v-divider>
-      <v-col sm="8">
+      <v-col sm="12">
         <p>{{ currentTopic?.description }}</p></v-col
       >
 
-      <v-expansion-panels>
+      <v-expansion-panels v-if="currentTopic?.link">
         <v-expansion-panel>
           <v-expansion-panel-title
             expand-icon="mdi-plus"
@@ -372,7 +363,6 @@ const handleSelectAddOption = () => {
                 v-model="form.title"
                 label="Tiêu đề"
                 single-line
-                :rules="titleRules"
                 variant="outlined"
               ></v-text-field>
               <v-text-field

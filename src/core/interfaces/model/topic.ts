@@ -10,4 +10,5 @@ export interface ITopic {
   option?: boolean | null
   team?: string | null
   voteBy?: IUser[]
+  updatedAt?: Date
 }
