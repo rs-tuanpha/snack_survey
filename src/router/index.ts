@@ -13,7 +13,7 @@ const routes = [
         component: () => import('@/views/Home/index.vue')
       },
       {
-        path: 'topic',
+        path: 't9rqVgmIA{XZTG',
         name: 'topicAmin',
         component: () => import('@/views/Admin/index.vue')
       },
