@@ -132,21 +132,21 @@
             </v-radio-group>
             <div class="btn-wrapper">
               <v-btn
-              type="submit"
-              :block="!showAddBtn"
-              class="mt-2 bg-blue-darken-2"
-              :class="showAddBtn ? 'bg-green-darken-2 mr-2' : 'bg-blue-darken-2'"
-              @click="confirm(type)"
-              variant="elevated"
-              >{{ txtbtn }}</v-btn
-            >
-            <v-btn
-              v-if="showAddBtn"
-              prepend-icon="mdi-plus"
-              class="mt-2 bg-blue-darken-2"
-              @click="cancelUpdate"
-              >Thêm mới</v-btn
-            >
+                type="submit"
+                :block="!showAddBtn"
+                class="mt-2 bg-blue-darken-2"
+                :class="showAddBtn ? 'bg-green-darken-2 mr-2' : 'bg-blue-darken-2'"
+                @click="confirm(type)"
+                variant="elevated"
+                >{{ txtbtn }}</v-btn
+              >
+              <v-btn
+                v-if="showAddBtn"
+                prepend-icon="mdi-plus"
+                class="mt-2 bg-blue-darken-2"
+                @click="cancelUpdate"
+                >Thêm mới</v-btn
+              >
             </div>
           </v-form>
           <v-alert
@@ -346,6 +346,7 @@ const edit = async (topicVal: string) => {
   }
 }
 
+// Reducer for confirm dialog
 const handleTopic = async (type: string) => {
   switch (type) {
     case 'create':
@@ -423,7 +424,7 @@ const showOptionFrm = (itemId: string) => {
 
 const createOption = async () => {
   try {
-    if (option.title && option.link) {
+    if (option.link) {
       if (type.value !== 'updateOption') {
         alertOption.value = 'Tạo mới thành công'
         await postNewOption(option.title, option.link, topicId.value)

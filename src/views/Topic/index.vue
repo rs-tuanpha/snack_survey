@@ -181,15 +181,11 @@ onMounted(async () => {
 })
 
 const handleAddTopic = async () => {
-  if (form.link && form.title) {
+  if (form.link) {
     await postNewOption(form.title, form.link, id.toString())
     options.value = await getOptionsByTopicId(id.toString())
     form.link = ''
     form.title = ''
-    // alert.value = 'Tạo thành công'
-    // setTimeout(() => {
-    //   alert.value = ''
-    // }, 2000)
     sortOptionByVotes()
     if (currentTopic.value?.option && currentAccount.value) {
       options.value.forEach((option, index) => {
@@ -332,7 +328,7 @@ const onClickSeeMore = (option: IOption) => {
         <p>{{ currentTopic?.description }}</p></v-col
       >
 
-      <v-expansion-panels>
+      <v-expansion-panels v-if="currentTopic?.link">
         <v-expansion-panel>
           <v-expansion-panel-title expand-icon="mdi-plus" collapse-icon="mdi-minus">
             Thêm option
