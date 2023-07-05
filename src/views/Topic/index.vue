@@ -42,6 +42,7 @@ const showOverlay = ref<boolean>(false)
 const currentTime = ref(new Date().getTime())
 const listVoteBy = ref<IUser[]>([])
 const dialog = ref<boolean>(false)
+
 //timeRemaining variable calculating the remaining time
 const timeRemaining = computed(() => {
   if (currentTopic.value?.date) {
@@ -76,6 +77,7 @@ const timeRemaining = computed(() => {
     seconds: -1
   }
 })
+
 // countdown variable gets the time from timeRemaining and format it to show on screen
 const countdown = computed(() => {
   const { days, hours, minutes, seconds } = timeRemaining.value
@@ -99,6 +101,7 @@ const countdown = computed(() => {
 
   return parts.join(', ')
 })
+
 // update the topic's status when the deadline approaches
 const update = async () => {
   const topicInfo = currentTopic.value ?? {
@@ -126,6 +129,7 @@ const form = reactive({
   title: ''
 })
 
+// validate link rules
 const linkRules = [
   (value: string) => {
     if (value === '' || !REG_URL_FORMAT.test(value)) {
@@ -141,6 +145,7 @@ const linkRules = [
   }
 ]
 
+// Check is account vote the option
 const checkAccountVoteOption = (option: IOption, account: IUser) => {
   for (const element of option.voteBy) {
     if (element.id === account.id) {
@@ -161,7 +166,7 @@ onMounted(async () => {
   const topicData = await getOptionsByTopicId(id.toString())
   options.value = topicData
   sortOptionByVotes()
-
+  // get account Id in localstorage and fetch data from firebase
   const accountId = localStorage.getItem('account_info')
   if (!accountId) {
     handleRouter.pushPath('/')
@@ -181,15 +186,11 @@ onMounted(async () => {
 })
 
 const handleAddTopic = async () => {
-  if (form.link && form.title) {
+  if (form.link) {
     await postNewOption(form.title, form.link, id.toString())
     options.value = await getOptionsByTopicId(id.toString())
     form.link = ''
     form.title = ''
-    // alert.value = 'Tạo thành công'
-    // setTimeout(() => {
-    //   alert.value = ''
-    // }, 2000)
     sortOptionByVotes()
     if (currentTopic.value?.option && currentAccount.value) {
       options.value.forEach((option, index) => {
@@ -256,6 +257,7 @@ const handleChangeVote = (optionIndex: number) => {
   currentVoteOption.value = optionIndex
 }
 
+// Update data for option list
 const handleSubmitForm = async () => {
   try {
     const res = await voteOption(options.value)
@@ -332,7 +334,7 @@ const onClickSeeMore = (option: IOption) => {
         <p>{{ currentTopic?.description }}</p></v-col
       >
 
-      <v-expansion-panels>
+      <v-expansion-panels v-if="currentTopic?.link">
         <v-expansion-panel>
           <v-expansion-panel-title expand-icon="mdi-plus" collapse-icon="mdi-minus">
             Thêm option
