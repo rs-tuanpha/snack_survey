@@ -1,6 +1,7 @@
 <template>
   <v-container>
     <v-row justify="center">
+      <!-- Modal handle topic event -->
       <v-dialog v-model="dialog" persistent width="auto">
         <v-card min-height="120">
           <v-card-text> {{ text }}</v-card-text>
@@ -16,6 +17,7 @@
         </v-card>
       </v-dialog>
 
+      <!-- Modal error notification -->
       <v-dialog v-model="errorDialog" width="auto">
         <v-card>
           <v-alert type="error" title="Lỗi!" text="Đã có lỗi xảy ra!" variant="tonal"></v-alert>
@@ -25,11 +27,12 @@
         </v-card>
       </v-dialog>
 
+      <!-- Modal create option for topic -->
       <v-dialog v-model="addOptionDlg" max-width="400">
         <v-card class="pb-4">
           <v-card-text>
             <p class="font-weight-black text-center">Option</p>
-            <v-form fast-fail @submit.prevent>
+            <v-form @submit.prevent>
               <v-text-field v-model="option.title" label="Tiêu đề"></v-text-field>
               <v-text-field v-model="option.link" label="Link" :rules="linkRules"></v-text-field>
               <v-btn
@@ -56,6 +59,7 @@
         </v-card>
       </v-dialog>
 
+      <!-- Modal show list option of topic -->
       <v-dialog v-model="listOptionDlg" width="auto" min-width="400">
         <v-card class="">
           <v-list density="compact" v-if="options.length">
@@ -75,7 +79,7 @@
                   @click="deleteOption(item.id)"
                 ></v-icon>
               </template>
-              <v-list-item-title :v-text="item.title">{{ item.title }}</v-list-item-title>
+              <v-list-item-title :v-text="item.title">{{ item.link }}</v-list-item-title>
             </v-list-item>
           </v-list>
           <v-alert type="warning" v-else title="" text="Không có option nào được thêm!"></v-alert>
@@ -211,6 +215,7 @@
     </v-row>
   </v-container>
 </template>
+
 <script setup lang="ts">
 import { ref, watch, reactive } from 'vue'
 import VueDatePicker from '@vuepic/vue-datepicker'
@@ -228,6 +233,7 @@ import type { ITopic } from '@/core/interfaces/model/topic'
 import type { IOption } from '@/core/interfaces/model/option'
 import { getOptionsByTopicId, postNewOption, getOptionById } from '@/services/option.service'
 import { descriptionRules, linkRules, nameRules } from './Admin.validate'
+import { REG_URL_FORMAT } from '@/core/utils/regexValidate'
 
 // State
 const db = getFirestore()
@@ -422,12 +428,13 @@ const showOptionForm = (itemId: string) => {
   type.value = ''
 }
 
+// Create option for topic
 const createOption = async () => {
   try {
-    if (option.link) {
+    if (option.link !== '' && REG_URL_FORMAT.test(option.link)) {
       if (type.value !== 'updateOption') {
-        alertOption.value = 'Tạo mới thành công'
         await postNewOption(option.title, option.link, topicId.value)
+        alertOption.value = 'Tạo mới thành công'
       } else {
         const topicRef = doc(db, 'options', optionId.value)
         await updateDoc(topicRef, option)
