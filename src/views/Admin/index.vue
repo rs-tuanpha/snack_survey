@@ -232,7 +232,7 @@ import { getTopics } from '@/services/fb.topic.service'
 import type { ITopic } from '@/core/interfaces/model/topic'
 import type { IOption } from '@/core/interfaces/model/option'
 import { getOptionsByTopicId, postNewOption, getOptionById } from '@/services/option.service'
-import { descriptionRules, linkRules, nameRules } from './Admin.validate'
+import { descriptionRules, nameRules } from './Admin.validate'
 import { REG_URL_FORMAT } from '@/core/utils/regexValidate'
 
 // State
@@ -305,6 +305,22 @@ const confirm = (type: string) => {
   }
   dialog.value = true
 }
+
+// validate link rules
+const linkRules = [
+  async (value: string) => {
+    if (value === '' || !REG_URL_FORMAT.test(value)) {
+      return 'Vui lòng nhập link hợp lệ'
+    }
+    const options = await getOptionsByTopicId(topicId.value)
+    for (const option of options) {
+      if (option.link === value) {
+        return 'Link đã tồn tại, vui lòng nhập link khác'
+      }
+    }
+    return true
+  }
+]
 
 const confirmDelete = (topicVal: string) => {
   text.value = 'Bạn có muốn xóa topic không?'
@@ -431,7 +447,7 @@ const showOptionForm = (itemId: string) => {
 // Create option for topic
 const createOption = async () => {
   try {
-    if (option.link !== '' && REG_URL_FORMAT.test(option.link)) {
+    if ((await linkRules[0](option.link)) === true) {
       if (type.value !== 'updateOption') {
         await postNewOption(option.title, option.link, topicId.value)
         alertOption.value = 'Tạo mới thành công'

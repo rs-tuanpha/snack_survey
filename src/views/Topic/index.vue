@@ -1,3 +1,191 @@
+<template>
+  <v-container>
+    <v-sheet
+      v-if="!common.loading && !currentTopic?.status"
+      max-width="638"
+      width="100%"
+      class="mx-auto"
+    >
+      <v-alert variant="outlined" type="warning" prominent class="w-100 mb-2" border="top">
+        Topic này đã đóng, vui lòng trở lại sau
+      </v-alert>
+    </v-sheet>
+    <v-sheet
+      elevation="1"
+      max-width="638"
+      rounded
+      width="100%"
+      class="border-top-violet pa-3 mx-auto"
+      border
+    >
+      <h1 class="text-h4">{{ currentTopic?.name }}</h1>
+      <v-col sm="8">
+        <p class="mt-3 text-body-1">
+          Thời hạn:
+          {{
+            new Date((currentTopic?.date as any)?.seconds * 1000).toLocaleDateString() +
+            ' ' +
+            new Date((currentTopic?.date as any)?.seconds * 1000).toLocaleTimeString()
+          }}
+        </p>
+        <p class="font-weight-medium pt-1">
+          <v-chip color="primary" label class="chip-with-icon">
+            <v-icon icon="mdi-clock-time-eight-outline"></v-icon>
+          </v-chip>
+          <span class="text-red ml-1">{{ countdown }}</span>
+        </p>
+      </v-col>
+      <v-divider></v-divider>
+      <v-col sm="12">
+        <p>{{ currentTopic?.description }}</p></v-col
+      >
+
+      <v-expansion-panels v-if="currentTopic?.link">
+        <v-expansion-panel>
+          <v-expansion-panel-title
+            expand-icon="mdi-plus"
+            collapse-icon="mdi-minus"
+            @click="handleSelectAddOption"
+          >
+            Thêm option
+          </v-expansion-panel-title>
+          <v-expansion-panel-text>
+            <v-form @submit.prevent v-if="currentTopic?.link">
+              <v-alert
+                v-if="alert"
+                border="start"
+                variant="tonal"
+                closable
+                :color="colorAlert"
+                class="mb-2"
+              >
+                {{ alert }}</v-alert
+              >
+              <v-text-field
+                v-model="form.title"
+                label="Tiêu đề"
+                single-line
+                variant="outlined"
+              ></v-text-field>
+              <v-text-field
+                v-model="form.link"
+                label="Link"
+                single-line
+                :rules="linkRules"
+                variant="outlined"
+              ></v-text-field>
+              <v-btn
+                type="submit"
+                @click="handleAddOption"
+                class="mb-2 float-right"
+                color="blue-darken-2"
+                size="large"
+                variant="flat"
+                min-width="100"
+                >Thêm mới option</v-btn
+              >
+            </v-form>
+          </v-expansion-panel-text>
+        </v-expansion-panel>
+      </v-expansion-panels>
+    </v-sheet>
+    <v-sheet
+      elevation="1"
+      max-width="638"
+      rounded="lg"
+      width="100%"
+      class="mt-3 pa-3 mx-auto"
+      border
+    >
+      <v-alert
+        v-if="alertVote"
+        border="start"
+        variant="tonal"
+        closable
+        :type="alertVoteType"
+        class="mb-2"
+      >
+        {{ alertVote }}</v-alert
+      >
+      <ul>
+        <li
+          v-for="(option, index) in options"
+          :key="option.id"
+          class="h-120px d-flex align-center mb-2 px-4 py-2 elevation-1"
+        >
+          <v-avatar color="primary">
+            {{ option.voteBy.length }}
+          </v-avatar>
+          <div class="flex-grow-1 mx-4">
+            <p class="mb-1 text-h6">{{ option.title }}</p>
+            <a :href="option.link" target="_blank">{{ stringMinify(option.link, 50) }}</a>
+            <div class="d-flex mt-1">
+              <div v-for="user in option.voteBy.slice(0, 5)" :key="user.username" class="mr-1">
+                <v-avatar color="secondary" class="m-1" size="30">
+                  <v-img v-if="user.avatar" :src="user.avatar" :alt="user.username"></v-img>
+                  <span v-else>{{ user.username.charAt(0).toLocaleUpperCase() }}</span>
+                  <v-tooltip activator="parent" location="top">{{ user.username }}</v-tooltip>
+                </v-avatar>
+              </div>
+              <div v-if="option.voteBy.length > 5" class="mr-1">
+                <v-avatar
+                  color="light-blue-darken-2"
+                  class="m-1 cursor-pointer"
+                  size="30"
+                  @click.stop="onClickSeeMore(option)"
+                >
+                  {{ option.voteBy.length - 5 }}<sup>+</sup>
+                </v-avatar>
+                <v-tooltip activator="parent" location="top">{{
+                  `${option.voteBy.length - 5} others people`
+                }}</v-tooltip>
+              </div>
+            </div>
+          </div>
+          <div class="d-flex align-self-center">
+            <v-icon
+              icon="mdi-thumb-up"
+              size="x-large"
+              :color="
+                (
+                  currentTopic?.option
+                    ? currentVoteMultiOption.includes(index)
+                    : index === currentVoteOption
+                )
+                  ? 'red-darken-1'
+                  : 'blue-darken-3'
+              "
+              @click.prevent="handleChangeVote(index)"
+            ></v-icon>
+          </div>
+        </li>
+      </ul>
+    </v-sheet>
+    <div>
+      <v-overlay :model-value="showOverlay" class="align-center justify-center">
+        <v-progress-circular color="primary" indeterminate size="64"></v-progress-circular>
+      </v-overlay>
+    </div>
+  </v-container>
+  <v-dialog v-model="dialog" width="auto">
+    <v-card>
+      <v-card-title>Danh sách vote</v-card-title>
+      <v-divider></v-divider>
+      <v-card-text max-height="300px" class="pa-3">
+        <div v-for="user in listVoteBy" :key="user.username" class="mr-1">
+          <div class="mt-1">
+            <v-avatar color="secondary" class="m-1" size="30">
+              <v-img v-if="user.avatar" :src="user.avatar" :alt="user.username"></v-img>
+              <span v-else>{{ user.username.charAt(0).toLocaleUpperCase() }}</span>
+              <v-tooltip activator="parent" location="top">{{ user.username }}</v-tooltip>
+            </v-avatar>
+            <span class="ml-1">{{ user.username }}</span>
+          </div>
+        </div>
+      </v-card-text>
+    </v-card>
+  </v-dialog>
+</template>
 <script setup lang="ts">
 import { onMounted, reactive, ref, computed } from 'vue'
 import { doc, updateDoc } from 'firebase/firestore'
@@ -185,8 +373,8 @@ onMounted(async () => {
     : null
 })
 
-const handleAddTopic = async () => {
-  if (form.link) {
+const handleAddOption = async () => {
+  if (linkRules[0](form.link) === true) {
     await postNewOption(form.title, form.link, id.toString())
     options.value = await getOptionsByTopicId(id.toString())
     form.link = ''
@@ -295,195 +483,6 @@ const handleSelectAddOption = () => {
   form.title = ''
 }
 </script>
-
-<template>
-  <v-container>
-    <v-sheet
-      v-if="!common.loading && !currentTopic?.status"
-      max-width="638"
-      width="100%"
-      class="mx-auto"
-    >
-      <v-alert variant="outlined" type="warning" prominent class="w-100 mb-2" border="top">
-        Topic này đã đóng, vui lòng trở lại sau
-      </v-alert>
-    </v-sheet>
-    <v-sheet
-      elevation="1"
-      max-width="638"
-      rounded
-      width="100%"
-      class="border-top-violet pa-3 mx-auto"
-      border
-    >
-      <h1 class="text-h4">{{ currentTopic?.name }}</h1>
-      <v-col sm="8">
-        <p class="mt-3 text-body-1">
-          Thời hạn:
-          {{
-            new Date((currentTopic?.date as any)?.seconds * 1000).toLocaleDateString() +
-            ' ' +
-            new Date((currentTopic?.date as any)?.seconds * 1000).toLocaleTimeString()
-          }}
-        </p>
-        <p class="font-weight-medium pt-1">
-          <v-chip color="primary" label class="chip-with-icon">
-            <v-icon icon="mdi-clock-time-eight-outline"></v-icon>
-          </v-chip>
-          <span class="text-red ml-1">{{ countdown }}</span>
-        </p>
-      </v-col>
-      <v-divider></v-divider>
-      <v-col sm="12">
-        <p>{{ currentTopic?.description }}</p></v-col
-      >
-
-      <v-expansion-panels v-if="currentTopic?.link">
-        <v-expansion-panel>
-          <v-expansion-panel-title
-            expand-icon="mdi-plus"
-            collapse-icon="mdi-minus"
-            @click="handleSelectAddOption"
-          >
-            Thêm option
-          </v-expansion-panel-title>
-          <v-expansion-panel-text>
-            <v-form @submit.prevent v-if="currentTopic?.link">
-              <v-alert
-                v-if="alert"
-                border="start"
-                variant="tonal"
-                closable
-                :color="colorAlert"
-                class="mb-2"
-              >
-                {{ alert }}</v-alert
-              >
-              <v-text-field
-                v-model="form.title"
-                label="Tiêu đề"
-                single-line
-                variant="outlined"
-              ></v-text-field>
-              <v-text-field
-                v-model="form.link"
-                label="Link"
-                single-line
-                :rules="linkRules"
-                variant="outlined"
-              ></v-text-field>
-              <v-btn
-                type="submit"
-                @click="handleAddTopic"
-                class="mb-2 float-right"
-                color="blue-darken-2"
-                size="large"
-                variant="flat"
-                min-width="100"
-                >Thêm mới option</v-btn
-              >
-            </v-form>
-          </v-expansion-panel-text>
-        </v-expansion-panel>
-      </v-expansion-panels>
-    </v-sheet>
-    <v-sheet
-      elevation="1"
-      max-width="638"
-      rounded="lg"
-      width="100%"
-      class="mt-3 pa-3 mx-auto"
-      border
-    >
-      <v-alert
-        v-if="alertVote"
-        border="start"
-        variant="tonal"
-        closable
-        :type="alertVoteType"
-        class="mb-2"
-      >
-        {{ alertVote }}</v-alert
-      >
-      <ul>
-        <li
-          v-for="(option, index) in options"
-          :key="option.id"
-          class="h-120px d-flex align-center mb-2 px-4 py-2 elevation-1"
-        >
-          <v-avatar color="primary">
-            {{ option.voteBy.length }}
-          </v-avatar>
-          <div class="flex-grow-1 mx-4">
-            <p class="mb-1 text-h6">{{ option.title }}</p>
-            <a :href="option.link" target="_blank">{{ stringMinify(option.link, 50) }}</a>
-            <div class="d-flex mt-1">
-              <div v-for="user in option.voteBy.slice(0, 5)" :key="user.username" class="mr-1">
-                <v-avatar color="secondary" class="m-1" size="30">
-                  <v-img v-if="user.avatar" :src="user.avatar" :alt="user.username"></v-img>
-                  <span v-else>{{ user.username.charAt(0).toLocaleUpperCase() }}</span>
-                  <v-tooltip activator="parent" location="top">{{ user.username }}</v-tooltip>
-                </v-avatar>
-              </div>
-              <div v-if="option.voteBy.length > 5" class="mr-1">
-                <v-avatar
-                  color="light-blue-darken-2"
-                  class="m-1 cursor-pointer"
-                  size="30"
-                  @click.stop="onClickSeeMore(option)"
-                >
-                  {{ option.voteBy.length - 5 }}<sup>+</sup>
-                </v-avatar>
-                <v-tooltip activator="parent" location="top">{{
-                  `${option.voteBy.length - 5} others people`
-                }}</v-tooltip>
-              </div>
-            </div>
-          </div>
-          <div class="d-flex align-self-center">
-            <v-icon
-              icon="mdi-thumb-up"
-              size="x-large"
-              :color="
-                (
-                  currentTopic?.option
-                    ? currentVoteMultiOption.includes(index)
-                    : index === currentVoteOption
-                )
-                  ? 'red-darken-1'
-                  : 'blue-darken-3'
-              "
-              @click.prevent="handleChangeVote(index)"
-            ></v-icon>
-          </div>
-        </li>
-      </ul>
-    </v-sheet>
-    <div>
-      <v-overlay :model-value="showOverlay" class="align-center justify-center">
-        <v-progress-circular color="primary" indeterminate size="64"></v-progress-circular>
-      </v-overlay>
-    </div>
-  </v-container>
-  <v-dialog v-model="dialog" width="auto">
-    <v-card>
-      <v-card-title>Danh sách vote</v-card-title>
-      <v-divider></v-divider>
-      <v-card-text max-height="300px" class="pa-3">
-        <div v-for="user in listVoteBy" :key="user.username" class="mr-1">
-          <div class="mt-1">
-            <v-avatar color="secondary" class="m-1" size="30">
-              <v-img v-if="user.avatar" :src="user.avatar" :alt="user.username"></v-img>
-              <span v-else>{{ user.username.charAt(0).toLocaleUpperCase() }}</span>
-              <v-tooltip activator="parent" location="top">{{ user.username }}</v-tooltip>
-            </v-avatar>
-            <span class="ml-1">{{ user.username }}</span>
-          </div>
-        </div>
-      </v-card-text>
-    </v-card>
-  </v-dialog>
-</template>
 <style scoped lang="scss">
 @import './styles.scss';
 </style>
