@@ -130,7 +130,7 @@
               <v-chip color="primary" label
                 ><v-icon start icon="mdi-account-circle-outline"></v-icon>Team</v-chip
               >
-              <v-radio label="BE" value="BE"></v-radio>
+              <v-radio label="PHP" value="PHP"></v-radio>
               <v-radio label="FE" value="FE"></v-radio>
               <v-radio label="All" value="All"></v-radio>
             </v-radio-group>
@@ -173,16 +173,18 @@
           <v-table fixed-header :height="topics.length > 10 ? '400px' : ''">
             <thead>
               <tr>
-                <th class="text-left">STT</th>
-                <th class="text-left">Tên topic</th>
-                <th class="text-left">Trạng thái</th>
-                <th class="text-left" width="400">Tác vụ</th>
+                <th class="text-left" scope="col">STT</th>
+                <th class="text-left" scope="col">Tên topic</th>
+                <th class="text-left" scope="col">Team</th>
+                <th class="text-left" scope="col">Trạng thái</th>
+                <th class="text-left w-400" scope="col">Tác vụ</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="(item, index) in topics" :key="item.id">
                 <td>{{ index + 1 }}</td>
                 <td>{{ item.name }}</td>
+                <td>{{ item.team }}</td>
                 <td>{{ item.status === true ? 'Mở' : 'Đóng' }}</td>
                 <td>
                   <v-btn class="text-none w-auto ma-1" color="blue-darken-2" @click="edit(item.id)"
@@ -499,5 +501,8 @@ const showEdittingOption = async (id: string) => {
 }
 .btn-wrapper {
   text-align: center;
+}
+.w-400 {
+  width: 400px;
 }
 </style>
