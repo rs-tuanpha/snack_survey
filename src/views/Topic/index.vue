@@ -112,6 +112,7 @@
           v-for="(option, index) in options"
           :key="option.id"
           class="h-120px d-flex align-center mb-2 px-4 py-2 elevation-1"
+          v-memo="[options]"
         >
           <v-avatar color="primary">
             {{ option.voteBy.length }}
@@ -187,7 +188,7 @@
   </v-dialog>
 </template>
 <script setup lang="ts">
-import { onMounted, reactive, ref, computed } from 'vue'
+import { onMounted, reactive, ref, computed,watch } from 'vue'
 import { doc, updateDoc } from 'firebase/firestore'
 import { useDocument } from 'vuefire'
 import { db } from '@/plugins/firebase'
@@ -346,13 +347,14 @@ const checkAccountVoteOption = (option: IOption, account: IUser) => {
 const sortOptionByVotes = () => {
   options.value = options.value.sort((a, b) => (a?.voteBy.length < b?.voteBy.length ? 1 : -1))
 }
-
 onMounted(async () => {
   setInterval(() => {
     currentTime.value = new Date().getTime()
   }, 1000)
-  const topicData = await getOptionsByTopicId(id.toString())
-  options.value = topicData
+  // const topicData = 
+  options.value = await getOptionsByTopicId(id.toString())
+  // console.log(options.value);
+  
   sortOptionByVotes()
   // get account Id in localstorage and fetch data from firebase
   const accountId = localStorage.getItem('account_info')
@@ -363,18 +365,27 @@ onMounted(async () => {
   const userData = await getAccountById(accountId!)
   currentAccount.value = userData
   if (currentTopic.value?.option && userData) {
-    topicData.forEach((option, index) => {
+    options.value.forEach((option, index) => {
       checkAccountVoteOption(option, userData) && currentVoteMultiOption.value.push(index)
     })
     return
   }
   currentVoteOption.value = userData
-    ? topicData.findIndex((option) => checkAccountVoteOption(option, userData))
+    ? options.value.findIndex((option) => checkAccountVoteOption(option, userData))
     : null
 })
-
+const temp = computed(()=> common.getCount);
+watch(()=> temp.value,async ()=>{
+  options.value = await getOptionsByTopicId(id.toString())
+})
+watch(()=>options.value,()=>{
+  console.log('a');
+  
+  console.log('options.value', options.value);
+  
+}, {deep:true})
 const handleAddOption = async () => {
-  if (linkRules[0](form.link) === true) {
+  if (form.link) {
     await postNewOption(form.title, form.link, id.toString())
     options.value = await getOptionsByTopicId(id.toString())
     form.link = ''

@@ -7,7 +7,7 @@
           <v-card-text> {{ text }}</v-card-text>
           <v-card-actions>
             <v-spacer></v-spacer>
-            <v-btn class="text-none" color="red-darken-1" variant="flat" @click="dialog = false"
+            <v-btn class="text-none" color="red-darken-1" variant="flat" @click="dialog = false, type = prevType"
               >Không</v-btn
             >
             <v-btn class="text-none" color="blue-darken-2" variant="flat" @click="handleTopic(type)"
@@ -258,6 +258,7 @@ const errorDialog = ref<boolean>(false)
 const showAddBtn = ref<boolean>(false)
 const dialog = ref<boolean>(false)
 const type = ref<string>('create')
+const prevType = ref('create');
 const reset = ref<boolean>(false)
 const topicInfo: ITopic = reactive({
   id: '',
@@ -345,6 +346,7 @@ const confirmDelete = (topicVal: string) => {
 const cancelUpdate = () => {
   textBtn.value = 'Tạo mới'
   type.value = 'create'
+  prevType.value = 'create'
   showAddBtn.value = false
   dialog.value = false
   topicInfo.name = ''
@@ -372,6 +374,7 @@ const edit = async (topicVal: string) => {
     topicInfo.team = docSnap.data().team
     textBtn.value = 'Cập nhật'
     type.value = 'update'
+    prevType.value = 'update'
     showAddBtn.value = true
   } else {
     console.log('No such document!')
@@ -442,6 +445,8 @@ const deleteTopic = async () => {
     if (e instanceof Error) {
       console.error(e.message)
     }
+  } finally {
+    type.value = prevType.value
   }
 }
 
@@ -485,6 +490,8 @@ const showOptionList = async (itemId: string) => {
   topicId.value = itemId
   listOptionDlg.value = true
   options.value = await getOptionsByTopicId(itemId)
+  console.log('showoptionlist options', options.value);
+  
 }
 
 const deleteOption = async (optionId: string) => {
