@@ -172,6 +172,7 @@
                 <th class="text-left" scope="col">Tên topic</th>
                 <th class="text-left" scope="col">Team</th>
                 <th class="text-left" scope="col">Trạng thái</th>
+                <th class="text-left" scope="col">Deadline</th>
                 <th class="text-left w-400" scope="col">Tác vụ</th>
               </tr>
             </thead>
@@ -181,6 +182,13 @@
                 <td>{{ item.name }}</td>
                 <td>{{ item.team }}</td>
                 <td>{{ item.status === true ? 'Mở' : 'Đóng' }}</td>
+                <td>
+                  {{
+                    new Date((item?.date as any)?.seconds * 1000).toLocaleDateString() +
+                    ' ' +
+                    new Date((item?.date as any)?.seconds * 1000).toLocaleTimeString()
+                  }}
+                </td>
                 <td>
                   <v-btn
                     class="text-none w-auto ma-1"
