@@ -1,3 +1,4 @@
+import type { ETopicRequireField, ETopicTeam } from '@/core/constants/enum'
 import type { IUser } from './user'
 
 export interface ITopic {
@@ -7,8 +8,9 @@ export interface ITopic {
   date?: Date
   status?: boolean | null | string
   link?: boolean | null
+  requireField?: `${ETopicRequireField}`
   option?: boolean | null
-  team?: string | null
+  team?: `${ETopicTeam}`
   voteBy?: IUser[]
   updatedAt?: Date
 }

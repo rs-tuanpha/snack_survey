@@ -28,36 +28,19 @@
       </v-dialog>
 
       <!-- Modal create option for topic -->
-      <v-dialog v-model="addOptionDlg" max-width="400">
-        <v-card class="pb-4">
-          <v-card-text>
-            <p class="font-weight-black text-center">Option</p>
-            <v-form @submit.prevent>
-              <v-text-field v-model="option.title" label="Tiêu đề"></v-text-field>
-              <v-text-field v-model="option.link" label="Link" :rules="linkRules"></v-text-field>
-              <v-btn
-                type="submit"
-                block
-                class="mt-2 bg-blue-darken-2"
-                @click="createOption"
-                variant="elevated"
-              >
-                {{ txtOptionBtn }}</v-btn
-              >
-            </v-form>
-            <v-alert
-              v-if="alertOption"
-              border="start"
-              variant="tonal"
-              closable
-              :color="colorAlert"
-              class="mt-2"
-            >
-              {{ alertOption }}</v-alert
-            >
-          </v-card-text>
-        </v-card>
-      </v-dialog>
+      <modal-create-option
+        v-if="isShowModalCreateOption"
+        @on-close="isShowModalCreateOption = false"
+        :topicState="topicState"
+      />
+      <!-- Modal edit option -->
+      <modal-edit-option
+        v-if="isShowModalEditOption"
+        @on-close="handleCloseEditOptionDialog"
+        :option="optionState"
+        :optionList="options"
+        :topicState="topicState"
+      />
 
       <!-- Modal show list option of topic -->
       <v-dialog v-model="listOptionDlg" width="auto" min-width="400">
@@ -70,7 +53,7 @@
                   icon="mdi-circle-edit-outline"
                   color="green"
                   class="pl-0 ml-0"
-                  @click="showEdittingOption(item.id)"
+                  @click="handleEditOption({ ...item })"
                 ></v-icon>
                 <v-icon
                   icon="mdi-close"
@@ -90,9 +73,13 @@
         <v-sheet class="pa-2" border rounded>
           <p class="font-weight-black text-center">Topic</p>
           <v-form fast-fail @submit.prevent>
-            <v-text-field v-model="topicInfo.name" label="Tên" :rules="nameRules"></v-text-field>
             <v-text-field
-              v-model="topicInfo.description"
+              v-model="topicFormData.name"
+              label="Tên"
+              :rules="nameRules"
+            ></v-text-field>
+            <v-text-field
+              v-model="topicFormData.description"
               label="Mô tả"
               :rules="descriptionRules"
             ></v-text-field>
@@ -102,31 +89,39 @@
                   <v-icon start icon="mdi-clock-time-eight-outline"></v-icon>Deadline</v-chip
                 >
               </p>
-              <VueDatePicker v-model="topicInfo.date"></VueDatePicker>
+              <VueDatePicker v-model="topicFormData.date"></VueDatePicker>
             </div>
 
             <v-switch
-              v-model="topicInfo.status"
+              v-model="topicFormData.status"
               hide-details
               color="green-darken-1"
               inset
-              :label="`Trạng thái: ${topicInfo.status ? 'Mở' : 'Đóng'}`"
+              :label="`Trạng thái: ${topicFormData.status ? 'Mở' : 'Đóng'}`"
             ></v-switch>
             <v-switch
-              v-model="topicInfo.link"
+              v-model="topicFormData.link"
               hide-details
               color="green-darken-1"
               inset
-              :label="`Cho phép đóng góp link: ${topicInfo.link ? 'Có' : 'Không'}`"
+              :label="`Cho phép đóng góp link: ${topicFormData.link ? 'Có' : 'Không'}`"
             ></v-switch>
+            <v-radio-group inline v-if="topicFormData.link" v-model="topicFormData.requireField">
+              <v-chip color="primary" label
+                ><v-icon start icon="mdi-account-circle-outline"></v-icon>Require</v-chip
+              >
+              <v-radio label="title" value="title"></v-radio>
+              <v-radio label="link" value="link"></v-radio>
+              <v-radio label="all" value="all"></v-radio>
+            </v-radio-group>
             <v-switch
-              v-model="topicInfo.option"
+              v-model="topicFormData.option"
               hide-details
               color="green-darken-1"
               inset
-              :label="`Cho phép vote nhiều option: ${topicInfo.option ? 'Có' : 'Không'}`"
+              :label="`Cho phép vote nhiều option: ${topicFormData.option ? 'Có' : 'Không'}`"
             ></v-switch>
-            <v-radio-group inline v-model="topicInfo.team">
+            <v-radio-group inline v-model="topicFormData.team">
               <v-chip color="primary" label
                 ><v-icon start icon="mdi-account-circle-outline"></v-icon>Team</v-chip
               >
@@ -187,19 +182,22 @@
                 <td>{{ item.team }}</td>
                 <td>{{ item.status === true ? 'Mở' : 'Đóng' }}</td>
                 <td>
-                  <v-btn class="text-none w-auto ma-1" color="blue-darken-2" @click="edit(item.id)"
+                  <v-btn
+                    class="text-none w-auto ma-1"
+                    color="blue-darken-2"
+                    @click="handleEditTopic(item.id)"
                     >Sửa</v-btn
                   >
                   <v-btn
                     class="text-none w-auto ma-1"
                     color="red-darken-1"
-                    @click="confirmDelete(item.id)"
+                    @click="handleDeleteTopic(item.id)"
                     >Xóa</v-btn
                   >
                   <v-btn
                     class="text-none w-auto ma-1"
                     color="blue-darken-2"
-                    @click="showOptionForm(item.id)"
+                    @click="handleAddOption(item.id)"
                     >+Option</v-btn
                   >
                   <v-btn
@@ -219,26 +217,22 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, reactive } from 'vue'
+import { ref, watch, reactive, defineAsyncComponent } from 'vue'
 import VueDatePicker from '@vuepic/vue-datepicker'
-import {
-  getFirestore,
-  collection,
-  addDoc,
-  getDoc,
-  doc,
-  updateDoc,
-  deleteDoc
-} from 'firebase/firestore'
-import { getTopics } from '@/services/fb.topic.service'
+import { collection, addDoc, doc, updateDoc, deleteDoc } from 'firebase/firestore'
+import { db } from '@/plugins/firebase'
+import { getTopicById, getTopics } from '@/services/topic.service'
+import { getOptionsByTopicId } from '@/services/option.service'
+import { nameRules, descriptionRules } from './Admin.validate'
+import { initOption, initTopic, initTopicState } from './Admin.state'
 import type { ITopic } from '@/core/interfaces/model/topic'
 import type { IOption } from '@/core/interfaces/model/option'
-import { getOptionsByTopicId, postNewOption, getOptionById } from '@/services/option.service'
-import { descriptionRules, nameRules } from './Admin.validate'
-import { REG_URL_FORMAT } from '@/core/utils/regexValidate'
+import type { IState } from '@/core/interfaces/model/state'
+
+const ModalCreateOption = defineAsyncComponent(() => import('./ModalCreateOption.vue'))
+const ModalEditOption = defineAsyncComponent(() => import('./ModalEditOption.vue'))
 
 // State
-const db = getFirestore()
 const format = ref<string>('')
 const topics = getTopics
 const text = ref<string>('')
@@ -251,44 +245,33 @@ const showAddBtn = ref<boolean>(false)
 const dialog = ref<boolean>(false)
 const type = ref<string>('create')
 const reset = ref<boolean>(false)
-const topicInfo: ITopic = reactive({
-  id: '',
-  name: '',
-  description: '',
-  date: new Date(),
-  status: true,
-  link: true,
-  option: true,
-  team: 'All'
-})
 const colorAlert = ref<string>('green-darken-1')
-const addOptionDlg = ref<boolean>(false)
-const option = reactive({ title: '', link: '' })
-const alertOption = ref<string>('')
 const options = ref<IOption[]>([])
 const listOptionDlg = ref<boolean>(false)
-const txtOptionBtn = ref<string>('Tạo mới')
-const optionId = ref<string>('')
-format.value = `${(topicInfo.date as Date).getDate()}/${(topicInfo.date as Date).getMonth() + 1}/${(
-  topicInfo.date as Date
-).getFullYear()}`
+
+const isShowModalCreateOption = ref<boolean>(false)
+const isShowModalEditOption = ref<boolean>(false)
+
+const topicState = ref<IState<ITopic>>(initTopicState)
+const optionState = ref<IOption>(initOption)
+let topicFormData = reactive<ITopic>(initTopic)
 
 // Composition API
 watch(
-  () => topicInfo.date,
+  () => topicFormData.date,
   () => {
-    format.value = `${(topicInfo.date as Date).getDate()}/${
-      (topicInfo.date as Date).getMonth() + 1
-    }/${(topicInfo.date as Date).getFullYear()}`
+    format.value = `${(topicFormData.date as Date).getDate()}/${
+      (topicFormData.date as Date).getMonth() + 1
+    }/${(topicFormData.date as Date).getFullYear()}`
   }
 )
 
 // Methods
 const confirm = (type: string) => {
-  if (!topicInfo.name) {
+  if (!topicFormData.name) {
     return false
   }
-  if (topicInfo.date && topicInfo.date < new Date() && type === 'create') {
+  if (topicFormData.date && topicFormData.date < new Date() && type === 'create') {
     colorAlert.value = 'red-lighten-1'
     alert.value = 'Thời gian phải lớn hơn hiện tại'
     setTimeout(() => {
@@ -308,23 +291,17 @@ const confirm = (type: string) => {
   dialog.value = true
 }
 
-// validate link rules
-const linkRules = [
-  async (value: string) => {
-    if (value === '' || !REG_URL_FORMAT.test(value)) {
-      return 'Vui lòng nhập link hợp lệ'
-    }
-    const options = await getOptionsByTopicId(topicId.value)
-    for (const option of options) {
-      if (option.link === value) {
-        return 'Link đã tồn tại, vui lòng nhập link khác'
-      }
-    }
-    return true
-  }
-]
+/**
+ * update topic state and show create option modal
+ * @param {string} id
+ */
+const handleAddOption = async (id: string) => {
+  const topicData = await getTopicById(id)
+  topicState.value.data = topicData
+  isShowModalCreateOption.value = true
+}
 
-const confirmDelete = (topicVal: string) => {
+const handleDeleteTopic = (topicVal: string) => {
   text.value = 'Bạn có muốn xóa topic không?'
   dialog.value = true
   type.value = 'delete'
@@ -339,29 +316,17 @@ const cancelUpdate = () => {
   type.value = 'create'
   showAddBtn.value = false
   dialog.value = false
-  topicInfo.name = ''
-  topicInfo.description = ''
-  topicInfo.date = new Date()
-  topicInfo.status = true
-  topicInfo.link = true
-  topicInfo.option = true
-  topicInfo.team = 'All'
 }
 
-const edit = async (topicVal: string) => {
+const handleEditTopic = async (id: string) => {
   // Find the topic by topic id
-  const docRef = doc(db, 'topics', topicVal)
-  const docSnap = await getDoc(docRef)
-  if (docSnap.exists()) {
-    let dateString = docSnap.data().date
-    topicId.value = docSnap.id
-    topicInfo.name = docSnap.data().name
-    topicInfo.description = docSnap.data().description
-    topicInfo.date = dateString.toDate()
-    topicInfo.status = docSnap.data().status
-    topicInfo.link = docSnap.data().link
-    topicInfo.option = docSnap.data().option
-    topicInfo.team = docSnap.data().team
+  const topicData = await getTopicById(id)
+  if (topicData) {
+    topicId.value = topicData.id
+    topicFormData = {
+      ...topicData,
+      date: topicData?.date?.toDate()
+    }
     textBtn.value = 'Cập nhật'
     type.value = 'update'
     showAddBtn.value = true
@@ -375,16 +340,9 @@ const handleTopic = async (type: string) => {
   switch (type) {
     case 'create':
       try {
-        await addDoc(collection(db, 'topics'), { ...topicInfo, updatedAt: new Date() })
+        await addDoc(collection(db, 'topics'), { ...topicFormData, updatedAt: new Date() })
         dialog.value = false
         alert.value = 'Thêm mới thành công'
-        topicInfo.name = ''
-        topicInfo.description = ''
-        topicInfo.date = new Date()
-        topicInfo.status = true
-        topicInfo.link = true
-        topicInfo.option = true
-        topicInfo.team = 'All'
         setTimeout(() => {
           alert.value = ''
         }, 2000)
@@ -396,7 +354,7 @@ const handleTopic = async (type: string) => {
       }
       break
     case 'update':
-      update({ ...topicInfo, updatedAt: new Date() })
+      update({ ...topicFormData, updatedAt: new Date() })
       break
     case 'delete':
       deleteTopic()
@@ -437,46 +395,11 @@ const deleteTopic = async () => {
   }
 }
 
-const showOptionForm = (itemId: string) => {
-  addOptionDlg.value = true
-  topicId.value = itemId
-  option.title = ''
-  option.link = ''
-  txtOptionBtn.value = 'Tạo mới'
-  type.value = ''
-}
-
-// Create option for topic
-const createOption = async () => {
-  try {
-    if ((await linkRules[0](option.link)) === true) {
-      if (type.value !== 'updateOption') {
-        await postNewOption(option.title, option.link, topicId.value)
-        alertOption.value = 'Tạo mới thành công'
-      } else {
-        const topicRef = doc(db, 'options', optionId.value)
-        await updateDoc(topicRef, option)
-        alertOption.value = 'Cập nhật thành công'
-        options.value = await getOptionsByTopicId(topicId.value)
-      }
-      setTimeout(() => {
-        option.title = ''
-        option.link = ''
-        alertOption.value = ''
-        txtOptionBtn.value = 'Tạo mới'
-      }, 2000)
-    }
-  } catch (e) {
-    if (e instanceof Error) {
-      console.error(e.message)
-    }
-  }
-}
-
-const showOptionList = async (itemId: string) => {
-  topicId.value = itemId
+const showOptionList = async (id: string) => {
+  topicId.value = id
   listOptionDlg.value = true
-  options.value = await getOptionsByTopicId(itemId)
+  topicState.value.data = await getTopicById(id)
+  options.value = await getOptionsByTopicId(id)
 }
 
 const deleteOption = async (optionId: string) => {
@@ -484,14 +407,15 @@ const deleteOption = async (optionId: string) => {
   options.value = await getOptionsByTopicId(topicId.value)
 }
 
-const showEdittingOption = async (id: string) => {
-  addOptionDlg.value = true
-  const info = await getOptionById(id)
-  option.title = info.title
-  option.link = info.link
-  txtOptionBtn.value = 'Cập nhật'
-  type.value = 'updateOption'
-  optionId.value = id
+// open edit option modal
+const handleEditOption = async (option: IOption) => {
+  optionState.value = option
+  isShowModalEditOption.value = true
+}
+// close edit option modal
+const handleCloseEditOptionDialog = async () => {
+  options.value = await getOptionsByTopicId(topicId.value)
+  isShowModalEditOption.value = false
 }
 </script>
 <style scoped>

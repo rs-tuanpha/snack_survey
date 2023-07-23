@@ -39,55 +39,14 @@
       <v-col sm="12">
         <p>{{ currentTopic?.description }}</p></v-col
       >
-
-      <v-expansion-panels v-if="currentTopic?.link">
-        <v-expansion-panel>
-          <v-expansion-panel-title
-            expand-icon="mdi-plus"
-            collapse-icon="mdi-minus"
-            @click="handleSelectAddOption"
-          >
-            Thêm option
-          </v-expansion-panel-title>
-          <v-expansion-panel-text>
-            <v-form @submit.prevent v-if="currentTopic?.link">
-              <v-alert
-                v-if="alert"
-                border="start"
-                variant="tonal"
-                closable
-                :color="colorAlert"
-                class="mb-2"
-              >
-                {{ alert }}</v-alert
-              >
-              <v-text-field
-                v-model="form.title"
-                label="Tiêu đề"
-                single-line
-                variant="outlined"
-              ></v-text-field>
-              <v-text-field
-                v-model="form.link"
-                label="Link"
-                single-line
-                :rules="linkRules"
-                variant="outlined"
-              ></v-text-field>
-              <v-btn
-                type="submit"
-                @click="handleAddOption"
-                class="mb-2 float-right"
-                color="blue-darken-2"
-                size="large"
-                variant="flat"
-                min-width="100"
-                >Thêm mới option</v-btn
-              >
-            </v-form>
-          </v-expansion-panel-text>
-        </v-expansion-panel>
-      </v-expansion-panels>
+      <form-create-option
+        v-if="currentTopic?.link"
+        :id="(id as string)"
+        :options="options"
+        :topic-state="currentTopic"
+        @update-options-data="updateOptionsData"
+        @reload-options="handleReloadOptions"
+      />
     </v-sheet>
     <v-sheet
       elevation="1"
@@ -187,7 +146,7 @@
   </v-dialog>
 </template>
 <script setup lang="ts">
-import { onMounted, reactive, ref, computed } from 'vue'
+import { onMounted, reactive, ref, computed, defineAsyncComponent } from 'vue'
 import { doc, updateDoc } from 'firebase/firestore'
 import { useDocument } from 'vuefire'
 import { db } from '@/plugins/firebase'
@@ -200,6 +159,8 @@ import { useCommonStore } from '@/stores'
 import type { IOption } from '@/core/interfaces/model/option'
 import type { ITopic } from '@/core/interfaces/model/topic'
 import type { IUser } from '@/core/interfaces/model/user'
+
+const FormCreateOption = defineAsyncComponent(() => import('./FormCreateOption.vue'))
 
 /**
  * Common hook for all components
@@ -222,8 +183,6 @@ const currentTopic = useDocument<ITopic>(doc(db, 'topics', id.toString()))
 const options = ref<IOption[]>([])
 const currentVoteOption = ref<number | null>(null)
 const currentVoteMultiOption = ref<number[]>([])
-const alert = ref<string>('')
-const colorAlert = ref<string>('green-darken-1')
 const alertVote = ref<string>('')
 const alertVoteType = ref<string>('success')
 const showOverlay = ref<boolean>(false)
@@ -312,26 +271,6 @@ const update = async () => {
     }
   }
 }
-const form = reactive({
-  link: '',
-  title: ''
-})
-
-// validate link rules
-const linkRules = [
-  (value: string) => {
-    if (value === '' || !REG_URL_FORMAT.test(value)) {
-      return 'Vui lòng nhập link hợp lệ'
-    }
-
-    for (const option of options.value) {
-      if (option.link === value) {
-        return 'Link đã tồn tại, vui lòng nhập link khác'
-      }
-    }
-    return true
-  }
-]
 
 // Check is account vote the option
 const checkAccountVoteOption = (option: IOption, account: IUser) => {
@@ -373,27 +312,7 @@ onMounted(async () => {
     : null
 })
 
-const handleAddOption = async () => {
-  if (linkRules[0](form.link) === true) {
-    await postNewOption(form.title, form.link, id.toString())
-    options.value = await getOptionsByTopicId(id.toString())
-    form.link = ''
-    form.title = ''
-    sortOptionByVotes()
-    if (currentTopic.value?.option && currentAccount.value) {
-      options.value.forEach((option, index) => {
-        checkAccountVoteOption(option, currentAccount.value!) &&
-          currentVoteMultiOption.value.push(index)
-      })
-    } else {
-      currentVoteOption.value = options.value.findIndex((option) =>
-        checkAccountVoteOption(option, currentAccount.value!)
-      )
-    }
-    return
-  }
-}
-
+// change vote option
 const handleChangeVote = (optionIndex: number) => {
   if (!currentTopic.value?.status) {
     alertVote.value = 'Cập nhật thất bại'
@@ -445,6 +364,12 @@ const handleChangeVote = (optionIndex: number) => {
   currentVoteOption.value = optionIndex
 }
 
+// Reload options list
+const handleReloadOptions = async () => {
+  options.value = await getOptionsByTopicId(id.toString())
+  sortOptionByVotes()
+}
+
 // Update data for option list
 const handleSubmitForm = async () => {
   try {
@@ -474,13 +399,23 @@ const handleSubmitForm = async () => {
     )
   }
 }
+
+// update option voteBy list
+const updateOptionsData = () => {
+  if (currentTopic.value?.option && currentAccount.value) {
+    options.value.forEach((option, index) => {
+      checkAccountVoteOption(option, currentAccount.value!) &&
+        currentVoteMultiOption.value.push(index)
+    })
+  } else {
+    currentVoteOption.value = options.value.findIndex((option) =>
+      checkAccountVoteOption(option, currentAccount.value!)
+    )
+  }
+}
 const onClickSeeMore = (option: IOption) => {
   listVoteBy.value = option.voteBy
   dialog.value = true
-}
-const handleSelectAddOption = () => {
-  form.link = ''
-  form.title = ''
 }
 </script>
 <style scoped lang="scss">
