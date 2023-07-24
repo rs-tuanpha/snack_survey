@@ -80,6 +80,7 @@
                 ></v-icon>
               </template>
               <v-list-item-title :v-text="item.title">{{ item.link }}</v-list-item-title>
+              <v-list-item-subtitle :v-text="item.voteCount">Số vote: {{ item.voteCount }}</v-list-item-subtitle>
             </v-list-item>
           </v-list>
           <v-alert type="warning" v-else title="" text="Không có option nào được thêm!"></v-alert>
@@ -322,7 +323,7 @@ const linkRules = [
     if (value === '' || !REG_URL_FORMAT.test(value)) {
       return 'Vui lòng nhập link hợp lệ'
     }
-    const options = await getOptionsByTopicId(topicId.value)
+    const options = getOptions(topicId.value)
     for (const option of options) {
       if (option.link === value) {
         return 'Link đã tồn tại, vui lòng nhập link khác'
@@ -376,6 +377,21 @@ const edit = async (topicVal: string) => {
   } else {
     console.log('No such document!')
   }
+}
+
+const getOptions = (topicId: string, isSetOption: boolean = false) => {
+  const topicData =  getOptionsByTopicId(topicId)
+  let optionArr = [] as IOption[]
+  topicData.then(data => {
+    setTimeout(() => {
+      if (isSetOption) {
+        options.value = data.value as IOption[];
+      } else {
+        optionArr = data.value as IOption[];
+      }
+    }, 200);
+  })
+  return optionArr
 }
 
 // Reducer for confirm dialog
@@ -465,7 +481,7 @@ const createOption = async () => {
         const topicRef = doc(db, 'options', optionId.value)
         await updateDoc(topicRef, option)
         alertOption.value = 'Cập nhật thành công'
-        options.value = await getOptionsByTopicId(topicId.value)
+        options.value = getOptions(topicId.value, true)
       }
       setTimeout(() => {
         option.title = ''
@@ -484,12 +500,12 @@ const createOption = async () => {
 const showOptionList = async (itemId: string) => {
   topicId.value = itemId
   listOptionDlg.value = true
-  options.value = await getOptionsByTopicId(itemId)
+  options.value = getOptions(itemId, true)
 }
 
 const deleteOption = async (optionId: string) => {
   await deleteDoc(doc(db, 'options', optionId))
-  options.value = await getOptionsByTopicId(topicId.value)
+  options.value = getOptions(topicId.value, true)
 }
 
 const showEdittingOption = async (id: string) => {

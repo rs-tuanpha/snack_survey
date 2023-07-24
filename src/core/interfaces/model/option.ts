@@ -6,4 +6,5 @@ export interface IOption {
   link: string
   voteBy: IUser[]
   topicId: string
+  voteCount: number
 }

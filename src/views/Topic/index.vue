@@ -348,38 +348,41 @@ const sortOptionByVotes = () => {
 }
 
 onMounted(async () => {
+  const resOptions = getOptionsByTopicId(id.toString())
+  let topicData = [] as IOption[]
   setInterval(() => {
     currentTime.value = new Date().getTime()
   }, 1000)
-  const topicData = await getOptionsByTopicId(id.toString())
-  options.value = topicData
-  sortOptionByVotes()
   // get account Id in localstorage and fetch data from firebase
   const accountId = localStorage.getItem('account_info')
   if (!accountId) {
     handleRouter.pushPath('/')
     return
   }
-  const userData = await getAccountById(accountId!)
-  currentAccount.value = userData
-  if (currentTopic.value?.option && userData) {
-    topicData.forEach((option, index) => {
-      checkAccountVoteOption(option, userData) && currentVoteMultiOption.value.push(index)
-    })
-    return
-  }
-  currentVoteOption.value = userData
-    ? topicData.findIndex((option) => checkAccountVoteOption(option, userData))
-    : null
+  // wait 0.5s for the options to load then add voted options
+  resOptions.then(data => {
+    setTimeout(async () => {
+      options.value = data.value as IOption[];
+      topicData = data.value as IOption[];
+      const userData = await getAccountById(accountId!)
+      currentAccount.value = userData
+        if (currentTopic.value?.option && userData) {
+          topicData.forEach((option, index) => {
+            checkAccountVoteOption(option, userData) && currentVoteMultiOption.value.push(index)
+          })
+        }
+      currentVoteOption.value = userData
+        ? topicData.findIndex((option) => checkAccountVoteOption(option, userData))
+        : null
+    }, 500);
+  })
 })
 
 const handleAddOption = async () => {
   if (linkRules[0](form.link) === true) {
     await postNewOption(form.title, form.link, id.toString())
-    options.value = await getOptionsByTopicId(id.toString())
     form.link = ''
     form.title = ''
-    sortOptionByVotes()
     if (currentTopic.value?.option && currentAccount.value) {
       options.value.forEach((option, index) => {
         checkAccountVoteOption(option, currentAccount.value!) &&
@@ -416,9 +419,11 @@ const handleChangeVote = (optionIndex: number) => {
 
     if (isUnvote !== -1) {
       options.value[optionIndex].voteBy.splice(isUnvote, 1)
+      options.value[optionIndex].voteCount--
       currentVoteMultiOption.value.splice(currentVoteMultiOption.value.indexOf(optionIndex), 1)
     } else {
       options.value[optionIndex].voteBy.push(currentAccount.value!)
+      options.value[optionIndex].voteCount++
       currentVoteMultiOption.value.push(optionIndex)
     }
     handleSubmitForm()
@@ -460,18 +465,19 @@ const handleSubmitForm = async () => {
     setTimeout(() => {
       alertVote.value = ''
     }, 2000)
-    sortOptionByVotes()
     currentVoteMultiOption.value = []
 
-    if (currentTopic.value?.option && currentAccount.value) {
-      options.value.forEach((option, index) => {
-        checkAccountVoteOption(option, currentAccount.value!) &&
-          currentVoteMultiOption.value.push(index)
-      })
-    }
-    currentVoteOption.value = options.value.findIndex((option) =>
-      checkAccountVoteOption(option, currentAccount.value!)
-    )
+    setTimeout(() => {
+      if (currentTopic.value?.option && currentAccount.value) {
+        options.value.forEach((option, index) => {
+          checkAccountVoteOption(option, currentAccount.value!) &&
+            currentVoteMultiOption.value.push(index)
+        })
+      }
+      currentVoteOption.value = options.value.findIndex((option) =>
+        checkAccountVoteOption(option, currentAccount.value!)
+      )
+    }, 200)
   }
 }
 const onClickSeeMore = (option: IOption) => {
