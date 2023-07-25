@@ -63,9 +63,6 @@
                 ></v-icon>
               </template>
               <v-list-item-title :v-text="item.title">{{ item.link }}</v-list-item-title>
-              <v-list-item-subtitle :v-text="item.voteCount"
-                >Số vote: {{ item.voteCount }}</v-list-item-subtitle
-              >
             </v-list-item>
           </v-list>
           <v-alert type="warning" v-else title="" text="Không có option nào được thêm!"></v-alert>
