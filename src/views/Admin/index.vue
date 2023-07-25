@@ -63,6 +63,9 @@
                 ></v-icon>
               </template>
               <v-list-item-title :v-text="item.title">{{ item.link }}</v-list-item-title>
+              <v-list-item-subtitle :v-text="item.voteCount"
+                >Số vote: {{ item.voteCount }}</v-list-item-subtitle
+              >
             </v-list-item>
           </v-list>
           <v-alert type="warning" v-else title="" text="Không có option nào được thêm!"></v-alert>
@@ -343,6 +346,21 @@ const handleEditTopic = async (id: string) => {
   }
 }
 
+const getOptions = (topicId: string, isSetOption: boolean = false) => {
+  const topicData = getOptionsByTopicId(topicId)
+  let optionArr = [] as IOption[]
+  topicData.then((data) => {
+    setTimeout(() => {
+      if (isSetOption) {
+        options.value = data.value as IOption[]
+      } else {
+        optionArr = data.value as IOption[]
+      }
+    }, 200)
+  })
+  return optionArr
+}
+
 // Reducer for confirm dialog
 const handleTopic = async (type: string) => {
   switch (type) {
@@ -407,12 +425,12 @@ const showOptionList = async (id: string) => {
   topicId.value = id
   listOptionDlg.value = true
   topicState.value.data = await getTopicById(id)
-  options.value = await getOptionsByTopicId(id)
+  getOptions(id, true)
 }
 
 const deleteOption = async (optionId: string) => {
   await deleteDoc(doc(db, 'options', optionId))
-  options.value = await getOptionsByTopicId(topicId.value)
+  options.value = getOptions(topicId.value, true)
 }
 
 // open edit option modal
@@ -422,7 +440,7 @@ const handleEditOption = async (option: IOption) => {
 }
 // close edit option modal
 const handleCloseEditOptionDialog = async () => {
-  options.value = await getOptionsByTopicId(topicId.value)
+  getOptions(topicId.value, true)
   isShowModalEditOption.value = false
 }
 </script>

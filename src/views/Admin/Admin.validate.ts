@@ -1,5 +1,4 @@
 import { ETopicRequireField } from "@/core/constants/enum"
-import type { IOption } from "@/core/interfaces/model/option"
 import type { ITopic } from "@/core/interfaces/model/topic"
 import { REG_URL_FORMAT } from "@/core/utils/regexValidate"
 

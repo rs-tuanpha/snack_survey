@@ -106,7 +106,8 @@ const createOption = async () => {
       optionFormData &&
       handleValidateAddOption(optionFormData, props.topicState.data) === true
     ) {
-      const optionList = await getOptionsByTopicId(props.topicState.data.id)
+      const topicData = await getOptionsByTopicId(props.topicState.data.id)
+      const optionList = topicData.value as IOption[]
       optionList.forEach((option) => {
         if (option.title === optionFormData?.title || option.link === optionFormData?.link) {
           hasError.value = true

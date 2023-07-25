@@ -107,7 +107,8 @@ const updateOption = async () => {
       handleValidateAddOption(optionFormData, props.topicState.data) === true
     ) {
       await putOptionData(optionFormData)
-      emits('update:optionList', await getOptionsByTopicId(props.topicState.data.id))
+      const topicData = await getOptionsByTopicId(props.topicState.data.id)
+      emits('update:optionList', topicData.value)
       hasError.value = false
       message.value = 'Cập nhật thành công'
     }

@@ -1,20 +1,17 @@
 import type { IOption } from '@/core/interfaces/model/option'
 import { db } from '@/plugins/firebase'
-import { addDoc, collection, doc, getDocs, query, setDoc, where, getDoc, updateDoc } from 'firebase/firestore'
+import { addDoc, collection, doc, getDocs, query, setDoc, where, getDoc, orderBy, updateDoc } from 'firebase/firestore'
+import { useCollection } from 'vuefire'
 
 /**
- * Get list option by topic id
+ * Get list option by topic id and order by voteCount (descending)
  * @param {string} topicId
- * @return {Promise<IOption[]>}
+ * @return options collection with specific topicId
  */
-export const getOptionsByTopicId = async (topicId: string): Promise<IOption[]> => {
-  const snapshot = await getDocs(query(collection(db, 'options'), where('topicId', '==', topicId)))
-  if (snapshot.docs) {
-    const res = snapshot.docs.map((doc) => ({ ...doc.data(), id: doc.id })) as IOption[]
-    return res
-  } else {
-    return []
-  }
+export const getOptionsByTopicId = async (topicId: string) => {
+  const result = useCollection<IOption>(
+    query(collection(db, 'options'), where('topicId', '==', topicId), orderBy('voteCount', 'desc')))
+  return result
 }
 
 /**
@@ -40,7 +37,7 @@ export const getAllOptions = async (): Promise<IOption[]> => {
  */
 export const postNewOption = async (title: string, link: string, topicId: string) => {
   try {
-    const docref = await addDoc(collection(db, 'options'), { title, link, topicId, voteBy: [] })
+    const docref = await addDoc(collection(db, 'options'), { title, link, topicId, voteBy: [], voteCount: 0 })
     return docref.firestore.toJSON()
   } catch (e) {
     if (e instanceof Error) throw new Error(e.message)

@@ -111,7 +111,10 @@ const handleAddOption = async () => {
     if (props.topicState && handleValidateAddOption(form, props.topicState) === true) {
       let optionExited = false
       props.options.forEach((option) => {
-        if (option.title === form?.title || option.link === form?.link) {
+        if (
+          (option.title && option.title === form?.title) ||
+          (option.link && option.link === form?.link)
+        ) {
           hasError.value = true
           message.value = 'Option này đã tồn tại, vui lòng nhập lại!'
           optionExited = true

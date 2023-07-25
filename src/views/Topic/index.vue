@@ -69,34 +69,34 @@
       <ul>
         <li
           v-for="(option, index) in options"
-          :key="option.id"
+          :key="option?.id + index"
           class="h-120px d-flex align-center mb-2 px-4 py-2 elevation-1"
         >
           <v-avatar color="primary">
-            {{ option.voteBy.length }}
+            {{ option?.voteBy?.length }}
           </v-avatar>
           <div class="flex-grow-1 mx-4">
-            <p class="mb-1 text-h6">{{ option.title }}</p>
-            <a :href="option.link" target="_blank">{{ stringMinify(option.link, 50) }}</a>
+            <p class="mb-1 text-h6">{{ option?.title }}</p>
+            <a :href="option?.link" target="_blank">{{ stringMinify(option?.link, 50) }}</a>
             <div class="d-flex mt-1">
-              <div v-for="user in option.voteBy.slice(0, 5)" :key="user.username" class="mr-1">
+              <div v-for="user in option?.voteBy?.slice(0, 5)" :key="user.username" class="mr-1">
                 <v-avatar color="secondary" class="m-1" size="30">
                   <v-img v-if="user.avatar" :src="user.avatar" :alt="user.username"></v-img>
                   <span v-else>{{ user.username.charAt(0).toLocaleUpperCase() }}</span>
                   <v-tooltip activator="parent" location="top">{{ user.username }}</v-tooltip>
                 </v-avatar>
               </div>
-              <div v-if="option.voteBy.length > 5" class="mr-1">
+              <div v-if="option?.voteBy?.length > 5" class="mr-1">
                 <v-avatar
                   color="light-blue-darken-2"
                   class="m-1 cursor-pointer"
                   size="30"
                   @click.stop="onClickSeeMore(option)"
                 >
-                  {{ option.voteBy.length - 5 }}<sup>+</sup>
+                  {{ option?.voteBy?.length - 5 }}<sup>+</sup>
                 </v-avatar>
                 <v-tooltip activator="parent" location="top">{{
-                  `${option.voteBy.length - 5} others people`
+                  `${option?.voteBy?.length - 5} others people`
                 }}</v-tooltip>
               </div>
             </div>
@@ -146,13 +146,12 @@
   </v-dialog>
 </template>
 <script setup lang="ts">
-import { onMounted, reactive, ref, computed, defineAsyncComponent } from 'vue'
+import { onMounted, ref, computed, defineAsyncComponent } from 'vue'
 import { doc, updateDoc } from 'firebase/firestore'
 import { useDocument } from 'vuefire'
 import { db } from '@/plugins/firebase'
 import { getAccountById } from '@/services/account.service'
-import { getOptionsByTopicId, postNewOption, voteOption } from '@/services/option.service'
-import { REG_URL_FORMAT } from '@/core/utils/regexValidate'
+import { getOptionsByTopicId, voteOption } from '@/services/option.service'
 import stringMinify from '@/core/utils/stringMinify'
 import useCommon from '@/core/hooks/useCommon'
 import { useCommonStore } from '@/stores'
@@ -282,33 +281,30 @@ const checkAccountVoteOption = (option: IOption, account: IUser) => {
   return false
 }
 
-const sortOptionByVotes = () => {
-  options.value = options.value.sort((a, b) => (a?.voteBy.length < b?.voteBy.length ? 1 : -1))
-}
-
 onMounted(async () => {
   setInterval(() => {
     currentTime.value = new Date().getTime()
   }, 1000)
-  const topicData = await getOptionsByTopicId(id.toString())
-  options.value = topicData
-  sortOptionByVotes()
   // get account Id in localstorage and fetch data from firebase
   const accountId = localStorage.getItem('account_info')
   if (!accountId) {
     handleRouter.pushPath('/')
     return
   }
+  // wait 0.5s for the options to load then add voted options
+  const topicData = await getOptionsByTopicId(id.toString())
   const userData = await getAccountById(accountId!)
+
+  options.value = topicData.value as IOption[]
   currentAccount.value = userData
+
   if (currentTopic.value?.option && userData) {
-    topicData.forEach((option, index) => {
+    topicData.value.forEach((option, index) => {
       checkAccountVoteOption(option, userData) && currentVoteMultiOption.value.push(index)
     })
-    return
   }
   currentVoteOption.value = userData
-    ? topicData.findIndex((option) => checkAccountVoteOption(option, userData))
+    ? topicData.value.findIndex((option) => checkAccountVoteOption(option, userData))
     : null
 })
 
@@ -335,9 +331,11 @@ const handleChangeVote = (optionIndex: number) => {
 
     if (isUnvote !== -1) {
       options.value[optionIndex].voteBy.splice(isUnvote, 1)
+      options.value[optionIndex].voteCount--
       currentVoteMultiOption.value.splice(currentVoteMultiOption.value.indexOf(optionIndex), 1)
     } else {
       options.value[optionIndex].voteBy.push(currentAccount.value!)
+      options.value[optionIndex].voteCount++
       currentVoteMultiOption.value.push(optionIndex)
     }
     handleSubmitForm()
@@ -366,8 +364,10 @@ const handleChangeVote = (optionIndex: number) => {
 
 // Reload options list
 const handleReloadOptions = async () => {
-  options.value = await getOptionsByTopicId(id.toString())
-  sortOptionByVotes()
+  const topicData = await getOptionsByTopicId(id.toString())
+  setTimeout(() => {
+    options.value = topicData.value as IOption[]
+  }, 100)
 }
 
 // Update data for option list
@@ -385,23 +385,25 @@ const handleSubmitForm = async () => {
     setTimeout(() => {
       alertVote.value = ''
     }, 2000)
-    sortOptionByVotes()
     currentVoteMultiOption.value = []
 
-    if (currentTopic.value?.option && currentAccount.value) {
-      options.value.forEach((option, index) => {
-        checkAccountVoteOption(option, currentAccount.value!) &&
-          currentVoteMultiOption.value.push(index)
-      })
-    }
-    currentVoteOption.value = options.value.findIndex((option) =>
-      checkAccountVoteOption(option, currentAccount.value!)
-    )
+    setTimeout(() => {
+      if (currentTopic.value?.option && currentAccount.value) {
+        options.value.forEach((option, index) => {
+          checkAccountVoteOption(option, currentAccount.value!) &&
+            currentVoteMultiOption.value.push(index)
+        })
+      }
+      currentVoteOption.value = options.value.findIndex((option) =>
+        checkAccountVoteOption(option, currentAccount.value!)
+      )
+    }, 200)
   }
 }
 
 // update option voteBy list
 const updateOptionsData = () => {
+  console.log('options.value', options.value)
   if (currentTopic.value?.option && currentAccount.value) {
     options.value.forEach((option, index) => {
       checkAccountVoteOption(option, currentAccount.value!) &&
