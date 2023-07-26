@@ -227,7 +227,7 @@
 <script setup lang="ts">
 import { ref, watch, reactive, defineAsyncComponent } from 'vue'
 import VueDatePicker from '@vuepic/vue-datepicker'
-import { collection, addDoc, doc, updateDoc, deleteDoc } from 'firebase/firestore'
+import { collection, addDoc, doc, updateDoc, deleteDoc, Timestamp } from 'firebase/firestore'
 import { db } from '@/plugins/firebase'
 import { getTopicById, getTopics } from '@/services/topic.service'
 import { getOptionsByTopicId } from '@/services/option.service'
@@ -333,7 +333,7 @@ const handleEditTopic = async (id: string) => {
     topicId.value = topicData.id
     topicFormData = {
       ...topicData,
-      date: topicData?.date?.toDate()
+      date: Timestamp.fromDate(topicData?.date!).toDate()
     }
     textBtn.value = 'Cập nhật'
     type.value = 'update'
