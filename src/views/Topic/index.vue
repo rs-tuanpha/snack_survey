@@ -1,5 +1,16 @@
 <template>
   <v-container>
+    <v-row v-if="currentAccount" align="center" class="spacer" no-gutters justify="center">
+      <v-col sm="12" md="10" lg="8" align="center">
+        <v-avatar size="36px" :icon="currentAccount.avatar !== '' ? '' : 'mdi-account-circle'">
+          <v-img alt="Avatar" :src="currentAccount.avatar"></v-img>
+        </v-avatar>
+        <i> Tài khoản: </i><strong>{{ currentAccount.username }}</strong>
+        <v-btn class="ma-2 logout-btn" color="red" @click="logout">
+          <v-icon icon="mdi-logout-variant"></v-icon>
+        </v-btn>
+      </v-col>
+    </v-row>
     <v-sheet
       v-if="!common.loading && !currentTopic?.status"
       max-width="638"
@@ -424,6 +435,11 @@ const updateOptionsData = () => {
 const onClickSeeMore = (option: IOption) => {
   listVoteBy.value = option.voteBy
   dialog.value = true
+}
+const logout = () => {
+  currentAccount.value = null
+  localStorage.clear()
+  handleRouter.pushPath('/')
 }
 </script>
 <style scoped lang="scss">
