@@ -27,10 +27,5 @@ export const initOption: IOption = {
     link: '',
     voteBy: [],
     topicId: '',
-}
-
-export const initOptionState: IState<IOption> = {
-    hasError: false,
-    data: undefined,
-    message: ""
+    voteCount: 0,
 }
