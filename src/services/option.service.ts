@@ -1,6 +1,6 @@
 import type { IOption } from '@/core/interfaces/model/option'
 import { db } from '@/plugins/firebase'
-import { addDoc, collection, doc, getDocs, query, setDoc, where, getDoc, orderBy } from 'firebase/firestore'
+import { addDoc, collection, doc, getDocs, query, setDoc, where, getDoc, orderBy, updateDoc } from 'firebase/firestore'
 import { useCollection } from 'vuefire'
 
 /**
@@ -9,7 +9,7 @@ import { useCollection } from 'vuefire'
  * @return options collection with specific topicId
  */
 export const getOptionsByTopicId = async (topicId: string) => {
-  const result = useCollection(
+  const result = useCollection<IOption>(
     query(collection(db, 'options'), where('topicId', '==', topicId), orderBy('voteCount', 'desc')))
   return result
 }
@@ -57,7 +57,20 @@ export const voteOption = async (newOptionList: IOption[]) => {
   }
 }
 
+/**
+ * get option by id from firebase
+ */
 export const getOptionById = async (optionId: string): Promise<IOption> => {
   const docSnap = await getDoc(doc(db, "options", optionId));
   return docSnap.data() as IOption;
+}
+
+/**
+ * update option data to firebase
+ * @param {IOption} option 
+ */
+export const putOptionData = async (option: IOption) => {
+  console.log('option', option)
+  const topicRef = doc(db, 'options', option.id)
+  return await updateDoc(topicRef, {...option})
 }

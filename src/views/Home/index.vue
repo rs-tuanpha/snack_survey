@@ -88,8 +88,8 @@
 </template>
 <script setup lang="ts">
 import { onMounted, ref, reactive } from 'vue'
-import { getAccounts } from '@/services/fb.account.service'
-import { getOpenTopicList } from '@/services/fb.topic.service'
+import { getAccounts } from '@/services/account.service'
+import { getOpenTopicList } from '@/services/topic.service'
 import { getAllOptions } from '@/services/option.service'
 import type { ITopic } from '@/core/interfaces/model/topic'
 import type { IOption } from '@/core/interfaces/model/option'
@@ -106,8 +106,11 @@ const error = ref<boolean>(false)
 const dialog = ref<boolean>(false)
 const message = ref<string>('')
 const alert = ref<boolean>(false)
-const accountInfo: { username: string | null; avatar: string | null; team: string | null } =
-  reactive({ username: '', avatar: '', team: '' })
+const accountInfo: {
+  username?: string
+  avatar?: string
+  team?: string
+} = reactive({ username: '', avatar: '', team: '' })
 const listVoteBy = ref<IUser[]>([])
 // Check existence of the account
 const login = async () => {
@@ -124,10 +127,10 @@ const login = async () => {
       accountInfo.avatar = getAccounts.value[item].avatar
       accountInfo.username = getAccounts.value[item].username
       accountInfo.team = getAccounts.value[item].team
-      localStorage.setItem('account_avatar', getAccounts.value[item].avatar)
-      localStorage.setItem('account_username', getAccounts.value[item].username)
-      localStorage.setItem('account_team', getAccounts.value[item].team)
-      topics.value = await getOpenTopicList(getAccounts.value[item].team)
+      localStorage.setItem('account_avatar', getAccounts.value[item].avatar ?? '')
+      localStorage.setItem('account_username', getAccounts.value[item].username ?? '')
+      localStorage.setItem('account_team', getAccounts.value[item].team ?? '')
+      topics.value = await getOpenTopicList(getAccounts.value[item].team ?? '')
       if (topics.value.length === 0) {
         alert.value = true
       }
@@ -144,9 +147,9 @@ onMounted(async () => {
       alert.value = true
     }
     getTopicOptions()
-    accountInfo.avatar = localStorage.getItem('account_avatar')
-    accountInfo.username = localStorage.getItem('account_username')
-    accountInfo.team = localStorage.getItem('account_team')
+    accountInfo.avatar = localStorage.getItem('account_avatar') ?? ''
+    accountInfo.username = localStorage.getItem('account_username') ?? ''
+    accountInfo.team = localStorage.getItem('account_team') ?? ''
   }
 })
 

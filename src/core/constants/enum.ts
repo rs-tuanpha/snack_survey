@@ -11,3 +11,22 @@ export enum EStatusCode {
   NOT_FOUND = 404,
   INTERNAL_SERVER_ERROR = 500
 }
+
+export enum ETopicTeam {
+  FE = 'FE',
+  BE = 'BE',
+  ALL = 'ALL'
+}
+
+export enum ETopicRequireField {
+  TITLE = 'title',
+  LINK = 'link',
+  ALL = 'all'
+}
+
+export enum ENotificationColor {
+  ERROR = 'red-lighten-1',
+  SUCCESS = 'green-darken-1'
+}
+
+
