@@ -227,7 +227,7 @@
 <script setup lang="ts">
 import { ref, watch, reactive, defineAsyncComponent } from 'vue'
 import VueDatePicker from '@vuepic/vue-datepicker'
-import { collection, addDoc, doc, updateDoc, deleteDoc, Timestamp } from 'firebase/firestore'
+import { collection, addDoc, doc, updateDoc, deleteDoc } from 'firebase/firestore'
 import { db } from '@/plugins/firebase'
 import { getTopicById, getTopics } from '@/services/topic.service'
 import { getOptionsByTopicId } from '@/services/option.service'
@@ -259,9 +259,9 @@ const listOptionDlg = ref<boolean>(false)
 const isShowModalCreateOption = ref<boolean>(false)
 const isShowModalEditOption = ref<boolean>(false)
 
-const topicState = ref<IState<ITopic>>(initTopicState)
+const topicState = ref<IState<ITopic>>({ ...initTopicState })
 const optionState = ref<IOption>(initOption)
-const topicFormData = reactive<ITopic>(initTopic)
+const topicFormData = reactive<ITopic>({ ...initTopic })
 
 // Composition API
 watch(
@@ -323,6 +323,17 @@ const cancelUpdate = () => {
   type.value = 'create'
   showAddBtn.value = false
   dialog.value = false
+  topicId.value = initTopic.id
+  topicFormData.id = initTopic.id
+  topicFormData.name = initTopic.name
+  topicFormData.description = initTopic.description
+  topicFormData.status = initTopic.status
+  topicFormData.link = initTopic.link
+  topicFormData.option = initTopic.option
+  topicFormData.team = initTopic.team
+  topicFormData.requireField = initTopic.requireField
+  topicFormData.date = initTopic.date
+  console.log('topicFormData :>> ', topicFormData)
 }
 
 const handleEditTopic = async (id: string) => {
@@ -339,6 +350,7 @@ const handleEditTopic = async (id: string) => {
     topicFormData.team = topicData.team
     topicFormData.requireField = topicData.requireField
     topicFormData.date = topicData?.date.toDate()
+    topicFormData.updatedAt = new Date()
 
     textBtn.value = 'Cập nhật'
     type.value = 'update'
