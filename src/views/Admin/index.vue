@@ -333,7 +333,7 @@ const handleEditTopic = async (id: string) => {
     topicId.value = topicData.id
     topicFormData = {
       ...topicData,
-      date: Timestamp.fromDate(topicData?.date!).toDate()
+      date: Timestamp.fromDate(new Date(topicData?.date!)).toDate()
     }
     textBtn.value = 'Cập nhật'
     type.value = 'update'
