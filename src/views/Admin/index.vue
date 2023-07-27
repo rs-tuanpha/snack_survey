@@ -236,6 +236,7 @@ import { initOption, initTopic, initTopicState } from './Admin.state'
 import type { ITopic } from '@/core/interfaces/model/topic'
 import type { IOption } from '@/core/interfaces/model/option'
 import type { IState } from '@/core/interfaces/model/state'
+import { mappingObject } from '@/core/utils/mappingObject'
 
 const ModalCreateOption = defineAsyncComponent(() => import('./ModalCreateOption.vue'))
 const ModalEditOption = defineAsyncComponent(() => import('./ModalEditOption.vue'))
@@ -324,16 +325,9 @@ const cancelUpdate = () => {
   showAddBtn.value = false
   dialog.value = false
   topicId.value = initTopic.id
-  topicFormData.id = initTopic.id
-  topicFormData.name = initTopic.name
-  topicFormData.description = initTopic.description
-  topicFormData.status = initTopic.status
-  topicFormData.link = initTopic.link
-  topicFormData.option = initTopic.option
-  topicFormData.team = initTopic.team
-  topicFormData.requireField = initTopic.requireField
-  topicFormData.date = initTopic.date
-  console.log('topicFormData :>> ', topicFormData)
+  mappingObject(topicFormData, {
+    ...initTopic
+  })
 }
 
 const handleEditTopic = async (id: string) => {
@@ -341,16 +335,11 @@ const handleEditTopic = async (id: string) => {
   const topicData = await getTopicById(id)
   if (topicData?.name) {
     topicId.value = topicData.id
-    topicFormData.id = topicData.id
-    topicFormData.name = topicData.name
-    topicFormData.description = topicData.description
-    topicFormData.status = topicData.status
-    topicFormData.link = topicData.link
-    topicFormData.option = topicData.option
-    topicFormData.team = topicData.team
-    topicFormData.requireField = topicData.requireField
-    topicFormData.date = topicData?.date.toDate()
-    topicFormData.updatedAt = new Date()
+    mappingObject(topicFormData, {
+      ...topicData,
+      date: topicData?.date.toDate(),
+      updatedAt: new Date()
+    })
 
     textBtn.value = 'Cập nhật'
     type.value = 'update'
