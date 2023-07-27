@@ -89,7 +89,7 @@
                   <v-icon start icon="mdi-clock-time-eight-outline"></v-icon>Deadline</v-chip
                 >
               </p>
-              <VueDatePicker v-model="topicFormData.date"></VueDatePicker>
+              <vue-date-picker v-model="topicFormData.date"></vue-date-picker>
             </div>
 
             <v-switch
@@ -256,13 +256,12 @@ const reset = ref<boolean>(false)
 const colorAlert = ref<string>('green-darken-1')
 const options = ref<IOption[]>([])
 const listOptionDlg = ref<boolean>(false)
-
 const isShowModalCreateOption = ref<boolean>(false)
 const isShowModalEditOption = ref<boolean>(false)
 
 const topicState = ref<IState<ITopic>>(initTopicState)
 const optionState = ref<IOption>(initOption)
-let topicFormData = reactive<ITopic>(initTopic)
+const topicFormData = reactive<ITopic>(initTopic)
 
 // Composition API
 watch(
@@ -329,12 +328,18 @@ const cancelUpdate = () => {
 const handleEditTopic = async (id: string) => {
   // Find the topic by topic id
   const topicData = await getTopicById(id)
-  if (topicData) {
+  if (topicData?.name) {
     topicId.value = topicData.id
-    topicFormData = {
-      ...topicData,
-      date: Timestamp.fromDate(topicData?.date!).toDate()
-    }
+    topicFormData.id = topicData.id
+    topicFormData.name = topicData.name
+    topicFormData.description = topicData.description
+    topicFormData.status = topicData.status
+    topicFormData.link = topicData.link
+    topicFormData.option = topicData.option
+    topicFormData.team = topicData.team
+    topicFormData.requireField = topicData.requireField
+    topicFormData.date = topicData?.date.toDate()
+
     textBtn.value = 'Cập nhật'
     type.value = 'update'
     showAddBtn.value = true
