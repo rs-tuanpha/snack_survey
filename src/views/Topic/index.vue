@@ -196,6 +196,7 @@ const timeRemaining = computed(() => {
       new Date((currentTopic.value?.date as any)?.seconds * 1000).getTime() - currentTime.value
     if (difference <= 0) {
       update()
+      handleRouter.pushPath('/')
       return {
         days: 0,
         hours: 0,
@@ -261,6 +262,7 @@ const update = async () => {
     team: 'All'
   }
   topicInfo.status = false
+  topicInfo.link = false
   const topicRef = doc(db, 'topics', topicInfo.id)
   try {
     await updateDoc(topicRef, topicInfo as object)
