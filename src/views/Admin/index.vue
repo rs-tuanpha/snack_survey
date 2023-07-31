@@ -53,7 +53,7 @@
                   icon="mdi-circle-edit-outline"
                   color="green"
                   class="pl-0 ml-0"
-                  @click="handleEditOption({ ...item })"
+                  @click="handleEditOption({ ...item, id: item.id })"
                 ></v-icon>
                 <v-icon
                   icon="mdi-close"
