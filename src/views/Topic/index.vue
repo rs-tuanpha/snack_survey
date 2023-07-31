@@ -403,7 +403,6 @@ const handleSubmitForm = async () => {
 
 // update option voteBy list
 const updateOptionsData = () => {
-  console.log('options.value', options.value)
   if (currentTopic.value?.option && currentAccount.value) {
     options.value.forEach((option, index) => {
       checkAccountVoteOption(option, currentAccount.value!) &&

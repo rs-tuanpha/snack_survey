@@ -53,7 +53,7 @@
                   icon="mdi-circle-edit-outline"
                   color="green"
                   class="pl-0 ml-0"
-                  @click="handleEditOption({ ...item })"
+                  @click="handleEditOption({ ...item, id: item.id })"
                 ></v-icon>
                 <v-icon
                   icon="mdi-close"
@@ -89,7 +89,7 @@
                   <v-icon start icon="mdi-clock-time-eight-outline"></v-icon>Deadline</v-chip
                 >
               </p>
-              <VueDatePicker v-model="topicFormData.date"></VueDatePicker>
+              <vue-date-picker v-model="topicFormData.date"></vue-date-picker>
             </div>
 
             <v-switch
@@ -227,7 +227,7 @@
 <script setup lang="ts">
 import { ref, watch, reactive, defineAsyncComponent } from 'vue'
 import VueDatePicker from '@vuepic/vue-datepicker'
-import { collection, addDoc, doc, updateDoc, deleteDoc, Timestamp } from 'firebase/firestore'
+import { collection, addDoc, doc, updateDoc, deleteDoc } from 'firebase/firestore'
 import { db } from '@/plugins/firebase'
 import { getTopicById, getTopics } from '@/services/topic.service'
 import { getOptionsByTopicId } from '@/services/option.service'
@@ -236,6 +236,7 @@ import { initOption, initTopic, initTopicState } from './Admin.state'
 import type { ITopic } from '@/core/interfaces/model/topic'
 import type { IOption } from '@/core/interfaces/model/option'
 import type { IState } from '@/core/interfaces/model/state'
+import { mappingObject } from '@/core/utils/mappingObject'
 
 const ModalCreateOption = defineAsyncComponent(() => import('./ModalCreateOption.vue'))
 const ModalEditOption = defineAsyncComponent(() => import('./ModalEditOption.vue'))
@@ -256,13 +257,12 @@ const reset = ref<boolean>(false)
 const colorAlert = ref<string>('green-darken-1')
 const options = ref<IOption[]>([])
 const listOptionDlg = ref<boolean>(false)
-
 const isShowModalCreateOption = ref<boolean>(false)
 const isShowModalEditOption = ref<boolean>(false)
 
-const topicState = ref<IState<ITopic>>(initTopicState)
+const topicState = ref<IState<ITopic>>({ ...initTopicState })
 const optionState = ref<IOption>(initOption)
-let topicFormData = reactive<ITopic>(initTopic)
+const topicFormData = reactive<ITopic>({ ...initTopic })
 
 // Composition API
 watch(
@@ -324,17 +324,23 @@ const cancelUpdate = () => {
   type.value = 'create'
   showAddBtn.value = false
   dialog.value = false
+  topicId.value = initTopic.id
+  mappingObject(topicFormData, {
+    ...initTopic
+  })
 }
 
 const handleEditTopic = async (id: string) => {
   // Find the topic by topic id
   const topicData = await getTopicById(id)
-  if (topicData) {
+  if (topicData?.name) {
     topicId.value = topicData.id
-    topicFormData = {
+    mappingObject(topicFormData, {
       ...topicData,
-      date: Timestamp.fromDate(new Date(topicData?.date!)).toDate()
-    }
+      date: topicData?.date.toDate(),
+      updatedAt: new Date()
+    })
+
     textBtn.value = 'Cập nhật'
     type.value = 'update'
     showAddBtn.value = true
