@@ -337,7 +337,6 @@ const handleEditTopic = async (id: string) => {
     topicId.value = topicData.id
     mappingObject(topicFormData, {
       ...topicData,
-      date: topicData?.date.toDate(),
       updatedAt: new Date()
     })
 
