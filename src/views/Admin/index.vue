@@ -65,6 +65,7 @@
               <v-list-item-title :v-text="item.title">{{
                 item.link || item.title
               }}</v-list-item-title>
+              <v-list-item-subtitle :v-text="item.voteCount">Số vote: {{ item.voteCount }}</v-list-item-subtitle>
             </v-list-item>
           </v-list>
           <v-alert type="warning" v-else title="" text="Không có option nào được thêm!"></v-alert>
@@ -350,18 +351,16 @@ const handleEditTopic = async (id: string) => {
   }
 }
 
-const getOptions = (topicId: string, isSetOption: boolean = false) => {
-  const topicData = getOptionsByTopicId(topicId)
+const getOptions = async (topicId: string, isSetOption: boolean = false) => {
+  const topicData = await getOptionsByTopicId(topicId)
   let optionArr = [] as IOption[]
-  topicData.then((data) => {
-    setTimeout(() => {
-      if (isSetOption) {
-        options.value = data.value as IOption[]
-      } else {
-        optionArr = data.value as IOption[]
-      }
-    }, 200)
-  })
+  setTimeout(() => {
+    if (isSetOption) {
+      options.value = topicData.value as IOption[]
+    } else {
+      optionArr = topicData.value as IOption[]
+    }
+  }, 200)
   return optionArr
 }
 
@@ -429,12 +428,12 @@ const showOptionList = async (id: string) => {
   topicId.value = id
   listOptionDlg.value = true
   topicState.value.data = await getTopicById(id)
-  getOptions(id, true)
+  await getOptions(id, true)
 }
 
 const deleteOption = async (optionId: string) => {
   await deleteDoc(doc(db, 'options', optionId))
-  options.value = getOptions(topicId.value, true)
+  options.value = await getOptions(topicId.value, true)
 }
 
 // open edit option modal
@@ -444,7 +443,7 @@ const handleEditOption = async (option: IOption) => {
 }
 // close edit option modal
 const handleCloseEditOptionDialog = async () => {
-  getOptions(topicId.value, true)
+  await getOptions(topicId.value, true)
   isShowModalEditOption.value = false
 }
 </script>
