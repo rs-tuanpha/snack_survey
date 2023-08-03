@@ -425,10 +425,10 @@ const deleteTopic = async () => {
 }
 
 const showOptionList = async (id: string) => {
+  await getOptions(id, true)
   topicId.value = id
   listOptionDlg.value = true
   topicState.value.data = await getTopicById(id)
-  await getOptions(id, true)
 }
 
 const deleteOption = async (optionId: string) => {
