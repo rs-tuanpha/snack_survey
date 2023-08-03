@@ -62,7 +62,9 @@
                   @click="deleteOption(item.id)"
                 ></v-icon>
               </template>
-              <v-list-item-title :v-text="item.title">{{ item.link }}</v-list-item-title>
+              <v-list-item-title :v-text="item.title">{{
+                item.link || item.title
+              }}</v-list-item-title>
             </v-list-item>
           </v-list>
           <v-alert type="warning" v-else title="" text="Không có option nào được thêm!"></v-alert>

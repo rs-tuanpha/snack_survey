@@ -70,7 +70,6 @@ export const getOptionById = async (optionId: string): Promise<IOption> => {
  * @param {IOption} option 
  */
 export const putOptionData = async (option: IOption) => {
-  console.log('option', option)
   const topicRef = doc(db, 'options', option.id)
   return await updateDoc(topicRef, {...option})
 }
