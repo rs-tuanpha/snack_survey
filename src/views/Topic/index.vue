@@ -40,7 +40,7 @@
         <p>{{ currentTopic?.description }}</p></v-col
       >
       <form-create-option
-        v-if="currentTopic?.link"
+        v-if="currentTopic?.link && currentTopic?.status"
         :id="(id as string)"
         :options="options"
         :topic-state="currentTopic"
