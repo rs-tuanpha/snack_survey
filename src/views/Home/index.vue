@@ -94,29 +94,6 @@
     </v-sheet>
   </v-container>
 
-  <!-- <v-container>
-    <v-row justify="center">
-      <v-col cols="12" sm="12" class="py-0">
-        <p v-if="tab === 'open'" class="font-weight-bold w-50 mx-auto">Chọn topic để vote</p>
-        <v-text-field
-          v-if="tab === 'close'"
-          v-model="searchTerm"
-          class="w-50 mx-auto"
-          density="compact"
-          variant="solo"
-          label="Xem topic đã đóng"
-          append-inner-icon="mdi-magnify"
-          single-line
-          hide-details
-          @click:append-inner="debouncedSearch"
-        ></v-text-field>
-      </v-col>
-      <v-col sm="12" md="6" lg="6" xl="6">
-        
-      </v-col>
-    </v-row>
-  </v-container> -->
-
   <v-dialog v-model="dialog" width="auto">
     <v-card>
       <v-card-title>Danh sách vote</v-card-title>
