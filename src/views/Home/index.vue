@@ -209,10 +209,6 @@ onMounted(async () => {
   }
 })
 
-watch(topics, (newT, oldT) => {
-  console.log('newT', newT)
-})
-
 watch(tab, async (newTab, _) => {
   topics.value =
     newTab === 'open'
