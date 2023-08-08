@@ -56,7 +56,7 @@ export const getTopics = useCollection(
 export const getTopicById = async (topicId: string): Promise<ITopic | undefined> => {
   const docSnap = await getDoc(doc(db, "topics", topicId));
   if(docSnap.exists()) {
-    return {...docSnap.data(), id: docSnap.id} as ITopic;
+    return {...docSnap.data(), id: docSnap.id, date: docSnap.data().date.toDate()} as ITopic;
   }
   return undefined;
 }

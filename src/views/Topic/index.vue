@@ -40,8 +40,8 @@
         <p>{{ currentTopic?.description }}</p></v-col
       >
       <form-create-option
-        v-if="currentTopic?.link"
-        :id="(id as string)"
+        v-if="currentTopic?.link && currentTopic?.status"
+        :id="id.toString()"
         :options="options"
         :topic-state="currentTopic"
         @update-options-data="updateOptionsData"
@@ -262,6 +262,7 @@ const update = async () => {
     team: 'All'
   }
   topicInfo.status = false
+  topicInfo.link = false
   const topicRef = doc(db, 'topics', topicInfo.id)
   try {
     await updateDoc(topicRef, topicInfo as object)
@@ -404,7 +405,6 @@ const handleSubmitForm = async () => {
 
 // update option voteBy list
 const updateOptionsData = () => {
-  console.log('options.value', options.value)
   if (currentTopic.value?.option && currentAccount.value) {
     options.value.forEach((option, index) => {
       checkAccountVoteOption(option, currentAccount.value!) &&
