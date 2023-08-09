@@ -100,24 +100,31 @@ const handleClose = () => {
  * validate topic data and create option
  */
 const createOption = async () => {
+  const topicStateData = props.topicState.data
   try {
     if (
-      props.topicState.data &&
+      topicStateData &&
       optionFormData &&
-      handleValidateAddOption(optionFormData, props.topicState.data) === true
+      handleValidateAddOption(optionFormData, topicStateData) === true
     ) {
-      const topicData = await getOptionsByTopicId(props.topicState.data.id)
-      const optionList = topicData.value as IOption[]
-      optionList.forEach((option) => {
-        if (option.title === optionFormData?.title || option.link === optionFormData?.link) {
-          hasError.value = true
-          message.value = 'Option này đã tồn tại, vui lòng nhập lại!'
-          return
+      const topicData = await getOptionsByTopicId(topicStateData.id)
+      setTimeout(async () => {
+        const optionList = topicData.value as IOption[]
+        let checkIsDuplicate = false
+        optionList.forEach((option) => {
+          if (option.title === optionFormData?.title || option.link === optionFormData?.link) {
+            hasError.value = true
+            message.value = 'Option này đã tồn tại, vui lòng nhập lại!'
+            checkIsDuplicate = true
+            return
+          }
+        })
+        if (!checkIsDuplicate) {
+          await postNewOption(optionFormData.title, optionFormData.link, topicStateData.id)
+          hasError.value = false
+          message.value = 'Tạo mới thành công'
         }
-      })
-      await postNewOption(optionFormData.title, optionFormData.link, props.topicState.data.id)
-      hasError.value = false
-      message.value = 'Tạo mới thành công'
+      }, 200)
     }
   } catch {
     hasError.value = false

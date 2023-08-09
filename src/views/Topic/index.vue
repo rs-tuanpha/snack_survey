@@ -41,7 +41,7 @@
       >
       <form-create-option
         v-if="currentTopic?.link && currentTopic?.status"
-        :id="(id as string)"
+        :id="id.toString()"
         :options="options"
         :topic-state="currentTopic"
         @update-options-data="updateOptionsData"
@@ -196,7 +196,7 @@ const timeRemaining = computed(() => {
       new Date((currentTopic.value?.date as any)?.seconds * 1000).getTime() - currentTime.value
     if (difference <= 0) {
       update()
-      handleRouter.pushPath('/')
+      // handleRouter.pushPath('/')
       return {
         days: 0,
         hours: 0,
@@ -313,7 +313,7 @@ onMounted(async () => {
 // change vote option
 const handleChangeVote = (optionIndex: number) => {
   if (!currentTopic.value?.status) {
-    alertVote.value = 'Cập nhật thất bại'
+    alertVote.value = 'Topic này đã đóng!'
     alertVoteType.value = 'error'
     setTimeout(() => {
       alertVote.value = ''

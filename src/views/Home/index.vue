@@ -1,95 +1,124 @@
 <template>
-  <div class="py-4">
-    <v-container>
-      <v-row justify="center">
-        <v-col sm="12" md="6" lg="6" xl="4">
-          <v-row align="center" class="spacer" no-gutters justify="center" v-if="!show">
-            <v-col sm="12" md="10" lg="8" align="center">
-              <v-avatar size="36px" :icon="accountInfo.avatar !== '' ? '' : 'mdi-account-circle'">
-                <v-img alt="Avatar" :src="accountInfo.avatar"></v-img>
-              </v-avatar>
-              <i> Tài khoản: </i><strong>{{ accountInfo.username }}</strong>
-              <v-btn class="ma-2 logout-btn" color="red" @click="logout">
-                <v-icon icon="mdi-logout-variant"></v-icon>
-              </v-btn>
-            </v-col>
-          </v-row>
-          <v-card class="mx-auto pa-4 pb-4" min-width="350" rounded="md" v-if="show">
-            <v-autocomplete
-              label="Chọn tài khoản"
-              :items="getAccounts"
-              item-title="username"
-              item-value="id"
-              v-model="account"
-              :error="error"
-              :rules="accountRules"
-              :error-messages="message"
-            >
-            </v-autocomplete>
-            <v-btn class="bg-blue-darken-2 float-right" @click="login">Đăng nhập</v-btn>
-          </v-card>
-        </v-col>
-      </v-row>
-    </v-container>
+  <!-- <div class="py-4"> -->
+  <v-container v-if="show">
+    <v-sheet
+      v-if="show"
+      max-width="638"
+      min-width="350"
+      width="100%"
+      class="mx-auto pa-4 pb-4 d-flex flex-column"
+      elevation="1"
+      rounded
+    >
+      <v-autocomplete
+        label="Chọn tài khoản"
+        :items="getAccounts"
+        item-title="username"
+        item-value="id"
+        v-model="account"
+        :error="error"
+        :rules="accountRules"
+        :error-messages="message"
+      >
+      </v-autocomplete>
+      <v-btn class="bg-blue-darken-2 float-right" @click="login">Đăng nhập</v-btn>
+    </v-sheet>
+  </v-container>
 
-    <v-container>
-      <v-row justify="center">
-        <v-col sm="12" md="6" lg="6" xl="6">
-          <v-row justify="center">
-            <v-sheet class="pa-2" border rounded v-if="topics && topics.length" min-width="350">
-              <p class="font-weight-bold">Chọn topic để vote</p>
-              <v-col v-for="{ id, name, voteBy } in topics" :key="id" cols="12" sm="12">
-                <v-hover v-slot="{ isHovering, props }">
-                  <v-card
-                    color="indigo-lighten-5"
-                    :elevation="isHovering ? 12 : 2"
-                    v-bind="props"
-                    :class="isHovering ? 'bg-indigo-lighten-2' : ''"
-                    @click="goTopicVote(id)"
-                  >
-                    <template v-slot:title>
-                      <div class="d-flex justify-space-between">
-                        <div>{{ name }}</div>
-                        <v-avatar color="primary" v-if="voteBy" @click.stop="onClickAvatar(voteBy)">
-                          {{ voteBy.length }}
-                        </v-avatar>
-                      </div>
-                    </template>
-                  </v-card>
-                </v-hover>
-              </v-col>
-            </v-sheet>
-          </v-row>
-          <v-alert variant="outlined" type="warning" prominent border="top" v-if="alert">
-            Hiện tại không có topic nào đang mở
-          </v-alert>
-        </v-col>
-      </v-row>
-    </v-container>
-    <v-dialog v-model="dialog" width="auto">
-      <v-card>
-        <v-card-title>Danh sách vote</v-card-title>
-        <v-divider></v-divider>
-        <v-card-text max-height="300px" class="pa-3">
-          <div v-for="user in listVoteBy" :key="user.username" class="mr-1">
-            <div class="mt-1">
-              <v-avatar color="secondary" class="m-1" size="30">
-                <v-img v-if="user.avatar" :src="user.avatar" :alt="user.username"></v-img>
-                <span v-else>{{ user.username.charAt(0).toLocaleUpperCase() }}</span>
-                <v-tooltip activator="parent" location="top">{{ user.username }}</v-tooltip>
-              </v-avatar>
-              <span class="ml-1">{{ user.username }}</span>
-            </div>
+  <v-container v-if="!show">
+    <v-sheet max-width="638" width="100%" class="mx-auto d-flex justify-space-between align-center">
+      <div class="d-flex align-center">
+        <v-avatar
+          size="36px"
+          :icon="accountInfo.avatar !== '' ? '' : 'mdi-account-circle'"
+          class="mr-2"
+        >
+          <v-img alt="Avatar" :src="accountInfo.avatar"></v-img>
+        </v-avatar>
+        <i> Tài khoản: </i><strong>{{ accountInfo.username }}</strong>
+      </div>
+      <v-btn class="ma-2 logout-btn" color="red" @click="logout">
+        <v-icon icon="mdi-logout-variant"></v-icon>
+      </v-btn>
+    </v-sheet>
+
+    <v-sheet max-width="638" width="100%" class="mx-auto mb-2 pa-2" elevation="1" rounded>
+      <v-tabs v-model="tab" bg-color="primary" class="mb-1 rounded">
+        <v-tab value="open" width="50%">Topics đang mở</v-tab>
+        <v-tab value="close" width="50%">Topics đã đóng</v-tab>
+      </v-tabs>
+      <v-text-field
+        v-model="searchTerm"
+        class="w-full mx-auto"
+        density="compact"
+        label="Tìm topic"
+        append-inner-icon="mdi-magnify"
+        single-line
+        hide-details
+        @click:append-inner="debouncedSearch"
+      ></v-text-field>
+    </v-sheet>
+
+    <v-sheet
+      v-if="searchedTopics && searchedTopics.length"
+      class="mx-auto pa-2"
+      border
+      rounded
+      min-width="350"
+      max-width="638"
+      width="100%"
+    >
+      <v-col v-for="{ id, name, voteBy } in searchedTopics" :key="id" cols="12" sm="12">
+        <v-hover v-slot="{ isHovering, props }">
+          <v-card
+            color="indigo-lighten-5"
+            :elevation="isHovering ? 12 : 2"
+            v-bind="props"
+            :class="isHovering ? 'bg-indigo-lighten-2' : ''"
+            @click="goTopicVote(id)"
+          >
+            <template v-slot:title>
+              <div class="d-flex justify-space-between">
+                <div>{{ name }}</div>
+                <v-avatar color="primary" v-if="voteBy" @click.stop="onClickAvatar(voteBy)">
+                  {{ voteBy.length }}
+                </v-avatar>
+              </div>
+            </template>
+          </v-card>
+        </v-hover>
+      </v-col>
+      <v-alert variant="outlined" type="warning" prominent border="top" v-if="alert">
+        Hiện tại không có topic nào đang mở
+      </v-alert>
+    </v-sheet>
+  </v-container>
+
+  <v-dialog v-model="dialog" width="auto">
+    <v-card>
+      <v-card-title>Danh sách vote</v-card-title>
+      <v-divider></v-divider>
+      <v-card-text max-height="300px" class="pa-3">
+        <div v-for="user in listVoteBy" :key="user.username" class="mr-1">
+          <div class="mt-1">
+            <v-avatar color="secondary" class="m-1" size="30">
+              <v-img v-if="user.avatar" :src="user.avatar" :alt="user.username"></v-img>
+              <span v-else>{{ user.username.charAt(0).toLocaleUpperCase() }}</span>
+              <v-tooltip activator="parent" location="top">{{ user.username }}</v-tooltip>
+            </v-avatar>
+            <span class="ml-1">{{ user.username }}</span>
           </div>
-        </v-card-text>
-      </v-card>
-    </v-dialog>
-  </div>
+        </div>
+      </v-card-text>
+    </v-card>
+  </v-dialog>
+  <!-- </div> -->
 </template>
 <script setup lang="ts">
-import { onMounted, ref, reactive } from 'vue'
+import { onMounted, ref, reactive, watch, onBeforeUnmount } from 'vue'
 import { getAccounts } from '@/services/account.service'
-import { getOpenTopicList } from '@/services/topic.service'
+import { getOpenTopicList, getCloseTopicList } from '@/services/topic.service'
+import { debounce } from 'vue-debounce'
 import { getAllOptions } from '@/services/option.service'
 import type { ITopic } from '@/core/interfaces/model/topic'
 import type { IOption } from '@/core/interfaces/model/option'
@@ -99,19 +128,23 @@ import useCommon from '@/core/hooks/useCommon'
 const { handleRouter } = useCommon('useCommonStore')
 
 const show = ref<boolean>(true)
+const tab = ref<'open' | 'close'>('open')
 const topics = ref<ITopic[]>([])
+const searchedTopics = ref<ITopic[]>([])
 const options = ref<IOption[]>([])
 const account = ref<null>(null)
 const error = ref<boolean>(false)
 const dialog = ref<boolean>(false)
 const message = ref<string>('')
 const alert = ref<boolean>(false)
+const searchTerm = ref('')
 const accountInfo: {
   username?: string
   avatar?: string
   team?: string
 } = reactive({ username: '', avatar: '', team: '' })
 const listVoteBy = ref<IUser[]>([])
+
 // Check existence of the account
 const login = async () => {
   if (!account.value) {
@@ -151,6 +184,30 @@ onMounted(async () => {
     accountInfo.username = localStorage.getItem('account_username') ?? ''
     accountInfo.team = localStorage.getItem('account_team') ?? ''
   }
+})
+
+watch(tab, async (newTab, _) => {
+  topics.value =
+    newTab === 'open'
+      ? await getOpenTopicList(localStorage.getItem('account_team'))
+      : await getCloseTopicList(localStorage.getItem('account_team'))
+  getTopicOptions()
+})
+
+watch(topics, (newTopics, _) => {
+  searchedTopics.value = newTopics
+})
+
+/** search debounce */
+const debouncedSearch = debounce(() => {
+  // Perform search logic here
+  searchedTopics.value = topics.value.filter((topic) => topic.name.includes(searchTerm.value))
+}, 500)
+
+watch(searchTerm, debouncedSearch)
+
+onBeforeUnmount(() => {
+  debouncedSearch.cancel()
 })
 
 const accountRules = [
