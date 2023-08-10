@@ -88,7 +88,17 @@
           </v-card>
         </v-hover>
       </v-col>
-      <v-alert variant="outlined" type="warning" prominent border="top" v-if="alert">
+    </v-sheet>
+    <v-sheet
+      v-if="tab === 'open' && topics.length === 0"
+      class="mx-auto pa-2"
+      border
+      rounded
+      min-width="350"
+      max-width="638"
+      width="100%"
+    >
+      <v-alert variant="outlined" type="warning" prominent border="top">
         Hiện tại không có topic nào đang mở
       </v-alert>
     </v-sheet>
