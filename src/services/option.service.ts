@@ -45,10 +45,15 @@ export const postNewOption = async (title: string, link: string, topicId: string
   }
 }
 
+/**
+ * handle update voteBy and voteCount of Option
+ * @param newOptionList 
+ * @returns 1 on success, 
+ */
 export const voteOption = async (newOptionList: IOption[]) => {
   try {
     newOptionList.forEach((option) => {
-      setDoc(doc(db, 'options', option.id), option)
+      updateDoc(doc(db, 'options', option.id), {voteBy: option.voteBy, voteCount: option.voteCount})
     })
     return 1;
   } catch (e) {
