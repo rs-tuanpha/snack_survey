@@ -107,9 +107,7 @@
               size="x-large"
               :color="
                 (
-                  currentTopic?.option
-                    ? currentVoteMultiOption.includes(index)
-                    : index === currentVoteOption
+                  option.voteBy.some(voter => voter.id === currentAccount?.id)
                 )
                   ? 'red-darken-1'
                   : 'blue-darken-3'
@@ -228,7 +226,7 @@ const timeRemaining = computed(() => {
 // countdown variable gets the time from timeRemaining and format it to show on screen
 const countdown = computed(() => {
   const { days, hours, minutes, seconds } = timeRemaining.value
-  const parts = []
+  const parts: string[] = []
 
   if (days > 0) {
     parts.push(`${days} ngày`)
