@@ -70,13 +70,13 @@
         <li
           v-for="(option, index) in options"
           :key="option?.id + index"
-          class="h-120px d-flex align-center mb-2 px-4 py-2 elevation-1"
+          class="option d-flex align-center mb-2 px-4 py-2 elevation-1"
         >
           <v-avatar color="primary">
             {{ option?.voteBy?.length }}
           </v-avatar>
-          <div class="flex-grow-1 mx-4">
-            <p class="mb-1 text-h6">{{ option?.title }}</p>
+          <div class="option__content flex-grow-1 mx-4">
+            <p class="option__content--title mb-1">{{ option?.title }}</p>
             <a :href="option?.link" target="_blank">{{ stringMinify(option?.link, 50) }}</a>
             <div class="d-flex mt-1">
               <div v-for="user in option?.voteBy?.slice(0, 5)" :key="user.username" class="mr-1">
@@ -106,9 +106,7 @@
               icon="mdi-thumb-up"
               size="x-large"
               :color="
-                (
-                  option.voteBy.some(voter => voter.id === currentAccount?.id)
-                )
+                option.voteBy.some((voter) => voter.id === currentAccount?.id)
                   ? 'red-darken-1'
                   : 'blue-darken-3'
               "

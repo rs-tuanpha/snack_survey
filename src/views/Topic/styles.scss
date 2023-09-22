@@ -22,6 +22,23 @@
   padding: 5px;
 }
 
-p, h1 {
+p,
+h1 {
   word-break: break-all;
+}
+
+.option {
+  height: fit-content;
+  min-height: 120px;
+  &__content {
+    &--title {
+      font-size: 1.25rem;
+      line-height: 1.5rem;
+      font-weight: 500;
+      letter-spacing: 0.0125em;
+      font-family: 'Roboto', sans-serif;
+      text-transform: none;
+      word-break: break-word;
+    }
+  }
 }
