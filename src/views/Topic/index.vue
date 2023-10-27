@@ -142,18 +142,18 @@
   </v-dialog>
 </template>
 <script setup lang="ts">
-import { onMounted, ref, computed, defineAsyncComponent } from 'vue'
-import { doc, updateDoc } from 'firebase/firestore'
-import { useDocument } from 'vuefire'
-import { db } from '@/plugins/firebase'
-import { getAccountById } from '@/services/account.service'
-import { getOptionsByTopicId, voteOption } from '@/services/option.service'
-import stringMinify from '@/core/utils/stringMinify'
 import useCommon from '@/core/hooks/useCommon'
-import { useCommonStore } from '@/stores'
 import type { IOption } from '@/core/interfaces/model/option'
 import type { ITopic } from '@/core/interfaces/model/topic'
 import type { IUser } from '@/core/interfaces/model/user'
+import stringMinify from '@/core/utils/stringMinify'
+import { db } from '@/plugins/firebase'
+import { getAccountById } from '@/services/account.service'
+import { getOptionsByTopicId, voteOption } from '@/services/option.service'
+import { useCommonStore } from '@/stores'
+import { doc, updateDoc } from 'firebase/firestore'
+import { computed, defineAsyncComponent, onMounted, ref } from 'vue'
+import { useDocument } from 'vuefire'
 
 const FormCreateOption = defineAsyncComponent(() => import('./FormCreateOption.vue'))
 
@@ -316,10 +316,10 @@ const handleChangeVote = (optionIndex: number) => {
     }, 2000)
     return
   }
-  showOverlay.value = !showOverlay.value
+    showOverlay.value = !showOverlay.value
   // handle vote multiple
   if (currentTopic.value?.option) {
-    let isUnvote = -1
+        let isUnvote = -1
     for (let i = 0; i < options.value[optionIndex].voteBy.length; i++) {
       if (options.value[optionIndex].voteBy[i].id === currentAccount.value?.id) {
         isUnvote = i
@@ -339,7 +339,7 @@ const handleChangeVote = (optionIndex: number) => {
     handleSubmitForm()
     return
   }
-  // Handle vote 1
+    // Handle vote 1
   const accountIndex =
     currentVoteOption?.value !== null && options?.value?.[currentVoteOption.value]?.voteBy?.length
       ? options.value[currentVoteOption.value].voteBy.findIndex(
@@ -358,6 +358,7 @@ const handleChangeVote = (optionIndex: number) => {
 
   currentAccount.value && options.value[optionIndex].voteBy.push(currentAccount.value)
   currentVoteOption.value = optionIndex
+  handleSubmitForm()
 }
 
 // Reload options list
