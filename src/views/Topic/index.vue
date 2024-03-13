@@ -280,6 +280,12 @@ const checkAccountVoteOption = (option: IOption, account: IUser) => {
 }
 
 onMounted(async () => {
+  const isResetAccount = localStorage.getItem('isResetAccount')
+  if (isResetAccount !== 'true') {
+    localStorage.clear()
+    localStorage.setItem('isResetAccount', 'true')
+    handleRouter.pushPath('/')
+  }
   setInterval(() => {
     currentTime.value = new Date().getTime()
   }, 1000)
@@ -316,10 +322,10 @@ const handleChangeVote = (optionIndex: number) => {
     }, 2000)
     return
   }
-    showOverlay.value = !showOverlay.value
+  showOverlay.value = !showOverlay.value
   // handle vote multiple
   if (currentTopic.value?.option) {
-        let isUnvote = -1
+    let isUnvote = -1
     for (let i = 0; i < options.value[optionIndex].voteBy.length; i++) {
       if (options.value[optionIndex].voteBy[i].id === currentAccount.value?.id) {
         isUnvote = i
@@ -332,14 +338,16 @@ const handleChangeVote = (optionIndex: number) => {
       options.value[optionIndex].voteCount--
       currentVoteMultiOption.value.splice(currentVoteMultiOption.value.indexOf(optionIndex), 1)
     } else {
-      options.value[optionIndex].voteBy.push(currentAccount.value!)
-      options.value[optionIndex].voteCount++
-      currentVoteMultiOption.value.push(optionIndex)
+      if (currentAccount.value) {
+        options.value[optionIndex].voteBy.push(currentAccount.value!)
+        options.value[optionIndex].voteCount++
+        currentVoteMultiOption.value.push(optionIndex)
+      }
     }
     handleSubmitForm()
     return
   }
-    // Handle vote 1
+  // Handle vote 1
   const accountIndex =
     currentVoteOption?.value !== null && options?.value?.[currentVoteOption.value]?.voteBy?.length
       ? options.value[currentVoteOption.value].voteBy.findIndex(

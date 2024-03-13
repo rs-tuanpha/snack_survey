@@ -257,6 +257,7 @@ const goTopicVote = (id: string) => {
 
 const logout = () => {
   localStorage.clear()
+  localStorage.setItem('isResetAccount', 'true')
   topics.value = []
   show.value = true
   alert.value = false
