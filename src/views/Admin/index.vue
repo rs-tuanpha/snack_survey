@@ -184,7 +184,7 @@
                 <td>{{ index + 1 }}</td>
                 <td>{{ item.name }}</td>
                 <td>{{ item.team }}</td>
-                <td>{{ item.status === true ? 'Mở' : 'Đóng' }}</td>
+                <td>{{ item.status === true || item.date.toDate() >= new Date() ? 'Mở' : 'Đóng' }}</td>
                 <td>
                   {{
                     new Date((item?.date as any)?.seconds * 1000).toLocaleDateString() +
@@ -262,6 +262,7 @@ const options = ref<IOption[]>([])
 const listOptionDlg = ref<boolean>(false)
 const isShowModalCreateOption = ref<boolean>(false)
 const isShowModalEditOption = ref<boolean>(false)
+const isFirstCheckStatus = ref<boolean>(true)
 
 const topicState = ref<IState<ITopic>>({ ...initTopicState })
 const optionState = ref<IOption>(initOption)
@@ -276,6 +277,23 @@ watch(
     }/${(topicFormData.date as Date).getFullYear()}`
   }
 )
+
+
+watch(() => topics, async (topicsRef) => {
+  if(!topicsRef.value.length || !isFirstCheckStatus.value) {
+    return;
+  }
+  isFirstCheckStatus.value = false
+  const syncStatusList: Promise<void>[] = []
+  const currentDay = new Date()
+  topicsRef.value.forEach(topicItem => {
+    if(topicItem.status === true && topicItem.date.toDate() < currentDay) {
+      const topicRef = doc(db, 'topics', topicItem.id)
+      syncStatusList.push(updateDoc(topicRef,{ ...topicItem, status: false, updatedAt: currentDay }))
+    }
+  })
+  await Promise.all(syncStatusList)
+}, {deep: true})
 
 // Methods
 const confirm = (type: string) => {
