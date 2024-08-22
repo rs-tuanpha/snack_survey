@@ -112,7 +112,10 @@ const createOption = async () => {
         const optionList = topicData.value as IOption[]
         let checkIsDuplicate = false
         optionList.forEach((option) => {
-          if (option.title === optionFormData?.title || option.link === optionFormData?.link) {
+          if (
+            option.title === optionFormData?.title ||
+            (optionFormData?.link && optionFormData.link === option.link)
+          ) {
             hasError.value = true
             message.value = 'Option này đã tồn tại, vui lòng nhập lại!'
             checkIsDuplicate = true
