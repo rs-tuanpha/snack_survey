@@ -1,6 +1,7 @@
 import { useFirestore, useCollection } from 'vuefire'
 import { collection, getDocs, query, orderBy, getDoc, doc } from 'firebase/firestore'
 import type { ITopic } from '@/core/interfaces/model/topic'
+import { ETopicTeam } from '@/core/constants/enum'
 const db = useFirestore()
 
 /**
@@ -14,10 +15,10 @@ export const getOpenTopicList = async (team: string | null): Promise<ITopic[]> =
     const info = doc.data()
     if (
       info.status &&
-      (info.team == team || info.team == 'All') &&
+      (info.team == team || String(info.team).toUpperCase() === ETopicTeam.ALL) &&
       info.date.toDate() >= new Date()
     ) {
-      const topic = {...info, id: doc.id } as ITopic
+      const topic = { ...info, id: doc.id } as ITopic
       openTopicList.push(topic)
     }
   })
@@ -33,11 +34,8 @@ export const getCloseTopicList = async (team: string | null): Promise<ITopic[]> 
   const openTopicList: ITopic[] = []
   querySnapshot.forEach((doc) => {
     const info = doc.data()
-    if (
-      !info.status &&
-      (info.team == team || info.team == 'All')
-    ) {
-      const topic = {...info, id: doc.id } as ITopic
+    if (!info.status && (info.team == team || String(info.team).toUpperCase() === ETopicTeam.ALL)) {
+      const topic = { ...info, id: doc.id } as ITopic
       openTopicList.push(topic)
     }
   })
@@ -50,13 +48,13 @@ export const getTopics = useCollection(
 
 /**
  * service get topic from firebase
- * @param {string} topicId 
+ * @param {string} topicId
  * @return {Promise<ITopic | undefined>}
  */
 export const getTopicById = async (topicId: string): Promise<ITopic | undefined> => {
-  const docSnap = await getDoc(doc(db, "topics", topicId));
-  if(docSnap.exists()) {
-    return {...docSnap.data(), id: docSnap.id, date: docSnap.data().date.toDate()} as ITopic;
+  const docSnap = await getDoc(doc(db, 'topics', topicId))
+  if (docSnap.exists()) {
+    return { ...docSnap.data(), id: docSnap.id, date: docSnap.data().date.toDate() } as ITopic
   }
-  return undefined;
+  return undefined
 }
