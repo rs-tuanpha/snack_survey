@@ -52,3 +52,11 @@ export const LocalStorage = {
  * Refer check detail: https://www.npmjs.com/package/js-cookie
  */
 export const Cookies = jsCookie.withAttributes({ secure: true })
+
+/** clear all account setting when login */
+export const clearAccountData = () => {
+  LocalStorage.remove('account_info')
+  LocalStorage.remove('account_avatar')
+  LocalStorage.remove('account_username')
+  LocalStorage.remove('account_team')
+}

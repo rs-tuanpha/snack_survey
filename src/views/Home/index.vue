@@ -1,5 +1,4 @@
 <template>
-  <!-- <div class="py-4"> -->
   <v-container v-if="show">
     <v-sheet
       v-if="show"
@@ -28,14 +27,10 @@
   <v-container v-if="!show">
     <v-sheet max-width="638" width="100%" class="mx-auto d-flex justify-space-between align-center">
       <div class="d-flex align-center">
-        <v-avatar
-          size="36px"
-          :icon="accountInfo.avatar !== '' ? '' : 'mdi-account-circle'"
-          class="mr-2"
-        >
+        <v-avatar size="36px" :icon="avatarIcon" class="mr-2" aria-label="Logout">
           <v-img alt="Avatar" :src="accountInfo.avatar"></v-img>
         </v-avatar>
-        <i> Tài khoản: </i><strong>{{ accountInfo.username }}</strong>
+        <i class="mr-2"> Tài khoản: </i><strong>{{ accountInfo.username }}</strong>
       </div>
       <v-btn class="ma-2 logout-btn" color="red" @click="logout">
         <v-icon icon="mdi-logout-variant"></v-icon>
@@ -122,14 +117,14 @@
       </v-card-text>
     </v-card>
   </v-dialog>
-  <!-- </div> -->
 </template>
 <script setup lang="ts">
-import { onMounted, ref, reactive, watch, onBeforeUnmount } from 'vue'
+import { onMounted, ref, reactive, watch, onBeforeUnmount, computed } from 'vue'
 import { getAccounts } from '@/services/account.service'
 import { getOpenTopicList, getCloseTopicList } from '@/services/topic.service'
 import { debounce } from 'vue-debounce'
 import { getAllOptions } from '@/services/option.service'
+import { clearAccountData } from '@/core/utils/storage'
 import type { ITopic } from '@/core/interfaces/model/topic'
 import type { IOption } from '@/core/interfaces/model/option'
 import type { IUser } from '@/core/interfaces/model/user'
@@ -154,6 +149,8 @@ const accountInfo: {
   team?: string
 } = reactive({ username: '', avatar: '', team: '' })
 const listVoteBy = ref<IUser[]>([])
+
+const avatarIcon = computed(() => (accountInfo?.avatar !== '' ? '' : 'mdi-account-circle'))
 
 // Check existence of the account
 const login = async () => {
@@ -256,11 +253,17 @@ const goTopicVote = (id: string) => {
 }
 
 const logout = () => {
-  localStorage.clear()
-  localStorage.setItem('isResetAccount', 'true')
-  topics.value = []
-  show.value = true
-  alert.value = false
+  try {
+    if (confirm('Are you sure you want to log out?')) {
+      clearAccountData()
+      localStorage.setItem('isResetAccount', 'true')
+      topics.value = []
+      show.value = true
+      alert.value = false
+    }
+  } catch (error) {
+    console.error('Logout failed:', error)
+  }
 }
 const onClickAvatar = (voteBy: IUser[]) => {
   if (voteBy.length > 0) {

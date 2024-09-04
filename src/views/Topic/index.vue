@@ -2,11 +2,11 @@
   <v-container>
     <v-row v-if="currentAccount" align="center" class="spacer" no-gutters justify="center">
       <v-col sm="12" md="10" lg="8" align="center">
-        <v-avatar size="36px" :icon="currentAccount.avatar !== '' ? '' : 'mdi-account-circle'">
+        <v-avatar size="36px" :icon="avatarIcon">
           <v-img alt="Avatar" :src="currentAccount.avatar"></v-img>
         </v-avatar>
-        <i> Tài khoản: </i><strong>{{ currentAccount.username }}</strong>
-        <v-btn class="ma-2 logout-btn" color="red" @click="logout">
+        <i class="mr-2"> Tài khoản: </i><strong>{{ currentAccount.username }}</strong>
+        <v-btn class="ma-2 logout-btn" color="red" @click="logout" aria-label="Logout">
           <v-icon icon="mdi-logout-variant"></v-icon>
         </v-btn>
       </v-col>
@@ -158,6 +158,7 @@ import type { IOption } from '@/core/interfaces/model/option'
 import type { ITopic } from '@/core/interfaces/model/topic'
 import type { IUser } from '@/core/interfaces/model/user'
 import stringMinify from '@/core/utils/stringMinify'
+import { clearAccountData } from '@/core/utils/storage'
 import { db } from '@/plugins/firebase'
 import { getAccountById } from '@/services/account.service'
 import { getOptionsByTopicId, voteOption } from '@/services/option.service'
@@ -195,6 +196,7 @@ const showOverlay = ref<boolean>(false)
 const currentTime = ref(new Date().getTime())
 const listVoteBy = ref<IUser[]>([])
 const dialog = ref<boolean>(false)
+const avatarIcon = computed(() => (currentAccount.value?.avatar !== '' ? '' : 'mdi-account-circle'))
 
 //timeRemaining variable calculating the remaining time
 const timeRemaining = computed(() => {
@@ -437,9 +439,15 @@ const onClickSeeMore = (option: IOption) => {
   dialog.value = true
 }
 const logout = () => {
-  currentAccount.value = null
-  localStorage.clear()
-  handleRouter.pushPath('/')
+  try {
+    if (confirm('Are you sure you want to log out?')) {
+      currentAccount.value = null
+      clearAccountData()
+      handleRouter.pushPath('/')
+    }
+  } catch (error) {
+    console.error('Logout failed:', error)
+  }
 }
 </script>
 <style scoped lang="scss">
