@@ -65,7 +65,9 @@
               <v-list-item-title :v-text="item.title">{{
                 item.link || item.title
               }}</v-list-item-title>
-              <v-list-item-subtitle :v-text="item.voteCount">Số vote: {{ item.voteCount }}</v-list-item-subtitle>
+              <v-list-item-subtitle :v-text="item.voteCount"
+                >Số vote: {{ item.voteCount }}</v-list-item-subtitle
+              >
             </v-list-item>
           </v-list>
           <v-alert type="warning" v-else title="" text="Không có option nào được thêm!"></v-alert>
@@ -184,7 +186,9 @@
                 <td>{{ index + 1 }}</td>
                 <td>{{ item.name }}</td>
                 <td>{{ item.team }}</td>
-                <td>{{ item.status === true || item.date.toDate() >= new Date() ? 'Mở' : 'Đóng' }}</td>
+                <td>
+                  {{ item.status === true || item.date.toDate() >= new Date() ? 'Mở' : 'Đóng' }}
+                </td>
                 <td>
                   {{
                     new Date((item?.date as any)?.seconds * 1000).toLocaleDateString() +
@@ -271,31 +275,54 @@ const topicFormData = reactive<ITopic>({ ...initTopic })
 // Composition API
 watch(
   () => topicFormData.date,
-  () => {
-    format.value = `${(topicFormData.date as Date).getDate()}/${
-      (topicFormData.date as Date).getMonth() + 1
-    }/${(topicFormData.date as Date).getFullYear()}`
+  (newDate) => {
+    if (newDate instanceof Date) {
+      format.value = newDate.toLocaleDateString('en-GB')
+    }
   }
 )
 
-
-watch(() => topics, async (topicsRef) => {
-  if(!topicsRef.value.length || !isFirstCheckStatus.value) {
-    return;
-  }
-  isFirstCheckStatus.value = false
-  const syncStatusList: Promise<void>[] = []
-  const currentDay = new Date()
-  topicsRef.value.forEach(topicItem => {
-    if(topicItem.status === true && topicItem.date.toDate() < currentDay) {
-      const topicRef = doc(db, 'topics', topicItem.id)
-      syncStatusList.push(updateDoc(topicRef,{ ...topicItem, status: false, updatedAt: currentDay }))
+watch(
+  () => topics.value,
+  async (newTopics) => {
+    if (!newTopics.length || !isFirstCheckStatus.value) {
+      return
     }
-  })
-  await Promise.all(syncStatusList)
-}, {deep: true})
+
+    isFirstCheckStatus.value = false
+    const currentDay = new Date()
+    const topicsToUpdate = newTopics.filter(
+      (topic) => topic.status && topic.date.toDate() < currentDay
+    )
+
+    if (topicsToUpdate.length === 0) {
+      return
+    }
+
+    try {
+      await Promise.all(
+        topicsToUpdate.map((topic) =>
+          updateDoc(doc(db, 'topics', topic.id), {
+            ...topic,
+            status: false,
+            updatedAt: currentDay
+          })
+        )
+      )
+      console.log('Topics updated successfully')
+    } catch (error) {
+      console.error('Error updating topics:', error)
+    }
+  },
+  { deep: true }
+)
 
 // Methods
+/**
+ * Confirms the action based on the type (create or update) and validates the form data.
+ * @param {string} type - The type of action ('create' or 'update').
+ * @returns {boolean} False if validation fails, otherwise sets up the confirmation dialog.
+ */
 const confirm = (type: string) => {
   if (!topicFormData.name) {
     return false
@@ -321,8 +348,8 @@ const confirm = (type: string) => {
 }
 
 /**
- * update topic state and show create option modal
- * @param {string} id
+ * Updates the topic state and shows the create option modal.
+ * @param {string} id - The ID of the topic to add an option to.
  */
 const handleAddOption = async (id: string) => {
   const topicData = await getTopicById(id)
@@ -330,6 +357,10 @@ const handleAddOption = async (id: string) => {
   isShowModalCreateOption.value = true
 }
 
+/**
+ * Prepares the deletion of a topic by setting up the confirmation dialog.
+ * @param {string} topicVal - The ID of the topic to be deleted.
+ */
 const handleDeleteTopic = (topicVal: string) => {
   text.value = 'Bạn có muốn xóa topic không?'
   dialog.value = true
@@ -340,6 +371,9 @@ const handleDeleteTopic = (topicVal: string) => {
   topicCancelId.value = topicVal
 }
 
+/**
+ * Cancels the update operation and resets the form to its initial state.
+ */
 const cancelUpdate = () => {
   textBtn.value = 'Tạo mới'
   type.value = 'create'
@@ -351,6 +385,10 @@ const cancelUpdate = () => {
   })
 }
 
+/**
+ * Handles the editing of a topic by fetching its data and updating the form.
+ * @param {string} id - The ID of the topic to edit.
+ */
 const handleEditTopic = async (id: string) => {
   // Find the topic by topic id
   const topicData = await getTopicById(id)
@@ -369,6 +407,12 @@ const handleEditTopic = async (id: string) => {
   }
 }
 
+/**
+ * Fetches options for a given topic.
+ * @param {string} topicId - The ID of the topic to fetch options for.
+ * @param {boolean} isSetOption - If true, sets the options directly to the options ref.
+ * @returns {Promise<IOption[]>} An array of options.
+ */
 const getOptions = async (topicId: string, isSetOption: boolean = false) => {
   const topicData = await getOptionsByTopicId(topicId)
   let optionArr = [] as IOption[]
@@ -383,6 +427,10 @@ const getOptions = async (topicId: string, isSetOption: boolean = false) => {
 }
 
 // Reducer for confirm dialog
+/**
+ * Handles the topic action based on the type (create, update, or delete).
+ * @param {string} type - The type of action to perform.
+ */
 const handleTopic = async (type: string) => {
   switch (type) {
     case 'create':
@@ -409,6 +457,10 @@ const handleTopic = async (type: string) => {
   }
 }
 
+/**
+ * Updates a topic in the database.
+ * @param {object} topic - The topic object to update.
+ */
 const update = async (topic: object) => {
   const topicRef = doc(db, 'topics', topicId.value)
   try {
@@ -426,6 +478,9 @@ const update = async (topic: object) => {
   }
 }
 
+/**
+ * Deletes a topic from the database.
+ */
 const deleteTopic = async () => {
   try {
     await deleteDoc(doc(db, 'topics', topicCancelId.value))
@@ -442,6 +497,10 @@ const deleteTopic = async () => {
   }
 }
 
+/**
+ * Shows the list of options for a given topic.
+ * @param {string} id - The ID of the topic to show options for.
+ */
 const showOptionList = async (id: string) => {
   await getOptions(id, true)
   topicId.value = id
@@ -449,17 +508,28 @@ const showOptionList = async (id: string) => {
   topicState.value.data = await getTopicById(id)
 }
 
+/**
+ * Deletes an option from the database and refreshes the options list.
+ * @param {string} optionId - The ID of the option to delete.
+ */
 const deleteOption = async (optionId: string) => {
   await deleteDoc(doc(db, 'options', optionId))
   options.value = await getOptions(topicId.value, true)
 }
 
 // open edit option modal
+/**
+ * Opens the edit option modal with the selected option data.
+ * @param {IOption} option - The option to edit.
+ */
 const handleEditOption = async (option: IOption) => {
   optionState.value = option
   isShowModalEditOption.value = true
 }
 // close edit option modal
+/**
+ * Closes the edit option modal and refreshes the options list.
+ */
 const handleCloseEditOptionDialog = async () => {
   await getOptions(topicId.value, true)
   isShowModalEditOption.value = false

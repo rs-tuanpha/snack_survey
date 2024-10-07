@@ -312,7 +312,10 @@ onMounted(async () => {
     : null
 })
 
-// change vote option
+/**
+ * Handles the change of vote for an option
+ * @param {number} optionIndex - The index of the option being voted on
+ */
 const handleChangeVote = (optionIndex: number) => {
   if (!currentTopic.value?.status) {
     alertVote.value = 'Topic này đã đóng!'
@@ -323,7 +326,8 @@ const handleChangeVote = (optionIndex: number) => {
     return
   }
   showOverlay.value = !showOverlay.value
-  // handle vote multiple
+
+  // Handle vote for multiple options
   if (currentTopic.value?.option) {
     let isUnvote = -1
     for (let i = 0; i < options.value[optionIndex].voteBy.length; i++) {
@@ -347,7 +351,8 @@ const handleChangeVote = (optionIndex: number) => {
     handleSubmitForm()
     return
   }
-  // Handle vote 1
+
+  // Handle vote for single option
   const accountIndex =
     currentVoteOption?.value !== null && options?.value?.[currentVoteOption.value]?.voteBy?.length
       ? options.value[currentVoteOption.value].voteBy.findIndex(
@@ -369,7 +374,9 @@ const handleChangeVote = (optionIndex: number) => {
   handleSubmitForm()
 }
 
-// Reload options list
+/**
+ * Reloads the options list from the server
+ */
 const handleReloadOptions = async () => {
   const topicData = await getOptionsByTopicId(id.toString())
   setTimeout(() => {
@@ -377,7 +384,9 @@ const handleReloadOptions = async () => {
   }, 100)
 }
 
-// Update data for option list
+/**
+ * Submits the updated vote data to the server
+ */
 const handleSubmitForm = async () => {
   try {
     const res = await voteOption(options.value)
@@ -395,20 +404,14 @@ const handleSubmitForm = async () => {
     currentVoteMultiOption.value = []
 
     setTimeout(() => {
-      if (currentTopic.value?.option && currentAccount.value) {
-        options.value.forEach((option, index) => {
-          checkAccountVoteOption(option, currentAccount.value!) &&
-            currentVoteMultiOption.value.push(index)
-        })
-      }
-      currentVoteOption.value = options.value.findIndex((option) =>
-        checkAccountVoteOption(option, currentAccount.value!)
-      )
+      updateOptionsData()
     }, 200)
   }
 }
 
-// update option voteBy list
+/**
+ * Updates the local options data based on the current account's votes
+ */
 const updateOptionsData = () => {
   if (currentTopic.value?.option && currentAccount.value) {
     options.value.forEach((option, index) => {
@@ -421,6 +424,11 @@ const updateOptionsData = () => {
     )
   }
 }
+
+/**
+ * Handles the click event to see more details about voters for an option
+ * @param {IOption} option - The option whose voters are to be displayed
+ */
 const onClickSeeMore = (option: IOption) => {
   listVoteBy.value = option.voteBy
   dialog.value = true

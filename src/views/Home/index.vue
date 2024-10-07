@@ -227,6 +227,10 @@ const accountRules = [
   }
 ]
 
+/**
+ * Fetches all options for topics and updates the topics with combined vote information.
+ * @async
+ */
 const getTopicOptions = async () => {
   const topicData = await getAllOptions()
   options.value = topicData
@@ -251,10 +255,17 @@ const getTopicOptions = async () => {
   })
 }
 
+/**
+ * Navigates to the topic vote page for a specific topic.
+ * @param {string} id - The ID of the topic to vote on.
+ */
 const goTopicVote = (id: string) => {
   handleRouter.pushName('topicVote', { params: { id: id } })
 }
 
+/**
+ * Logs out the user, clears local storage, and resets the UI state.
+ */
 const logout = () => {
   localStorage.clear()
   localStorage.setItem('isResetAccount', 'true')
@@ -262,6 +273,11 @@ const logout = () => {
   show.value = true
   alert.value = false
 }
+
+/**
+ * Handles the click event on an avatar, displaying a dialog with vote information.
+ * @param {IUser[]} voteBy - An array of users who voted.
+ */
 const onClickAvatar = (voteBy: IUser[]) => {
   if (voteBy.length > 0) {
     listVoteBy.value = voteBy
