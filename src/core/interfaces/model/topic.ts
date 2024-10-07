@@ -1,16 +1,31 @@
 import type { ETopicRequireField, ETopicTeam } from '@/core/constants/enum'
-import type { IUser } from './user'
 
-export interface ITopic {
-  id: string
+export interface ITopicModel {
+  /** supabase */
+  topic_id: number
   name: string
-  description?: string
-  date?: Date
-  status?: boolean | null | string
-  link?: boolean | null
-  requireField?: `${ETopicRequireField}`
-  option?: boolean | null
-  team?: `${ETopicTeam}`
-  voteBy?: IUser[]
-  updatedAt?: Date
+  description: string | null
+  expiration: string | null
+  is_open: boolean | null
+  is_option_have_link: boolean | null
+  required_field: string | null
+  is_multiple_vote: boolean | null
+  team: string
+  created_at: string | null
+  updated_at: string | null
+}
+
+export interface ITopicCreateDto {
+  /** supabase */
+  topic_id: number
+  name: string
+  description: string | null
+  expiration: string | null
+  is_open: boolean | null
+  is_option_have_link: boolean | null
+  is_multiple_vote: boolean | null
+  required_field: `${ETopicRequireField}` | null
+  team: `${ETopicTeam}`
+  created_at: string | null
+  updated_at: string | null
 }

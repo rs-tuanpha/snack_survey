@@ -71,14 +71,14 @@ import {
 } from './Admin.validate'
 import { ENotificationColor } from '@/core/constants/enum'
 import { getOptionsByTopicId, putOptionData } from '@/services/option.service'
-import type { IOption } from '@/core/interfaces/model/option'
+import type { IOptionVoteCountDto } from '@/core/interfaces/model/option'
 import type { IState } from '@/core/interfaces/model/state'
-import type { ITopic } from '@/core/interfaces/model/topic'
+import type { ITopicCreateDto } from '@/core/interfaces/model/topic'
 
 const props = defineProps<{
-  option: IOption
-  optionList: IOption[]
-  topicState: IState<ITopic>
+  option: IOptionVoteCountDto
+  optionList: IOptionVoteCountDto[]
+  topicState: IState<ITopicCreateDto>
 }>()
 
 const emits = defineEmits(['onClose', 'update:optionList'])
@@ -87,7 +87,7 @@ const emits = defineEmits(['onClose', 'update:optionList'])
 const dialogVisible = ref(true)
 const hasError = ref<boolean>(false)
 const message = ref<string>('')
-const optionFormData = reactive<IOption>({ ...props.option })
+const optionFormData = reactive<IOptionVoteCountDto>({ ...props.option })
 
 /**
  * close dialog
@@ -104,7 +104,10 @@ const updateOption = async () => {
     if (
       props.topicState.data &&
       optionFormData &&
-      handleValidateAddOption(optionFormData, props.topicState.data) === true
+      handleValidateAddOption(
+        { title: optionFormData.name, link: optionFormData.link },
+        props.topicState.data
+      ) === true
     ) {
       await putOptionData(optionFormData)
       const topicData = await getOptionsByTopicId(props.topicState.data.id)

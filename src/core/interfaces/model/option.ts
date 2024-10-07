@@ -1,10 +1,20 @@
-import type { IUser } from './user'
+import { IAccountVoteDto } from './user'
 
-export interface IOption {
-  id: string
-  title: string
-  link: string
-  voteBy: IUser[]
-  topicId: string
-  voteCount: number
+export interface IOptionModel {
+  link: string | null
+  name: string
+  option_id: number
+  topic_id: number
+}
+
+export interface IOptionVoteCountDto extends IOptionModel {
+  vote_count: number
+}
+
+export interface IOptionRealtimeDto {
+  link: string | null
+  name: string
+  option_id: number
+  topic_id: number
+  voteBy: IAccountVoteDto[]
 }
