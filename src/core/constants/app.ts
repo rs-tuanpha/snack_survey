@@ -3,3 +3,5 @@ export const ENV_CONFIG = {
 }
 
 export const DEFAULT_EMPTY = '-'
+
+export const THUMBNAIL_MAX_SIZE = 5 * 1024 * 1024

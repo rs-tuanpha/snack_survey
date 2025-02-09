@@ -52,6 +52,23 @@
             variant="outlined"
           ></v-text-field>
 
+          <div v-if="props.topicState && checkLinkRequired(props.topicState)">
+            <label class="block font-medium">Image (optional, max 5MB):</label>
+            <input
+              type="file"
+              @change="handleFileChange"
+              accept="image/*"
+              class="border p-2 w-full rounded-md"
+            />
+          </div>
+          <v-file-input
+            label="Upload Image (optional, max 5MB)"
+            accept="image/*"
+            outlined
+            @change="handleFileChange"
+            :error-messages="uploadMessage"
+          ></v-file-input>
+
           <v-btn
             type="submit"
             @click="handleAddOption"
@@ -81,6 +98,7 @@ import {
 import { ENotificationColor } from '@/core/constants/enum'
 import type { IOption } from '@/core/interfaces/model/option'
 import type { ITopic } from '@/core/interfaces/model/topic'
+import { THUMBNAIL_MAX_SIZE } from '@/core/constants/app'
 
 const props = defineProps<{
   id: string
@@ -95,11 +113,30 @@ const emits = defineEmits<{
 
 const hasError = ref<boolean>(false)
 const message = ref<String>('')
+const uploadMessage = ref('')
 
 const form = reactive({
   link: '',
   title: ''
 })
+const image = ref<File | null>(null)
+
+/** handle user upload and change thubmnail file event */
+const handleFileChange = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  if (target.files?.length) {
+    const file = target.files[0]
+
+    // Check file size limit (5MB)
+    if (file.size > THUMBNAIL_MAX_SIZE) {
+      uploadMessage.value = 'File size exceeds 5MB limit!'
+      image.value = null
+    } else {
+      image.value = file
+      uploadMessage.value = ''
+    }
+  }
+}
 
 /**
  * handle add option
@@ -124,7 +161,7 @@ const handleAddOption = async () => {
       if (optionExited) {
         return
       }
-      await postNewOption(form.title, form.link, props.id)
+      await postNewOption(form.title, form.link, props.id, image.value)
       hasError.value = false
       message.value = 'Tạo mới thành công'
       emits('reloadOptions')
@@ -139,6 +176,7 @@ const handleAddOption = async () => {
       form.title = ''
       form.link = ''
       message.value = ''
+      image.value = null
     }, 2000)
   }
 }

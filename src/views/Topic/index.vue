@@ -1,46 +1,31 @@
 <template>
-  <v-container>
+  <v-container id="topic">
     <v-sheet
-      v-if="!common.loading && !currentTopic?.status"
-      max-width="638"
-      width="100%"
-      class="mx-auto"
-    >
-      <v-alert variant="outlined" type="warning" prominent class="w-100 mb-2" border="top">
-        Topic này đã đóng, vui lòng trở lại sau
-      </v-alert>
-    </v-sheet>
-    <v-sheet
-      elevation="1"
       max-width="638"
       rounded
       width="100%"
-      class="border-top-violet pa-3 mx-auto"
-      border
+      class="mx-auto mt-16"
+      style="background-color: transparent; max-width: calc(100% / 3)"
     >
-      <h1 class="text-h4">{{ currentTopic?.name }}</h1>
-      <v-col sm="8">
-        <p class="mt-3 text-body-1">
-          Thời hạn:
-          {{
-            new Date((currentTopic?.date as any)?.seconds * 1000).toLocaleDateString() +
-            ' ' +
-            new Date((currentTopic?.date as any)?.seconds * 1000).toLocaleTimeString()
-          }}
-        </p>
-        <p class="font-weight-medium pt-1">
-          <v-chip color="primary" label class="chip-with-icon">
-            <v-icon icon="mdi-clock-time-eight-outline"></v-icon>
-          </v-chip>
-          <span class="text-red ml-1">{{ countdown }}</span>
-        </p>
-      </v-col>
-      <v-divider></v-divider>
-      <v-col sm="12">
-        <p>{{ currentTopic?.description }}</p></v-col
-      >
+      <h1 class="text-white text-h4">{{ currentTopic?.name }}</h1>
+      <p class="text-white">{{ currentTopic?.description }}</p>
+      <p class="text-white text-body-1">
+        Thời hạn:
+        {{
+          new Date((currentTopic?.date as any)?.seconds * 1000).toLocaleDateString() +
+          ' ' +
+          new Date((currentTopic?.date as any)?.seconds * 1000).toLocaleTimeString()
+        }}
+      </p>
+      <p class="text-white font-weight-medium pt-1 mb-2">
+        <v-chip color="primary" label class="chip-with-icon">
+          <v-icon icon="mdi-clock-time-eight-outline"></v-icon>
+        </v-chip>
+        <span class="text-red ml-1">{{ countdown }}</span>
+      </p>
+
       <form-create-option
-        v-if="currentTopic?.link && currentTopic?.status"
+        v-if="true || (currentTopic?.link && currentTopic?.status)"
         :id="id.toString()"
         :options="options"
         :topic-state="currentTopic"
@@ -49,72 +34,147 @@
       />
     </v-sheet>
     <v-sheet
-      elevation="1"
       max-width="638"
       rounded="lg"
       width="100%"
-      class="mt-3 pa-3 mx-auto"
-      border
+      heigth="100%"
+      class="mt-3 mx-auto"
+      style="background-color: transparent"
     >
       <v-alert
-        v-if="alertVote"
+        v-if="!common.loading && !currentTopic?.status"
+        variant="outlined"
+        type="warning"
+        class="w-100 pt-2 pb-2 mb-2"
+        style="background-color: white"
         border="start"
-        variant="tonal"
-        closable
+      >
+        Topic này đã đóng, vui lòng trở lại sau
+      </v-alert>
+      <v-alert
+        v-if="alertVote"
+        variant="outlined"
         :type="alertVoteType"
-        class="mb-2"
+        class="w-100 pt-2 pb-2 mb-2"
+        style="background-color: white"
+        border="start"
       >
         {{ alertVote }}</v-alert
       >
-      <ul>
-        <li
-          v-for="(option, index) in options"
-          :key="option?.id + index"
-          class="option d-flex align-center mb-2 px-4 py-2 elevation-1"
-        >
-          <v-avatar color="primary">
-            {{ option?.voteBy?.length }}
-          </v-avatar>
-          <div class="option__content flex-grow-1 mx-4">
-            <p class="option__content--title mb-1">{{ option?.title }}</p>
-            <a :href="option?.link" target="_blank">{{ stringMinify(option?.link, 50) }}</a>
-            <div class="d-flex mt-1">
-              <div v-for="user in option?.voteBy?.slice(0, 5)" :key="user.username" class="mr-1">
-                <v-avatar color="secondary" class="m-1" size="30">
-                  <v-img v-if="user.avatar" :src="user.avatar" :alt="user.username"></v-img>
-                  <span v-else>{{ user.username.charAt(0).toLocaleUpperCase() }}</span>
-                  <v-tooltip activator="parent" location="top">{{ user.username }}</v-tooltip>
-                </v-avatar>
-              </div>
-              <div v-if="option?.voteBy?.length > 5" class="mr-1">
-                <v-avatar
-                  color="light-blue-darken-2"
-                  class="m-1 cursor-pointer"
-                  size="30"
-                  @click.stop="onClickSeeMore(option)"
+      <div
+        style="
+          background-color: white;
+          width: 100%;
+          height: 100%;
+          overflow-y: scroll;
+          padding: 8px;
+          border-radius: 4px;
+        "
+      >
+        <ul>
+          <li
+            v-for="(option, index) in options"
+            :key="option.id"
+            style="
+              position: relative;
+              float: left;
+              padding: 4px;
+              width: calc(100% / 3);
+              max-width: calc(100% / 3);
+              height: 232px;
+              max-height: 232px;
+            "
+          >
+            <img
+              v-if="index < 3"
+              :src="`/assets/${index + 1}.webp`"
+              width="40"
+              height="40"
+              style="position: absolute; top: -8px; left: -8px; z-index: 10"
+            />
+            <v-card style="box-shadow: none; border: 1px solid #ebebeb">
+              <v-img
+                height="116px"
+                :src="option?.thumbnail ?? '/assets/default-vote-thumb.jpg'"
+                cover
+              ></v-img>
+              <div style="border-top: 1px solid #ebebeb">
+                <p
+                  style="
+                    font-size: 14px;
+                    font-weight: 700;
+                    color: #252525;
+                    white-space: nowrap;
+                    text-overflow: ellipsis;
+                    overflow: hidden;
+                    margin-bottom: 1px;
+                    padding: 4px 8px 0;
+                  "
                 >
-                  {{ option?.voteBy?.length - 5 }}<sup>+</sup>
-                </v-avatar>
-                <v-tooltip activator="parent" location="top">{{
-                  `${option?.voteBy?.length - 5} others people`
-                }}</v-tooltip>
+                  {{ option?.title ?? '' }}
+                </p>
+                <a
+                  :href="option?.link"
+                  target="_blank"
+                  style="
+                    display: block;
+                    width: 100%;
+                    font-size: 12px;
+                    padding: 0 8px;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                  "
+                >
+                  {{ option?.link }}
+                </a>
+                <v-card-actions>
+                  <div class="w-100 d-flex justify-space-between align-center">
+                    <div class="d-flex mt-1">
+                      <div
+                        v-for="user in option?.voteBy?.slice(0, 4)"
+                        :key="user.username"
+                        style="margin-right: -8px"
+                      >
+                        <v-avatar color="secondary" class="m-1" size="30">
+                          <v-img v-if="user.avatar" :src="user.avatar" :alt="user.username"></v-img>
+                          <span v-else>{{ user.username.charAt(0).toLocaleUpperCase() }}</span>
+                          <v-tooltip activator="parent" location="top">{{
+                            user.username
+                          }}</v-tooltip>
+                        </v-avatar>
+                      </div>
+                      <div v-if="option?.voteBy?.length > 4" class="mr-1">
+                        <v-avatar
+                          color="light-blue-darken-2"
+                          class="m-1 cursor-pointer"
+                          size="30"
+                          @click.stop="onClickSeeMore(option)"
+                        >
+                          {{ option?.voteBy?.length - 4 }}<sup>+</sup>
+                        </v-avatar>
+                        <v-tooltip activator="parent" location="top">{{
+                          `${option?.voteBy?.length - 4} others people`
+                        }}</v-tooltip>
+                      </div>
+                    </div>
+                    <v-icon
+                      icon="mdi-thumb-up"
+                      size="x-large"
+                      :color="
+                        option.voteBy.some((voter) => voter.id === currentAccount?.id)
+                          ? 'red-darken-1'
+                          : 'blue-darken-3'
+                      "
+                      @click.prevent="handleChangeVote(index)"
+                    ></v-icon>
+                  </div>
+                </v-card-actions>
               </div>
-            </div>
-          </div>
-          <div class="d-flex align-self-center">
-            <v-icon
-              icon="mdi-thumb-up"
-              size="x-large"
-              :color="
-                option.voteBy.some((voter) => voter.id === currentAccount?.id)
-                  ? 'red-darken-1'
-                  : 'blue-darken-3'
-              "
-              @click.prevent="handleChangeVote(index)"
-            ></v-icon>
-          </div>
-        </li>
-      </ul>
+            </v-card>
+          </li>
+        </ul>
+      </div>
     </v-sheet>
     <div>
       <v-overlay :model-value="showOverlay" class="align-center justify-center">
@@ -428,4 +488,25 @@ const onClickSeeMore = (option: IOption) => {
 </script>
 <style scoped lang="scss">
 @import './styles.scss';
+#topic {
+  max-width: 1280px;
+  height: 100vh;
+  position: fixed;
+  top: 70px;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: row;
+  margin: 0 auto;
+  z-index: 0;
+  background-image: url('/assets/main-banner.jpg');
+  background-size: cover;
+  overflow: hidden;
+}
+
+@media (width <= 1024px) {
+  #topic {
+    flex-direction: column;
+  }
+}
 </style>
