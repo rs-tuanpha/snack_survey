@@ -13,11 +13,12 @@ const isLoading = computed(() => {
 
   return loading.value
 })
-console.log("App.vue running");
-
 </script>
 
 <template>
   <RouterView />
   <Loading :is-loading="isLoading" />
 </template>
+<style lang="scss">
+@import '@/assets/styles/global.scss';
+</style>

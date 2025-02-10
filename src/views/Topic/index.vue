@@ -4,12 +4,12 @@
       max-width="638"
       rounded
       width="100%"
-      class="mx-auto mt-16"
+      class="mx-auto mt-12"
       style="background-color: transparent; max-width: calc(100% / 3)"
     >
-      <h1 class="text-white text-h4">{{ currentTopic?.name }}</h1>
-      <p class="text-white">{{ currentTopic?.description }}</p>
-      <p class="text-white text-body-1">
+      <h1 class="text-white text-h4 mb-4">{{ currentTopic?.name }}</h1>
+      <p class="text-white text-body-1 mb-1">{{ currentTopic?.description }}</p>
+      <p class="text-white text-body-1 mb-1">
         Thời hạn:
         {{
           new Date((currentTopic?.date as any)?.seconds * 1000).toLocaleDateString() +
@@ -17,7 +17,7 @@
           new Date((currentTopic?.date as any)?.seconds * 1000).toLocaleTimeString()
         }}
       </p>
-      <p class="text-white font-weight-medium pt-1 mb-2">
+      <p class="text-white font-weight-medium mb-4">
         <v-chip color="primary" label class="chip-with-icon">
           <v-icon icon="mdi-clock-time-eight-outline"></v-icon>
         </v-chip>
@@ -25,7 +25,7 @@
       </p>
 
       <form-create-option
-        v-if="true || (currentTopic?.link && currentTopic?.status)"
+        v-if="currentTopic?.link && currentTopic?.status"
         :id="id.toString()"
         :options="options"
         :topic-state="currentTopic"
@@ -38,7 +38,7 @@
       rounded="lg"
       width="100%"
       heigth="100%"
-      class="mt-3 mx-auto"
+      class="mx-auto"
       style="background-color: transparent"
     >
       <v-alert
@@ -66,23 +66,24 @@
           background-color: white;
           width: 100%;
           height: 100%;
+          max-height: calc(100vh - 140px);
           overflow-y: scroll;
           padding: 8px;
           border-radius: 4px;
         "
       >
-        <ul>
+        <ul style="display: flex; flex-wrap: wrap; gap: 8px">
           <li
             v-for="(option, index) in options"
             :key="option.id"
             style="
               position: relative;
-              float: left;
               padding: 4px;
-              width: calc(100% / 3);
-              max-width: calc(100% / 3);
+              width: calc(100% / 3 - 8px);
+              max-width: 200px;
               height: 232px;
               max-height: 232px;
+              list-style: none;
             "
           >
             <img
@@ -206,7 +207,6 @@ import useCommon from '@/core/hooks/useCommon'
 import type { IOption } from '@/core/interfaces/model/option'
 import type { ITopic } from '@/core/interfaces/model/topic'
 import type { IUser } from '@/core/interfaces/model/user'
-import stringMinify from '@/core/utils/stringMinify'
 import { db } from '@/plugins/firebase'
 import { getAccountById } from '@/services/account.service'
 import { getOptionsByTopicId, voteOption } from '@/services/option.service'
@@ -499,7 +499,6 @@ const onClickSeeMore = (option: IOption) => {
   flex-direction: row;
   margin: 0 auto;
   z-index: 0;
-  background-image: url('/assets/main-banner.jpg');
   background-size: cover;
   overflow: hidden;
 }

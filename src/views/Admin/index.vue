@@ -65,7 +65,9 @@
               <v-list-item-title :v-text="item.title">{{
                 item.link || item.title
               }}</v-list-item-title>
-              <v-list-item-subtitle :v-text="item.voteCount">Số vote: {{ item.voteCount }}</v-list-item-subtitle>
+              <v-list-item-subtitle :v-text="item.voteCount"
+                >Số vote: {{ item.voteCount }}</v-list-item-subtitle
+              >
             </v-list-item>
           </v-list>
           <v-alert type="warning" v-else title="" text="Không có option nào được thêm!"></v-alert>
@@ -168,15 +170,15 @@
     <v-row justify="center">
       <v-col sm="12" md="12" lg="12" xl="8">
         <v-sheet class="pa-2" border rounded>
-          <v-table fixed-header :height="topics.length > 10 ? '400px' : ''">
+          <v-table id="admin-table" fixed-header :height="topics.length > 10 ? '400px' : ''">
             <thead>
               <tr>
                 <th class="text-left" scope="col">STT</th>
                 <th class="text-left" scope="col">Tên topic</th>
                 <th class="text-left" scope="col">Team</th>
-                <th class="text-left" scope="col">Trạng thái</th>
-                <th class="text-left" scope="col">Deadline</th>
-                <th class="text-left w-400" scope="col">Tác vụ</th>
+                <th class="text-left" scope="col" style="width: 90px">Trạng thái</th>
+                <th class="text-left" scope="col" style="width: 90px">Deadline</th>
+                <th class="text-left" scope="col" style="width: 408px">Tác vụ</th>
               </tr>
             </thead>
             <tbody>
@@ -184,12 +186,12 @@
                 <td>{{ index + 1 }}</td>
                 <td>{{ item.name }}</td>
                 <td>{{ item.team }}</td>
-                <td>{{ item.status === true || item.date.toDate() >= new Date() ? 'Mở' : 'Đóng' }}</td>
+                <td>
+                  {{ item.status === true || item.date.toDate() >= new Date() ? 'Mở' : 'Đóng' }}
+                </td>
                 <td>
                   {{
-                    new Date((item?.date as any)?.seconds * 1000).toLocaleDateString() +
-                    ' ' +
-                    new Date((item?.date as any)?.seconds * 1000).toLocaleTimeString()
+                    dayjs(new Date((item?.date as any)?.seconds * 1000)).format('DD/MM/YYYY HH:mm')
                   }}
                 </td>
                 <td>
@@ -207,13 +209,13 @@
                   >
                   <v-btn
                     class="text-none w-auto ma-1"
-                    color="blue-darken-2"
+                    color="green-darken-2"
                     @click="handleAddOption(item.id)"
                     >+Option</v-btn
                   >
                   <v-btn
                     class="text-none w-auto ma-1"
-                    color="blue-darken-2"
+                    color="purple-darken-2"
                     @click="showOptionList(item.id)"
                     >List Option</v-btn
                   >
@@ -240,6 +242,7 @@ import type { ITopic } from '@/core/interfaces/model/topic'
 import type { IOption } from '@/core/interfaces/model/option'
 import type { IState } from '@/core/interfaces/model/state'
 import { mappingObject } from '@/core/utils/mappingObject'
+import dayjs from 'dayjs'
 
 const ModalCreateOption = defineAsyncComponent(() => import('./ModalCreateOption.vue'))
 const ModalEditOption = defineAsyncComponent(() => import('./ModalEditOption.vue'))
@@ -278,22 +281,27 @@ watch(
   }
 )
 
-
-watch(() => topics, async (topicsRef) => {
-  if(!topicsRef.value.length || !isFirstCheckStatus.value) {
-    return;
-  }
-  isFirstCheckStatus.value = false
-  const syncStatusList: Promise<void>[] = []
-  const currentDay = new Date()
-  topicsRef.value.forEach(topicItem => {
-    if(topicItem.status === true && topicItem.date.toDate() < currentDay) {
-      const topicRef = doc(db, 'topics', topicItem.id)
-      syncStatusList.push(updateDoc(topicRef,{ ...topicItem, status: false, updatedAt: currentDay }))
+watch(
+  () => topics,
+  async (topicsRef) => {
+    if (!topicsRef.value.length || !isFirstCheckStatus.value) {
+      return
     }
-  })
-  await Promise.all(syncStatusList)
-}, {deep: true})
+    isFirstCheckStatus.value = false
+    const syncStatusList: Promise<void>[] = []
+    const currentDay = new Date()
+    topicsRef.value.forEach((topicItem) => {
+      if (topicItem.status === true && topicItem.date.toDate() < currentDay) {
+        const topicRef = doc(db, 'topics', topicItem.id)
+        syncStatusList.push(
+          updateDoc(topicRef, { ...topicItem, status: false, updatedAt: currentDay })
+        )
+      }
+    })
+    await Promise.all(syncStatusList)
+  },
+  { deep: true }
+)
 
 // Methods
 const confirm = (type: string) => {
@@ -465,7 +473,7 @@ const handleCloseEditOptionDialog = async () => {
   isShowModalEditOption.value = false
 }
 </script>
-<style scoped>
+<style lang="scss" scoped>
 .topic-tbl {
   max-height: 300px;
   overflow: auto;
@@ -473,7 +481,10 @@ const handleCloseEditOptionDialog = async () => {
 .btn-wrapper {
   text-align: center;
 }
-.w-400 {
-  width: 400px;
+#admin-table {
+  tr > th,
+  td {
+    padding: 0 8px;
+  }
 }
 </style>
