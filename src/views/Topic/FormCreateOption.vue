@@ -1,14 +1,17 @@
 <template>
-  <v-expansion-panels>
-    <v-expansion-panel>
-      <v-expansion-panel-title
-        expand-icon="mdi-plus"
-        collapse-icon="mdi-minus"
+  <v-dialog max-width="340">
+    <template v-slot:activator="{ props: activatorProps }">
+      <v-btn
+        v-bind="activatorProps"
+        prepend-icon="mdi-package"
+        width="204"
         @click="handleResetForm"
       >
         Thêm option
-      </v-expansion-panel-title>
-      <v-expansion-panel-text>
+      </v-btn>
+    </template>
+    <template v-slot:default="{ isActive }">
+      <v-card title="Thêm Option" style="background-color: white; padding: 8px">
         <v-form @submit.prevent>
           <v-alert
             v-if="message"
@@ -68,21 +71,25 @@
             @change="handleFileChange"
             :error-messages="uploadMessage"
           ></v-file-input>
-
+          <v-btn
+            text="Huỷ"
+            color="red-darken-2"
+            @click="isActive.value = false"
+            variant="flat"
+          ></v-btn>
           <v-btn
             type="submit"
             @click="handleAddOption"
             class="mb-2 float-right"
             color="blue-darken-2"
-            size="large"
             variant="flat"
             min-width="100"
             >Thêm mới option</v-btn
           >
         </v-form>
-      </v-expansion-panel-text>
-    </v-expansion-panel>
-  </v-expansion-panels>
+      </v-card>
+    </template>
+  </v-dialog>
 </template>
 
 <script setup lang="ts">
@@ -187,5 +194,3 @@ const handleResetForm = () => {
   form.title = ''
 }
 </script>
-
-<style scoped></style>
