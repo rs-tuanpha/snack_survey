@@ -1,12 +1,6 @@
 <template>
   <v-container id="topic">
-    <v-sheet
-      max-width="638"
-      rounded
-      width="100%"
-      class="mx-auto mt-12"
-      style="background-color: transparent; max-width: calc(100% / 3)"
-    >
+    <v-sheet max-width="638" rounded width="100%" class="mx-auto left-area">
       <h1 class="text-white text-h4 mb-4">{{ currentTopic?.name }}</h1>
       <p class="text-white text-body-1 mb-1">{{ currentTopic?.description }}</p>
       <p class="text-white text-body-1 mb-1">
@@ -17,7 +11,7 @@
           new Date((currentTopic?.date as any)?.seconds * 1000).toLocaleTimeString()
         }}
       </p>
-      <p class="text-white font-weight-medium mb-4">
+      <p v-if="Boolean(countdown)" class="text-white font-weight-medium mb-4">
         <v-chip color="primary" label class="chip-with-icon">
           <v-icon icon="mdi-clock-time-eight-outline"></v-icon>
         </v-chip>
@@ -32,15 +26,49 @@
         @update-options-data="updateOptionsData"
         @reload-options="handleReloadOptions"
       />
+      <div class="left-area__rank">
+        <option-card
+          v-if="Boolean(options?.[0])"
+          :index="0"
+          :is-rank-card="true"
+          :option="options[0]"
+          :current-account="currentAccount"
+          card-style="position: relative;
+              padding: 8px;
+              width: 220px;
+              height: 200px;
+              max-height: 232px;
+              background:"
+        ></option-card>
+        <div class="left-area__rank--bottom">
+          <option-card
+            v-if="Boolean(options?.[1])"
+            :index="1"
+            :is-rank-card="true"
+            :option="options[1]"
+            :current-account="currentAccount"
+            card-style="position: relative;
+              padding: 8px;
+              width: 220px;
+              height: 200px;
+              max-height: 232px;"
+          ></option-card>
+          <option-card
+            v-if="Boolean(options?.[2])"
+            :index="2"
+            :is-rank-card="true"
+            :option="options[2]"
+            :current-account="currentAccount"
+            card-style="position: relative;
+              padding: 8px;
+              width: 220px;
+              height: 200px;
+              max-height: 232px;"
+          ></option-card>
+        </div>
+      </div>
     </v-sheet>
-    <v-sheet
-      max-width="638"
-      rounded="lg"
-      width="100%"
-      heigth="100%"
-      class="mx-auto"
-      style="background-color: transparent"
-    >
+    <v-sheet max-width="638" rounded="lg" width="100%" heigth="100%" class="mx-auto right-area">
       <v-alert
         v-if="!common.loading && !currentTopic?.status"
         variant="outlined"
@@ -61,120 +89,27 @@
       >
         {{ alertVote }}</v-alert
       >
-      <div
-        style="
-          background-color: white;
-          width: 100%;
-          height: 100%;
-          max-height: calc(100vh - 140px);
-          overflow-y: scroll;
-          padding: 8px;
-          border-radius: 4px;
-        "
-      >
-        <ul style="display: flex; flex-wrap: wrap; gap: 8px">
-          <li
+      <div class="right-area__list-wrapper">
+        <div class="right-area__list">
+          <option-card
             v-for="(option, index) in options"
             :key="option.id"
-            style="
+            :index="index"
+            :is-rank-card="false"
+            :option="option"
+            :current-account="currentAccount"
+            card-style="
               position: relative;
               padding: 4px;
               width: calc(100% / 3 - 8px);
               max-width: 200px;
               height: 232px;
               max-height: 232px;
-              list-style: none;
-            "
-          >
-            <img
-              v-if="index < 3"
-              :src="`/assets/${index + 1}.webp`"
-              width="40"
-              height="40"
-              style="position: absolute; top: -8px; left: -8px; z-index: 10"
-            />
-            <v-card style="box-shadow: none; border: 1px solid #ebebeb">
-              <v-img
-                height="116px"
-                :src="option?.thumbnail ?? '/assets/default-vote-thumb.jpg'"
-                cover
-              ></v-img>
-              <div style="border-top: 1px solid #ebebeb">
-                <p
-                  style="
-                    font-size: 14px;
-                    font-weight: 700;
-                    color: #252525;
-                    white-space: nowrap;
-                    text-overflow: ellipsis;
-                    overflow: hidden;
-                    margin-bottom: 1px;
-                    padding: 4px 8px 0;
-                  "
-                >
-                  {{ option?.title ?? '' }}
-                </p>
-                <a
-                  :href="option?.link"
-                  target="_blank"
-                  style="
-                    display: block;
-                    width: 100%;
-                    font-size: 12px;
-                    padding: 0 8px;
-                    overflow: hidden;
-                    text-overflow: ellipsis;
-                    white-space: nowrap;
-                  "
-                >
-                  {{ option?.link }}
-                </a>
-                <v-card-actions>
-                  <div class="w-100 d-flex justify-space-between align-center">
-                    <div class="d-flex mt-1">
-                      <div
-                        v-for="user in option?.voteBy?.slice(0, 4)"
-                        :key="user.username"
-                        style="margin-right: -8px"
-                      >
-                        <v-avatar color="secondary" class="m-1" size="30">
-                          <v-img v-if="user.avatar" :src="user.avatar" :alt="user.username"></v-img>
-                          <span v-else>{{ user.username.charAt(0).toLocaleUpperCase() }}</span>
-                          <v-tooltip activator="parent" location="top">{{
-                            user.username
-                          }}</v-tooltip>
-                        </v-avatar>
-                      </div>
-                      <div v-if="option?.voteBy?.length > 4" class="mr-1">
-                        <v-avatar
-                          color="light-blue-darken-2"
-                          class="m-1 cursor-pointer"
-                          size="30"
-                          @click.stop="onClickSeeMore(option)"
-                        >
-                          {{ option?.voteBy?.length - 4 }}<sup>+</sup>
-                        </v-avatar>
-                        <v-tooltip activator="parent" location="top">{{
-                          `${option?.voteBy?.length - 4} others people`
-                        }}</v-tooltip>
-                      </div>
-                    </div>
-                    <v-icon
-                      icon="mdi-thumb-up"
-                      size="x-large"
-                      :color="
-                        option.voteBy.some((voter) => voter.id === currentAccount?.id)
-                          ? 'red-darken-1'
-                          : 'blue-darken-3'
-                      "
-                      @click.prevent="handleChangeVote(index)"
-                    ></v-icon>
-                  </div>
-                </v-card-actions>
-              </div>
-            </v-card>
-          </li>
-        </ul>
+              "
+            @on-click-see-more="onClickSeeMore(option)"
+            @handle-change-vote="handleChangeVote(index)"
+          ></option-card>
+        </div>
       </div>
     </v-sheet>
     <div>
@@ -214,7 +149,7 @@ import { useCommonStore } from '@/stores'
 import { doc, updateDoc } from 'firebase/firestore'
 import { computed, defineAsyncComponent, onMounted, ref } from 'vue'
 import { useDocument } from 'vuefire'
-
+import OptionCard from './OptionCard.vue'
 const FormCreateOption = defineAsyncComponent(() => import('./FormCreateOption.vue'))
 
 /**

@@ -42,3 +42,47 @@ h1 {
     }
   }
 }
+
+.left-area {
+  background-color: transparent;
+  max-width: calc(100% / 3);
+  display: flex;
+  gap: 8px;
+  flex-direction: column;
+  align-items: center;
+  background-color: transparent;
+
+  &__rank {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 4px;
+
+    &--bottom {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      align-items: center;
+      margin-top: 40px;
+    }
+  }
+}
+
+.right-area {
+  background-color: transparent;
+
+  &__list-wrapper {
+    background-color: white;
+    width: 100%;
+    height: 100%;
+    max-height: calc(100vh - 140px);
+    overflow-y: scroll;
+    padding: 8px;
+    border-radius: 4px;
+  }
+  &__list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}
