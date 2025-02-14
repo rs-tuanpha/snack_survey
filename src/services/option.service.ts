@@ -10,7 +10,8 @@ import {
   where,
   getDoc,
   orderBy,
-  updateDoc
+  updateDoc,
+  limit
 } from 'firebase/firestore'
 import { useCollection } from 'vuefire'
 import { uploadImageToFirebase } from './upload.service'
@@ -23,6 +24,13 @@ import { uploadImageToFirebase } from './upload.service'
 export const getOptionsByTopicId = async (topicId: string) => {
   const result = useCollection<IOption>(
     query(collection(db, 'options'), where('topicId', '==', topicId), orderBy('title', 'asc'))
+  )
+  return result
+}
+
+export const getRankByTopicId = async (topicId: string) => {
+  const result = useCollection<IOption>(
+    query(collection(db, 'options'), where('topicId', '==', topicId), orderBy('voteCount', 'desc'), limit(3))
   )
   return result
 }
