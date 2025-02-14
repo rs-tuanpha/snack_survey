@@ -17,15 +17,6 @@
         </v-chip>
         <span class="text-red ml-1">{{ countdown }}</span>
       </p>
-
-      <form-create-option
-        v-if="currentTopic?.link && currentTopic?.status"
-        :id="id.toString()"
-        :options="options"
-        :topic-state="currentTopic"
-        @update-options-data="updateOptionsData"
-        @reload-options="handleReloadOptions"
-      />
       <div class="left-area__rank">
         <option-card
           v-if="Boolean(options?.[0])"
@@ -69,26 +60,39 @@
       </div>
     </v-sheet>
     <v-sheet max-width="638" rounded="lg" width="100%" heigth="100%" class="mx-auto right-area">
-      <v-alert
-        v-if="!common.loading && !currentTopic?.status"
-        variant="outlined"
-        type="warning"
-        class="w-100 pt-2 pb-2 mb-2"
-        style="background-color: white"
-        border="start"
-      >
-        Topic này đã đóng, vui lòng trở lại sau
-      </v-alert>
-      <v-alert
-        v-if="alertVote"
-        variant="outlined"
-        :type="alertVoteType"
-        class="w-100 pt-2 pb-2 mb-2"
-        style="background-color: white"
-        border="start"
-      >
-        {{ alertVote }}</v-alert
-      >
+      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px">
+        <div style="flex: 1">
+          <v-alert
+            v-if="!common.loading && !currentTopic?.status && !alertVote"
+            variant="outlined"
+            type="warning"
+            class="w-100 pt-2 pb-2"
+            style="background-color: white"
+            border="start"
+          >
+            Topic này đã đóng, vui lòng trở lại sau
+          </v-alert>
+          <v-alert
+            v-if="alertVote"
+            variant="outlined"
+            :type="alertVoteType"
+            class="w-100 pt-2 pb-2"
+            style="background-color: white"
+            border="start"
+          >
+            {{ alertVote }}</v-alert
+          >
+        </div>
+        <form-create-option
+          v-if="currentTopic?.link && currentTopic?.status"
+          :id="id.toString()"
+          :options="options"
+          :topic-state="currentTopic"
+          @update-options-data="updateOptionsData"
+          @reload-options="handleReloadOptions"
+        />
+      </div>
+
       <div class="right-area__list-wrapper">
         <div class="right-area__list">
           <option-card
@@ -253,7 +257,7 @@ const update = async () => {
     team: 'All'
   }
   topicInfo.status = false
-  topicInfo.link = false
+  // topicInfo.link = false
   const topicRef = doc(db, 'topics', topicInfo.id)
   try {
     await updateDoc(topicRef, topicInfo as object)

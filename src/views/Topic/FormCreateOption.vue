@@ -1,10 +1,12 @@
 <template>
-  <v-dialog max-width="340">
+  <v-dialog v-model="isOpen" max-width="340">
     <template v-slot:activator="{ props: activatorProps }">
       <v-btn
         v-bind="activatorProps"
-        prepend-icon="mdi-package"
-        width="204"
+        prepend-icon="mdi-plus"
+        width="fit-content"
+        color="primary"
+        height="46"
         @click="handleResetForm"
       >
         Thêm option
@@ -12,7 +14,7 @@
     </template>
     <template v-slot:default="{ isActive }">
       <v-card title="Thêm Option" style="background-color: white; padding: 8px">
-        <v-form @submit.prevent>
+        <v-form @submit.prevent :fast-fail="false">
           <v-alert
             v-if="message"
             border="start"
@@ -54,23 +56,15 @@
             single-line
             variant="outlined"
           ></v-text-field>
-
-          <div v-if="props.topicState && checkLinkRequired(props.topicState)">
-            <label class="block font-medium">Image (optional, max 5MB):</label>
-            <input
-              type="file"
-              @change="handleFileChange"
-              accept="image/*"
-              class="border p-2 w-full rounded-md"
-            />
-          </div>
           <v-file-input
-            label="Upload Image (optional, max 5MB)"
-            accept="image/*"
-            outlined
-            @change="handleFileChange"
-            :error-messages="uploadMessage"
-          ></v-file-input>
+              v-if="props.topicState.link"
+              label="Upload Image (optional, max 5MB)"
+              accept="image/*"
+              outlined
+              @change="handleFileChange"
+              :error-messages="uploadMessage"
+            ></v-file-input>
+
           <v-btn
             text="Huỷ"
             color="red-darken-2"
@@ -126,6 +120,8 @@ const form = reactive({
   link: '',
   title: ''
 })
+
+const isOpen = ref(false);
 const image = ref<File | null>(null)
 
 /** handle user upload and change thubmnail file event */
@@ -182,8 +178,9 @@ const handleAddOption = async () => {
     setTimeout(() => {
       form.title = ''
       form.link = ''
-      message.value = ''
       image.value = null
+      message.value = ''
+      isOpen.value = false
     }, 2000)
   }
 }
@@ -192,5 +189,7 @@ const handleAddOption = async () => {
 const handleResetForm = () => {
   form.link = ''
   form.title = ''
+  image.value = null
+  isOpen.value = true;
 }
 </script>

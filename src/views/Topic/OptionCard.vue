@@ -13,7 +13,7 @@
     >
       <v-img
         :height="isRankCard ? '136px' : '116px'"
-        :src="props.option?.thumbnail ?? '/assets/default-vote-thumb.jpg'"
+        :src="Boolean(props.option?.thumbnail) ? props.option.thumbnail : '/assets/default-vote-thumb.jpg'"
         cover
       ></v-img>
       <div style="border-top: 1px solid #ebebeb">
