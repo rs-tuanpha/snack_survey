@@ -1,22 +1,22 @@
 <template>
   <v-container id="topic">
     <v-sheet max-width="638" rounded width="100%" class="mx-auto left-area">
-      <h1 class="text-white text-h4 mb-4">{{ currentTopic?.name }}</h1>
-      <p class="text-white text-body-1 mb-1">{{ currentTopic?.description }}</p>
-      <p class="text-white text-body-1 mb-1">
-        Thời hạn:
-        {{
-          new Date((currentTopic?.date as any)?.seconds * 1000).toLocaleDateString() +
-          ' ' +
-          new Date((currentTopic?.date as any)?.seconds * 1000).toLocaleTimeString()
-        }}
-      </p>
-      <p v-if="Boolean(countdown)" class="text-white font-weight-medium mb-4">
-        <v-chip color="primary" label class="chip-with-icon">
-          <v-icon icon="mdi-clock-time-eight-outline"></v-icon>
-        </v-chip>
-        <span class="text-red ml-1">{{ countdown }}</span>
-      </p>
+      <div class="mx-auto left-area" style="width: 100% !important; max-width: 400px;">
+        <h1 class="text-white text-h4 mb-2">{{ currentTopic?.name }}</h1>
+        <p class="text-white text-body-1 mb-1">{{ currentTopic?.description }}</p>
+        <p class="text-white text-body-1 mb-8">
+          Thời hạn:
+          {{
+            dayjs(new Date((currentTopic?.date as any)?.seconds * 1000)).format('DD/MM/YYYY, HH:MM:ss')
+          }}
+        </p>
+        <p v-if="Boolean(countdown)" class="text-white font-weight-medium mb-4">
+          <v-chip color="primary" label class="chip-with-icon">
+            <v-icon icon="mdi-clock-time-eight-outline"></v-icon>
+          </v-chip>
+          <span class="text-red ml-1">{{ countdown }}</span>
+        </p>
+      </div>
       <div class="left-area__rank">
         <option-card
           v-if="Boolean(topOptions?.[0])"
@@ -38,7 +38,7 @@
             v-if="Boolean(topOptions?.[1])"
             :index="1"
             :is-rank-card="true"
-            :option="topOptions[2]"
+            :option="topOptions[1]"
             :current-account="currentAccount"
             card-style="position: relative;
               padding: 8px;
@@ -164,6 +164,7 @@ import { computed, defineAsyncComponent, onMounted, ref } from 'vue'
 import { useDocument } from 'vuefire'
 import OptionCard from './OptionCard.vue'
 import { urlToHttpOptions } from 'url'
+import dayjs from 'dayjs'
 const FormCreateOption = defineAsyncComponent(() => import('./FormCreateOption.vue'))
 
 /**
