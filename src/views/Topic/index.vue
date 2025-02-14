@@ -1,120 +1,120 @@
 <template>
-  <v-container>
-    <v-sheet
-      v-if="!common.loading && !currentTopic?.status"
-      max-width="638"
-      width="100%"
-      class="mx-auto"
-    >
-      <v-alert variant="outlined" type="warning" prominent class="w-100 mb-2" border="top">
-        Topic này đã đóng, vui lòng trở lại sau
-      </v-alert>
+  <v-container id="topic">
+    <v-sheet max-width="638" rounded width="100%" class="mx-auto left-area">
+      <h1 class="text-white text-h4 mb-4">{{ currentTopic?.name }}</h1>
+      <p class="text-white text-body-1 mb-1">{{ currentTopic?.description }}</p>
+      <p class="text-white text-body-1 mb-1">
+        Thời hạn:
+        {{
+          new Date((currentTopic?.date as any)?.seconds * 1000).toLocaleDateString() +
+          ' ' +
+          new Date((currentTopic?.date as any)?.seconds * 1000).toLocaleTimeString()
+        }}
+      </p>
+      <p v-if="Boolean(countdown)" class="text-white font-weight-medium mb-4">
+        <v-chip color="primary" label class="chip-with-icon">
+          <v-icon icon="mdi-clock-time-eight-outline"></v-icon>
+        </v-chip>
+        <span class="text-red ml-1">{{ countdown }}</span>
+      </p>
+      <div class="left-area__rank">
+        <option-card
+          v-if="Boolean(options?.[0])"
+          :index="0"
+          :is-rank-card="true"
+          :option="options[0]"
+          :current-account="currentAccount"
+          card-style="position: relative;
+              padding: 8px;
+              width: 220px;
+              height: 200px;
+              max-height: 232px;
+              background:"
+        ></option-card>
+        <div class="left-area__rank--bottom">
+          <option-card
+            v-if="Boolean(options?.[1])"
+            :index="1"
+            :is-rank-card="true"
+            :option="options[1]"
+            :current-account="currentAccount"
+            card-style="position: relative;
+              padding: 8px;
+              width: 220px;
+              height: 200px;
+              max-height: 232px;"
+          ></option-card>
+          <option-card
+            v-if="Boolean(options?.[2])"
+            :index="2"
+            :is-rank-card="true"
+            :option="options[2]"
+            :current-account="currentAccount"
+            card-style="position: relative;
+              padding: 8px;
+              width: 220px;
+              height: 200px;
+              max-height: 232px;"
+          ></option-card>
+        </div>
+      </div>
     </v-sheet>
-    <v-sheet
-      elevation="1"
-      max-width="638"
-      rounded
-      width="100%"
-      class="border-top-violet pa-3 mx-auto"
-      border
-    >
-      <h1 class="text-h4">{{ currentTopic?.name }}</h1>
-      <v-col sm="8">
-        <p class="mt-3 text-body-1">
-          Thời hạn:
-          {{
-            new Date((currentTopic?.date as any)?.seconds * 1000).toLocaleDateString() +
-            ' ' +
-            new Date((currentTopic?.date as any)?.seconds * 1000).toLocaleTimeString()
-          }}
-        </p>
-        <p class="font-weight-medium pt-1">
-          <v-chip color="primary" label class="chip-with-icon">
-            <v-icon icon="mdi-clock-time-eight-outline"></v-icon>
-          </v-chip>
-          <span class="text-red ml-1">{{ countdown }}</span>
-        </p>
-      </v-col>
-      <v-divider></v-divider>
-      <v-col sm="12">
-        <p>{{ currentTopic?.description }}</p></v-col
-      >
-      <form-create-option
-        v-if="currentTopic?.link && currentTopic?.status"
-        :id="id.toString()"
-        :options="options"
-        :topic-state="currentTopic"
-        @update-options-data="updateOptionsData"
-        @reload-options="handleReloadOptions"
-      />
-    </v-sheet>
-    <v-sheet
-      elevation="1"
-      max-width="638"
-      rounded="lg"
-      width="100%"
-      class="mt-3 pa-3 mx-auto"
-      border
-    >
-      <v-alert
-        v-if="alertVote"
-        border="start"
-        variant="tonal"
-        closable
-        :type="alertVoteType"
-        class="mb-2"
-      >
-        {{ alertVote }}</v-alert
-      >
-      <ul>
-        <li
-          v-for="(option, index) in options"
-          :key="option?.id + index"
-          class="option d-flex align-center mb-2 px-4 py-2 elevation-1"
-        >
-          <v-avatar color="primary">
-            {{ option?.voteBy?.length }}
-          </v-avatar>
-          <div class="option__content flex-grow-1 mx-4">
-            <p class="option__content--title mb-1">{{ option?.title }}</p>
-            <a :href="option?.link" target="_blank">{{ stringMinify(option?.link, 50) }}</a>
-            <div class="d-flex mt-1">
-              <div v-for="user in option?.voteBy?.slice(0, 5)" :key="user.username" class="mr-1">
-                <v-avatar color="secondary" class="m-1" size="30">
-                  <v-img v-if="user.avatar" :src="user.avatar" :alt="user.username"></v-img>
-                  <span v-else>{{ user.username.charAt(0).toLocaleUpperCase() }}</span>
-                  <v-tooltip activator="parent" location="top">{{ user.username }}</v-tooltip>
-                </v-avatar>
-              </div>
-              <div v-if="option?.voteBy?.length > 5" class="mr-1">
-                <v-avatar
-                  color="light-blue-darken-2"
-                  class="m-1 cursor-pointer"
-                  size="30"
-                  @click.stop="onClickSeeMore(option)"
-                >
-                  {{ option?.voteBy?.length - 5 }}<sup>+</sup>
-                </v-avatar>
-                <v-tooltip activator="parent" location="top">{{
-                  `${option?.voteBy?.length - 5} others people`
-                }}</v-tooltip>
-              </div>
-            </div>
-          </div>
-          <div class="d-flex align-self-center">
-            <v-icon
-              icon="mdi-thumb-up"
-              size="x-large"
-              :color="
-                option.voteBy.some((voter) => voter.id === currentAccount?.id)
-                  ? 'red-darken-1'
-                  : 'blue-darken-3'
+    <v-sheet max-width="638" rounded="lg" width="100%" heigth="100%" class="mx-auto right-area">
+      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px">
+        <div style="flex: 1">
+          <v-alert
+            v-if="!common.loading && !currentTopic?.status && !alertVote"
+            variant="outlined"
+            type="warning"
+            class="w-100 pt-2 pb-2"
+            style="background-color: white"
+            border="start"
+          >
+            Topic này đã đóng, vui lòng trở lại sau
+          </v-alert>
+          <v-alert
+            v-if="alertVote"
+            variant="outlined"
+            :type="alertVoteType"
+            class="w-100 pt-2 pb-2"
+            style="background-color: white"
+            border="start"
+          >
+            {{ alertVote }}</v-alert
+          >
+        </div>
+        <form-create-option
+          v-if="currentTopic?.link && currentTopic?.status"
+          :id="id.toString()"
+          :options="options"
+          :topic-state="currentTopic"
+          @update-options-data="updateOptionsData"
+          @reload-options="handleReloadOptions"
+        />
+      </div>
+
+      <div class="right-area__list-wrapper">
+        <div class="right-area__list">
+          <option-card
+            v-for="(option, index) in options"
+            :key="option.id"
+            :index="index"
+            :is-rank-card="false"
+            :option="option"
+            :current-account="currentAccount"
+            card-style="
+              position: relative;
+              padding: 4px;
+              width: calc(100% / 3 - 8px);
+              max-width: 200px;
+              height: 232px;
+              max-height: 232px;
               "
-              @click.prevent="handleChangeVote(index)"
-            ></v-icon>
-          </div>
-        </li>
-      </ul>
+            @on-click-see-more="onClickSeeMore(option)"
+            @handle-change-vote="handleChangeVote(index)"
+          ></option-card>
+        </div>
+      </div>
     </v-sheet>
     <div>
       <v-overlay :model-value="showOverlay" class="align-center justify-center">
@@ -146,7 +146,6 @@ import useCommon from '@/core/hooks/useCommon'
 import type { IOption } from '@/core/interfaces/model/option'
 import type { ITopic } from '@/core/interfaces/model/topic'
 import type { IUser } from '@/core/interfaces/model/user'
-import stringMinify from '@/core/utils/stringMinify'
 import { db } from '@/plugins/firebase'
 import { getAccountById } from '@/services/account.service'
 import { getOptionsByTopicId, voteOption } from '@/services/option.service'
@@ -154,7 +153,7 @@ import { useCommonStore } from '@/stores'
 import { doc, updateDoc } from 'firebase/firestore'
 import { computed, defineAsyncComponent, onMounted, ref } from 'vue'
 import { useDocument } from 'vuefire'
-
+import OptionCard from './OptionCard.vue'
 const FormCreateOption = defineAsyncComponent(() => import('./FormCreateOption.vue'))
 
 /**
@@ -258,7 +257,7 @@ const update = async () => {
     team: 'All'
   }
   topicInfo.status = false
-  topicInfo.link = false
+  // topicInfo.link = false
   const topicRef = doc(db, 'topics', topicInfo.id)
   try {
     await updateDoc(topicRef, topicInfo as object)
@@ -428,4 +427,24 @@ const onClickSeeMore = (option: IOption) => {
 </script>
 <style scoped lang="scss">
 @import './styles.scss';
+#topic {
+  max-width: 1280px;
+  height: 100vh;
+  position: fixed;
+  top: 70px;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: row;
+  margin: 0 auto;
+  z-index: 0;
+  background-size: cover;
+  overflow: hidden;
+}
+
+@media (width <= 1024px) {
+  #topic {
+    flex-direction: column;
+  }
+}
 </style>

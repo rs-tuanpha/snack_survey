@@ -1,7 +1,19 @@
 import type { IOption } from '@/core/interfaces/model/option'
+import { fetchDOMMetadata, fetchOpenGraphMetadata } from '@/core/utils/metadata'
 import { db } from '@/plugins/firebase'
-import { addDoc, collection, doc, getDocs, query, setDoc, where, getDoc, orderBy, updateDoc } from 'firebase/firestore'
+import {
+  addDoc,
+  collection,
+  doc,
+  getDocs,
+  query,
+  where,
+  getDoc,
+  orderBy,
+  updateDoc
+} from 'firebase/firestore'
 import { useCollection } from 'vuefire'
+import { uploadImageToFirebase } from './upload.service'
 
 /**
  * Get list option by topic id and order by voteCount (descending)
@@ -10,7 +22,8 @@ import { useCollection } from 'vuefire'
  */
 export const getOptionsByTopicId = async (topicId: string) => {
   const result = useCollection<IOption>(
-    query(collection(db, 'options'), where('topicId', '==', topicId), orderBy('voteCount', 'desc')))
+    query(collection(db, 'options'), where('topicId', '==', topicId), orderBy('voteCount', 'desc'))
+  )
   return result
 }
 
@@ -35,9 +48,29 @@ export const getAllOptions = async (): Promise<IOption[]> => {
  * @param {string} link
  * @param {string} topicId
  */
-export const postNewOption = async (title: string, link: string, topicId: string) => {
+export const postNewOption = async (
+  title: string,
+  link: string,
+  topicId: string,
+  image?: File | null
+) => {
   try {
-    const docref = await addDoc(collection(db, 'options'), { title, link, topicId, voteBy: [], voteCount: 0 })
+    let thumbnail = ''
+
+    if (image) {
+      thumbnail = (await uploadImageToFirebase(image)) || ''
+    } else {
+      const metadata = (await fetchOpenGraphMetadata(link)) || (await fetchDOMMetadata(link))
+      thumbnail = metadata?.image || ''
+    }
+    const docref = await addDoc(collection(db, 'options'), {
+      title,
+      link,
+      topicId,
+      thumbnail,
+      voteBy: [],
+      voteCount: 0
+    })
     return docref.firestore.toJSON()
   } catch (e) {
     if (e instanceof Error) throw new Error(e.message)
@@ -47,15 +80,18 @@ export const postNewOption = async (title: string, link: string, topicId: string
 
 /**
  * handle update voteBy and voteCount of Option
- * @param newOptionList 
- * @returns 1 on success, 
+ * @param newOptionList
+ * @returns 1 on success,
  */
 export const voteOption = async (newOptionList: IOption[]) => {
   try {
     newOptionList.forEach((option) => {
-      updateDoc(doc(db, 'options', option.id), {voteBy: option.voteBy, voteCount: option.voteCount})
+      updateDoc(doc(db, 'options', option.id), {
+        voteBy: option.voteBy,
+        voteCount: option.voteCount
+      })
     })
-    return 1;
+    return 1
   } catch (e) {
     if (e instanceof Error) throw new Error(e.message)
     else throw e
@@ -66,15 +102,15 @@ export const voteOption = async (newOptionList: IOption[]) => {
  * get option by id from firebase
  */
 export const getOptionById = async (optionId: string): Promise<IOption> => {
-  const docSnap = await getDoc(doc(db, "options", optionId));
-  return docSnap.data() as IOption;
+  const docSnap = await getDoc(doc(db, 'options', optionId))
+  return docSnap.data() as IOption
 }
 
 /**
  * update option data to firebase
- * @param {IOption} option 
+ * @param {IOption} option
  */
 export const putOptionData = async (option: IOption) => {
   const topicRef = doc(db, 'options', option.id)
-  return await updateDoc(topicRef, {...option})
+  return await updateDoc(topicRef, { ...option })
 }

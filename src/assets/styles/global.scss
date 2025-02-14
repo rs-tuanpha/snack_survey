@@ -17,9 +17,11 @@ body {
 }
 
 #app {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-
-  font-weight: normal;
+  width: 100vw;
+  height: 100vh;
+  position: fixed;
+  overflow-y: scroll;
+  object-fit: cover;
+  background-image: url('/assets/main-banner.jpg');
+  background-size: cover;
 }
