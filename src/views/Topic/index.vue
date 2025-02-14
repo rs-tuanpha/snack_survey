@@ -19,7 +19,7 @@
       </p>
 
       <form-create-option
-        v-if="true || (currentTopic?.link && currentTopic?.status)"
+        v-if="currentTopic?.link && currentTopic?.status"
         :id="id.toString()"
         :options="options"
         :topic-state="currentTopic"
