@@ -72,11 +72,11 @@ h1 {
   background-color: transparent;
 
   &__list-wrapper {
-    background-color: white;
+    background-color: #ffffffaa;
     width: 100%;
     height: 100%;
     max-height: calc(100vh - 140px);
-    overflow-y: scroll;
+    overflow-y: auto;
     padding: 8px;
     border-radius: 4px;
   }

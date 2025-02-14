@@ -27,8 +27,9 @@
           card-style="position: relative;
               padding: 8px;
               width: 220px;
-              height: 200px;
-              max-height: 232px;
+              height: 240px;
+              min-height: 240px;
+              max-height: 240px;
               background:"
         ></option-card>
         <div class="left-area__rank--bottom">
@@ -41,8 +42,9 @@
             card-style="position: relative;
               padding: 8px;
               width: 220px;
-              height: 200px;
-              max-height: 232px;"
+              height: 240px;
+              min-height: 240px;
+              max-height: 240px;"
           ></option-card>
           <option-card
             v-if="Boolean(options?.[2])"
@@ -53,8 +55,9 @@
             card-style="position: relative;
               padding: 8px;
               width: 220px;
-              height: 200px;
-              max-height: 232px;"
+              height: 240px;
+              min-height: 240px;
+              max-height: 240px;"
           ></option-card>
         </div>
       </div>
@@ -94,7 +97,8 @@
       </div>
 
       <div class="right-area__list-wrapper">
-        <div class="right-area__list">
+
+        <div v-if="Boolean(options.length)" class="right-area__list">
           <option-card
             v-for="(option, index) in options"
             :key="option.id"
@@ -108,12 +112,16 @@
               width: calc(100% / 3 - 8px);
               max-width: 200px;
               height: 232px;
+              min-height: 232px;
               max-height: 232px;
               "
             @on-click-see-more="onClickSeeMore(option)"
             @handle-change-vote="handleChangeVote(index)"
           ></option-card>
         </div>
+        <section v-else>
+          <p style="font-size: large;">No option yet!</p>
+        </section>
       </div>
     </v-sheet>
     <div>

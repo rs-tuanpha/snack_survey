@@ -22,7 +22,7 @@ import { uploadImageToFirebase } from './upload.service'
  */
 export const getOptionsByTopicId = async (topicId: string) => {
   const result = useCollection<IOption>(
-    query(collection(db, 'options'), where('topicId', '==', topicId), orderBy('voteCount', 'desc'))
+    query(collection(db, 'options'), where('topicId', '==', topicId), orderBy('title', 'asc'))
   )
   return result
 }
