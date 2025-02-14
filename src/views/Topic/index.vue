@@ -19,25 +19,26 @@
       </p>
       <div class="left-area__rank">
         <option-card
-          v-if="Boolean(options?.[0])"
+          v-if="Boolean(topOptions?.[0])"
           :index="0"
           :is-rank-card="true"
-          :option="options[0]"
+          :option="topOptions[0]"
           :current-account="currentAccount"
-          card-style="position: relative;
+          card-style="
+              position: relative;
               padding: 8px;
               width: 220px;
               height: 240px;
               min-height: 240px;
               max-height: 240px;
-              background:"
+              scale: 1.2;"
         ></option-card>
         <div class="left-area__rank--bottom">
           <option-card
-            v-if="Boolean(options?.[1])"
+            v-if="Boolean(topOptions?.[1])"
             :index="1"
             :is-rank-card="true"
-            :option="options[1]"
+            :option="topOptions[2]"
             :current-account="currentAccount"
             card-style="position: relative;
               padding: 8px;
@@ -47,10 +48,10 @@
               max-height: 240px;"
           ></option-card>
           <option-card
-            v-if="Boolean(options?.[2])"
+            v-if="Boolean(topOptions?.[2])"
             :index="2"
             :is-rank-card="true"
-            :option="options[2]"
+            :option="topOptions[2]"
             :current-account="currentAccount"
             card-style="position: relative;
               padding: 8px;
@@ -156,12 +157,13 @@ import type { ITopic } from '@/core/interfaces/model/topic'
 import type { IUser } from '@/core/interfaces/model/user'
 import { db } from '@/plugins/firebase'
 import { getAccountById } from '@/services/account.service'
-import { getOptionsByTopicId, voteOption } from '@/services/option.service'
+import { getOptionsByTopicId, getRankByTopicId, voteOption } from '@/services/option.service'
 import { useCommonStore } from '@/stores'
 import { doc, updateDoc } from 'firebase/firestore'
 import { computed, defineAsyncComponent, onMounted, ref } from 'vue'
 import { useDocument } from 'vuefire'
 import OptionCard from './OptionCard.vue'
+import { urlToHttpOptions } from 'url'
 const FormCreateOption = defineAsyncComponent(() => import('./FormCreateOption.vue'))
 
 /**
@@ -183,6 +185,7 @@ const common = useCommonStore()
 const currentAccount = ref<IUser | null>(null)
 const currentTopic = useDocument<ITopic>(doc(db, 'topics', id.toString()))
 const options = ref<IOption[]>([])
+const topOptions = ref<IOption[]>([])
 const currentVoteOption = ref<number | null>(null)
 const currentVoteMultiOption = ref<number[]>([])
 const alertVote = ref<string>('')
@@ -304,9 +307,12 @@ onMounted(async () => {
   }
   // wait 0.5s for the options to load then add voted options
   const topicData = await getOptionsByTopicId(id.toString())
+  const rankData = await getRankByTopicId(id.toString())
   const userData = await getAccountById(accountId!)
 
   options.value = topicData.value as IOption[]
+  topOptions.value = rankData.value as IOption[]
+  
   currentAccount.value = userData
 
   if (currentTopic.value?.option && userData) {
@@ -379,8 +385,10 @@ const handleChangeVote = (optionIndex: number) => {
 // Reload options list
 const handleReloadOptions = async () => {
   const topicData = await getOptionsByTopicId(id.toString())
+  const rankData = await getRankByTopicId(id.toString())
   setTimeout(() => {
     options.value = topicData.value as IOption[]
+    topOptions.value = rankData.value as IOption[]
   }, 100)
 }
 
