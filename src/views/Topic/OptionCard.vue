@@ -14,7 +14,7 @@
       <div style="width: 100%;" :style="{height:isRankCard ? '136px' : '116px'}">
         <v-img
           :height="isRankCard ? '136px' : '116px'"
-          :src="Boolean(props.option?.thumbnail) ? props.option.thumbnail : '/assets/default-vote-thumb.jpg'"
+          :src="Boolean(props.option?.thumbnail) ? props.option.thumbnail : DEFAULT_CARD_IMG"
           cover
         ></v-img>
       </div>
@@ -108,7 +108,7 @@
 import type { IOption } from '@/core/interfaces/model/option'
 import type { IUser } from '@/core/interfaces/model/user'
 import type { StyleValue } from 'vue'
-import { RANK_ICON } from '@/core/constants/app'
+import { RANK_ICON, DEFAULT_CARD_IMG } from '@/core/constants/app'
 
 const props = defineProps<{
   isRankCard: boolean

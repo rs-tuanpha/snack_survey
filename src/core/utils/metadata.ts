@@ -8,7 +8,9 @@ export interface Metadata {
 
 export const fetchOpenGraphMetadata = async (url: string): Promise<Metadata | null> => {
   try {
-    const apiKey = 'a67f2f6718bd24897c6023ee5a03a3f8'
+    
+
+    const apiKey = process.env.VUE_APP_LINKPREVIEW_KEY ?? ''
     const response = await fetch(`https://api.linkpreview.net/?key=${apiKey}&q=${url}`)
     const data = await response.json()
 
