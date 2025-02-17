@@ -28,7 +28,8 @@ export default defineConfig({
       VUE_APP_MESSAGING_SENDER_ID: process.env.VUE_APP_MESSAGING_SENDER_ID,
       VUE_APP_APP_ID: process.env.VUE_APP_APP_ID,
       VUE_APP_MEASURE_MEMBER_ID: process.env.VUE_APP_MEASURE_MEMBER_ID,
-      VUE_APP_ADMIN_PATH: process.env.VUE_APP_ADMIN_PATH
+      VUE_APP_ADMIN_PATH: process.env.VUE_APP_ADMIN_PATH,
+      VUE_APP_LINKPREVIEW_KEY: process.env.VUE_APP_LINKPREVIEW_KEY
     }
   },
   base: '/snack_survey/'
