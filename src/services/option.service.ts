@@ -11,7 +11,8 @@ import {
   getDoc,
   orderBy,
   updateDoc,
-  limit
+  limit,
+  writeBatch
 } from 'firebase/firestore'
 import { useCollection } from 'vuefire'
 import { uploadImageToFirebase } from './upload.service'
@@ -122,3 +123,45 @@ export const putOptionData = async (option: IOption) => {
   const topicRef = doc(db, 'options', option.id)
   return await updateDoc(topicRef, { ...option })
 }
+
+/**
+ * Batch deletes all options associated with a given topic ID from Firebase
+ * @param {number} topicId - The ID of the topic whose options should be deleted
+ * @throws {Error} If there is an error during the deletion process
+ * @returns {Promise<void>} A promise that resolves when deletion is complete
+ */
+
+export const batchDeleteOptions = async (topicId: string): Promise<void> => {
+  try {
+    // Reference to the options collection
+    const optionsRef = collection(db, 'options');
+    
+    // Create a query to get all documents with matching topicId
+    const q = query(optionsRef,  where('topicId', '==', topicId));
+    
+    // Get all matching documents
+    const querySnapshot = await getDocs(q);
+    
+    // Create a new batch
+    const batch = writeBatch(db);
+    
+    // Add delete operations to batch
+    querySnapshot.forEach((doc) => {
+      batch.delete(doc.ref);
+    });
+    
+    // If there are no documents to delete, return early
+    if (querySnapshot.empty) {
+      console.log('No matching documents found');
+      return;
+    }
+    
+    // Commit the batch
+    await batch.commit();
+    
+    console.log(`Successfully deleted ${querySnapshot.size} documents`);
+  } catch (error) {
+    console.error('Error deleting documents:', error);
+    throw error;
+  }
+};
