@@ -2,6 +2,12 @@
   <v-container>
     <v-row justify="center">
       <!-- Modal handle topic event -->
+      <confirm-dialog
+        :messages="'Bạn có muốn xóa topic không?'"
+        :open="isShowDeleteDialog"
+        @onOk="deleteTopic"
+        @onCancel="cancelDeleteTopic"
+      />
       <v-dialog v-model="dialog" persistent width="auto">
         <v-card min-height="120">
           <v-card-text> {{ text }}</v-card-text>
@@ -190,9 +196,7 @@
                   {{ item.status === true || item.date.toDate() >= new Date() ? 'Mở' : 'Đóng' }}
                 </td>
                 <td>
-                  {{
-                    dayjs(new Date((item?.date as any)?.seconds * 1000)).format('DD/MM/YYYY HH:mm')
-                  }}
+                  {{ dayjs(new Date(item?.date?.seconds * 1000)).format('DD/MM/YYYY HH:mm') }}
                 </td>
                 <td>
                   <v-btn
@@ -235,7 +239,7 @@ import VueDatePicker from '@vuepic/vue-datepicker'
 import { collection, addDoc, doc, updateDoc, deleteDoc } from 'firebase/firestore'
 import { db } from '@/plugins/firebase'
 import { getTopicById, getTopics } from '@/services/topic.service'
-import { getOptionsByTopicId } from '@/services/option.service'
+import { batchDeleteOptions, getOptionsByTopicId } from '@/services/option.service'
 import { nameRules, descriptionRules } from './Admin.validate'
 import { initOption, initTopic, initTopicState } from './Admin.state'
 import type { ITopic } from '@/core/interfaces/model/topic'
@@ -244,6 +248,7 @@ import type { IState } from '@/core/interfaces/model/state'
 import { mappingObject } from '@/core/utils/mappingObject'
 import dayjs from 'dayjs'
 
+const ConfirmDialog = defineAsyncComponent(() => import('@/components/molecules/ConfirmDialog.vue'))
 const ModalCreateOption = defineAsyncComponent(() => import('./ModalCreateOption.vue'))
 const ModalEditOption = defineAsyncComponent(() => import('./ModalEditOption.vue'))
 
@@ -258,6 +263,7 @@ const alert = ref<string>('')
 const errorDialog = ref<boolean>(false)
 const showAddBtn = ref<boolean>(false)
 const dialog = ref<boolean>(false)
+const isShowDeleteDialog = ref<boolean>(false)
 const type = ref<string>('create')
 const reset = ref<boolean>(false)
 const colorAlert = ref<string>('green-darken-1')
@@ -339,9 +345,7 @@ const handleAddOption = async (id: string) => {
 }
 
 const handleDeleteTopic = (topicVal: string) => {
-  text.value = 'Bạn có muốn xóa topic không?'
-  dialog.value = true
-  type.value = 'delete'
+  isShowDeleteDialog.value = true
   if (topicId.value === topicVal) {
     reset.value = true
   }
@@ -411,9 +415,6 @@ const handleTopic = async (type: string) => {
     case 'update':
       update({ ...topicFormData, updatedAt: new Date() })
       break
-    case 'delete':
-      deleteTopic()
-      break
   }
 }
 
@@ -434,13 +435,24 @@ const update = async (topic: object) => {
   }
 }
 
+const cancelDeleteTopic = () => {
+  isShowDeleteDialog.value = false
+  alert.value = ''
+  if (reset.value === true) {
+    cancelUpdate()
+  }
+}
+
 const deleteTopic = async () => {
   try {
-    await deleteDoc(doc(db, 'topics', topicCancelId.value))
-    dialog.value = false
-    alert.value = ''
-    if (reset.value === true) {
-      cancelUpdate()
+    if (topicCancelId.value) {
+      await deleteDoc(doc(db, 'topics', topicCancelId.value))
+      batchDeleteOptions(topicCancelId.value)
+      isShowDeleteDialog.value = false
+      alert.value = ''
+      if (reset.value === true) {
+        cancelUpdate()
+      }
     }
   } catch (e) {
     errorDialog.value = true
