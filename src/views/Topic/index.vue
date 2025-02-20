@@ -456,7 +456,7 @@ const onClickSeeMore = (option: IOption) => {
   margin: 0 auto;
   z-index: 0;
   background-size: cover;
-  overflow-y: scroll;
+  overflow-y: auto;
 }
 
 @media (width <= 1024px) {
