@@ -3,7 +3,7 @@
     <v-sheet max-width="638" rounded width="100%" class="mx-auto left-area">
       <div class="mx-auto left-area" style="width: 100% !important; max-width: 400px;">
         <h1 class="text-white text-h4 mb-2">{{ currentTopic?.name }}</h1>
-        <p class="text-white text-body-1 mb-1">{{ currentTopic?.description }}</p>
+        <p class="text-white text-body-1 mb-1 text-break">{{ currentTopic?.description }}</p>
         <p class="text-white text-body-1 mb-8">
           Thời hạn:
           {{
@@ -456,7 +456,7 @@ const onClickSeeMore = (option: IOption) => {
   margin: 0 auto;
   z-index: 0;
   background-size: cover;
-  overflow: hidden;
+  overflow-y: scroll;
 }
 
 @media (width <= 1024px) {
