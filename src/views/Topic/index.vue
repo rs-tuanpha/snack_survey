@@ -447,16 +447,12 @@ const onClickSeeMore = (option: IOption) => {
 #topic {
   max-width: 1280px;
   height: 100vh;
-  position: fixed;
-  top: 70px;
-  left: 0;
-  right: 0;
   display: flex;
   flex-direction: row;
   margin: 0 auto;
-  z-index: 0;
   background-size: cover;
   overflow-y: auto;
+  padding-top: 33px;
 }
 
 @media (width <= 1024px) {
