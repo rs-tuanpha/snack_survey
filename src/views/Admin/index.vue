@@ -130,9 +130,9 @@
               <v-chip color="primary" label
                 ><v-icon start icon="mdi-account-circle-outline"></v-icon>Team</v-chip
               >
-              <v-radio label="PHP" value="PHP"></v-radio>
-              <v-radio label="FE" value="FE"></v-radio>
-              <v-radio label="All" value="All"></v-radio>
+              <v-radio label="PHP" :value="ETopicTeam.BE"></v-radio>
+              <v-radio label="FE" :value="ETopicTeam.FE"></v-radio>
+              <v-radio label="All" :value="ETopicTeam.ALL"></v-radio>
             </v-radio-group>
             <div class="btn-wrapper">
               <v-btn
@@ -238,6 +238,7 @@ import { getTopicById, getTopics } from '@/services/topic.service'
 import { getOptionsByTopicId } from '@/services/option.service'
 import { nameRules, descriptionRules } from './Admin.validate'
 import { initOption, initTopic, initTopicState } from './Admin.state'
+import { ETopicTeam } from '@/core/constants/enum'
 import type { ITopic } from '@/core/interfaces/model/topic'
 import type { IOption } from '@/core/interfaces/model/option'
 import type { IState } from '@/core/interfaces/model/state'

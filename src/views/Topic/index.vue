@@ -140,11 +140,9 @@
     </v-sheet>
 
     <!-- Loading Overlay -->
-    <div>
-      <v-overlay :model-value="showOverlay" class="align-center justify-center">
-        <v-progress-circular color="primary" indeterminate size="64"></v-progress-circular>
-      </v-overlay>
-    </div>
+    <v-overlay :model-value="showOverlay" class="position-absolute w-screen h-screen align-center justify-center">
+      <v-progress-circular color="primary" indeterminate size="64"></v-progress-circular>
+    </v-overlay>
   </v-container>
 
   <!-- Vote List Dialog -->
