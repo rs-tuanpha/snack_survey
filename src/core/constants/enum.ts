@@ -18,15 +18,28 @@ export enum ETopicTeam {
   ALL = 'ALL'
 }
 
+export enum EUserRole {
+  USER = 'user',
+  ADMIN = 'admin'
+}
+
 export enum ETopicRequireField {
   TITLE = 'title',
   LINK = 'link',
   ALL = 'all'
 }
 
+export enum ETopicVoteType {
+  SINGLE = 'single',
+  MULTIPLE = 'multiple'
+}
+
+export enum EVoteActionType {
+  VOTE = 'vote',
+  UNVOTE = 'unvote'
+}
+
 export enum ENotificationColor {
   ERROR = 'red-lighten-1',
   SUCCESS = 'green-darken-1'
 }
-
-

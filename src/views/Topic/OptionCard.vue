@@ -21,7 +21,7 @@
       <div style="width: 100%" :style="{ height: isRankCard ? '136px' : '116px' }">
         <v-img
           :height="isRankCard ? '136px' : '116px'"
-          :src="Boolean(props.option?.thumbnail) ? props.option.thumbnail : DEFAULT_CARD_IMG"
+          :src="Boolean(props.option?.image) ? props.option.image : DEFAULT_CARD_IMG"
           cover
         ></v-img>
       </div>
@@ -34,7 +34,7 @@
           color="orange"
         >
           <p style="font-size: 16px; font-weight: 700; color: #252525; margin: 0">
-            {{ option?.voteBy?.length }}
+            {{ option.vote_count }}
           </p>
         </v-chip>
         <p
@@ -72,27 +72,33 @@
         <div class="w-100 d-flex justify-space-between align-center">
           <div class="d-flex mt-1">
             <div
-              v-for="user in option?.voteBy?.slice(0, 4)"
-              :key="user.username"
+              v-for="userId in Object.keys(option.user_votes).slice(0, 4)"
+              :key="userId"
               style="margin-right: -8px"
             >
               <v-avatar color="secondary" class="m-1" size="30">
-                <v-img v-if="user.avatar" :src="user.avatar" :alt="user.username"></v-img>
-                <span v-else>{{ user.username?.charAt(0).toLocaleUpperCase() }}</span>
-                <v-tooltip activator="parent" location="top">{{ user.username }}</v-tooltip>
+                <v-img
+                  v-if="userMap[userId].avatar"
+                  :src="userMap[userId].avatar"
+                  :alt="userMap[userId].username"
+                ></v-img>
+                <span v-else>{{ userMap[userId].email.charAt(0).toLocaleUpperCase() }}</span>
+                <v-tooltip activator="parent" location="top">{{
+                  userMap[userId].username
+                }}</v-tooltip>
               </v-avatar>
             </div>
-            <div v-if="props.option?.voteBy?.length > 4" class="mr-1">
+            <div v-if="Object.keys(option.user_votes).length > 4" class="mr-1">
               <v-avatar
                 color="light-blue-darken-2"
                 class="m-1 cursor-pointer"
                 size="30"
                 @click.stop="onClickSeeMore(option)"
               >
-                {{ option?.voteBy?.length - 4 }}<sup>+</sup>
+                {{ Object.keys(option.user_votes).length - 4 }}<sup>+</sup>
               </v-avatar>
               <v-tooltip activator="parent" location="top">{{
-                `${option?.voteBy?.length - 4} others people`
+                `${Object.keys(option.user_votes).length - 4} others people`
               }}</v-tooltip>
             </div>
           </div>
@@ -100,7 +106,7 @@
             icon="mdi-thumb-up"
             size="x-large"
             :color="
-              props.option.voteBy.some((voter) => voter.id === currentAccount?.id)
+              props.option.user_votes.has(String(currentAccount?.id))
                 ? 'red-darken-1'
                 : 'blue-darken-3'
             "
@@ -112,28 +118,35 @@
   </div>
 </template>
 <script setup lang="ts">
-import type { IOption } from '@/core/interfaces/model/option'
+import type { IOptionModel } from '@/core/interfaces/model/option'
 import type { IUser } from '@/core/interfaces/model/user'
 import type { StyleValue } from 'vue'
 import { RANK_ICON, DEFAULT_CARD_IMG } from '@/core/constants/app'
+import { useUserStore } from '@/stores'
 
 const props = defineProps<{
   isRankCard: boolean
   index: number
-  option: IOption
+  option: IOptionModel
   currentAccount: IUser | null
   cardStyle?: StyleValue
 }>()
 const emits = defineEmits<{
   (e: 'handleChangeVote', index: number): void
-  (e: 'onClickSeeMore', payload: IOption): void
+  (e: 'onClickSeeMore', payload: IOptionModel): void
 }>()
+
+const userList = useUserStore().getUserList
+const userMap = userList.reduce((acc, user) => {
+  acc[user.id] = user
+  return acc
+}, {} as Record<string, IUser>)
 
 const handleChangeVote = (index: number) => {
   emits('handleChangeVote', index)
 }
 
-const onClickSeeMore = (payload: IOption) => {
+const onClickSeeMore = (payload: IOptionModel) => {
   emits('onClickSeeMore', payload)
 }
 </script>

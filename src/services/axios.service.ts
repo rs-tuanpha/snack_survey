@@ -1,26 +1,29 @@
 import { ENV_CONFIG } from '@/core/constants/app'
 import { EStatusCode } from '@/core/constants/enum'
 import axios, { type AxiosRequestConfig } from 'axios'
+import Cookies from 'js-cookie'
 
 const instance = axios.create({
   baseURL: ENV_CONFIG.API_URL,
+  timeout: 10000,
   headers: {
-    'content-type': 'application/json'
+    'Content-Type': 'application/json'
   }
 })
 
 instance.interceptors.request.use(
   async (config: any) => {
-    const token = 'your token'
+    const token = Cookies.get('auth_token')
     if (token) {
       config.headers = {
+        ...config.headers,
         Authorization: `Bearer ${token}`
       }
     }
     return config
   },
   (error) => {
-    Promise.reject(error)
+    return Promise.reject(error)
   }
 )
 
@@ -41,19 +44,21 @@ instance.interceptors.response.use(
       // return
     }
 
-    return response?.data
+    return response.data
   },
   (error) => {
-    return error
+    return Promise.reject(error)
   }
 )
 
 const api = {
-  get: <T = any>(url: string, config?: AxiosRequestConfig) => {
-    return instance<T>(url, { method: 'get', url, ...config })
+  get: <T = any>(url: string, config?: AxiosRequestConfig): Promise<T> => {
+    return instance<T>(url, { method: 'get', url, ...config }).then((response) => response as T)
   },
-  post: <T = any>(url: string, data?: any, config?: AxiosRequestConfig) => {
-    return instance<T>(url, { method: 'post', url, data, ...config })
+  post: <T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> => {
+    return instance<T>(url, { method: 'post', url, data, ...config }).then(
+      (response) => response as T
+    )
   }
 }
 

@@ -97,14 +97,14 @@ import {
   checkTitleRequired
 } from '../Admin/Admin.validate'
 import { ENotificationColor } from '@/core/constants/enum'
-import type { IOption } from '@/core/interfaces/model/option'
+import type { IOption, IOptionModel } from '@/core/interfaces/model/option'
 import type { ITopic } from '@/core/interfaces/model/topic'
 import { THUMBNAIL_MAX_SIZE } from '@/core/constants/app'
 
 const props = defineProps<{
   id: string
   topicState: ITopic
-  options: IOption[]
+  options: IOptionModel[]
 }>()
 
 const hasError = ref<boolean>(false)

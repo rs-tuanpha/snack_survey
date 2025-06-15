@@ -1,4 +1,4 @@
-import type { IOption } from '@/core/interfaces/model/option'
+import type { IOptionModel, IOption } from '@/core/interfaces/model/option'
 import { fetchDOMMetadata, fetchOpenGraphMetadata } from '@/core/utils/metadata'
 import { db } from '@/plugins/firebase'
 import {
@@ -8,15 +8,19 @@ import {
   getDocs,
   query,
   where,
-  getDoc,
   orderBy,
   updateDoc,
   limit,
   runTransaction
 } from 'firebase/firestore'
-import { useCollection } from 'vuefire'
 import { uploadImageToFirebase } from './upload.service'
 import type { IUser } from '@/core/interfaces/model/user'
+import api from './axios.service'
+
+type GetOptionListResponse = {
+  options: IOptionModel[]
+  total: number
+}
 
 /**
  * Get list option by topic id and order by voteCount (descending)
@@ -24,10 +28,11 @@ import type { IUser } from '@/core/interfaces/model/user'
  * @return options collection with specific topicId
  */
 export const getOptionsByTopicId = async (topicId: string) => {
-  const result = useCollection<IOption>(
-    query(collection(db, 'options'), where('topicId', '==', topicId), orderBy('title', 'asc'))
-  )
-  return result
+  // const result = useCollection<IOption>(
+  //   query(collection(db, 'options'), where('topicId', '==', topicId), orderBy('title', 'asc'))
+  // )
+  // return result
+  return api.get<GetOptionListResponse>(`/api/options/topic/${topicId}`)
 }
 
 export const getRankByTopicId = (topicId: string) => {

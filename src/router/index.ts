@@ -13,6 +13,11 @@ const routes = [
         component: () => import('@/views/Home/index.vue')
       },
       {
+        path: '/change_password',
+        name: 'changePassword',
+        component: () => import('@/views/User/ChangePasswordPage.vue')
+      },
+      {
         path: process.env.VUE_APP_ADMIN_PATH!,
         name: 'topicAmin',
         component: () => import('@/views/Admin/index.vue')
@@ -23,6 +28,11 @@ const routes = [
         component: () => import('@/views/Topic/index.vue')
       }
     ]
+  },
+  {
+    path: '/login',
+    name: 'login',
+    component: () => import('@/views/Auth/LoginPage.vue')
   }
 ]
 

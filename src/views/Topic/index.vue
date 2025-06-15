@@ -9,9 +9,7 @@
         <p class="text-white text-body-1 mb-8">
           Thời hạn:
           {{
-            dayjs(new Date((currentTopic?.date as any)?.seconds * 1000)).format(
-              'DD/MM/YYYY, HH:MM:ss'
-            )
+            currentTopic?.date && dayjs(new Date(currentTopic.date)).format('DD/MM/YYYY, HH:MM:ss')
           }}
         </p>
         <!-- Countdown Timer Display -->
@@ -105,17 +103,17 @@
         <form-create-option
           v-if="currentTopic?.link && currentTopic?.status"
           :id="id.toString()"
-          :options="options"
+          :options="currentOptions"
           :topic-state="currentTopic"
         />
       </div>
 
       <!-- Options List -->
       <div class="right-area__list-wrapper">
-        <div v-if="Boolean(options.length)" class="right-area__list">
+        <div v-if="currentOptions.length" class="right-area__list">
           <option-card
-            v-for="(option, index) in options"
-            :key="option.id"
+            v-for="(option, index) in currentOptions"
+            :key="option._id"
             :index="index"
             :is-rank-card="false"
             :option="option"
@@ -132,6 +130,8 @@
             @on-click-see-more="onClickSeeMore(option)"
             @handle-change-vote="handleChangeVote(index)"
           ></option-card>
+
+          <!-- <p v-for="option in currentOptions" :key="option._id">Hello {{ option._id }}</p> -->
         </div>
         <section v-else>
           <p style="font-size: large">No option yet!</p>
@@ -153,14 +153,20 @@
       <v-card-title>Danh sách vote</v-card-title>
       <v-divider></v-divider>
       <v-card-text max-height="300px" class="pa-3">
-        <div v-for="user in listVoteBy" :key="user.username" class="mr-1">
+        <div v-for="userId in listVoteBy" :key="userId" class="mr-1">
           <div class="mt-1">
             <v-avatar color="secondary" class="m-1" size="30">
-              <v-img v-if="user.avatar" :src="user.avatar" :alt="user.username"></v-img>
-              <span v-else>{{ user.username.charAt(0).toLocaleUpperCase() }}</span>
-              <v-tooltip activator="parent" location="top">{{ user.username }}</v-tooltip>
+              <v-img
+                v-if="userMap[userId].avatar"
+                :src="userMap[userId].avatar"
+                :alt="userMap[userId].username"
+              ></v-img>
+              <span v-else>{{ userMap[userId].email.charAt(0).toLocaleUpperCase() }}</span>
+              <v-tooltip activator="parent" location="top">{{
+                userMap[userId].username
+              }}</v-tooltip>
             </v-avatar>
-            <span class="ml-1">{{ user.username }}</span>
+            <span class="ml-1">{{ userMap[userId].username }}</span>
           </div>
         </div>
       </v-card-text>
@@ -169,26 +175,25 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineAsyncComponent, onMounted, ref } from 'vue'
-import { useCollection, useDocument } from 'vuefire'
+import { computed, defineAsyncComponent, onMounted, ref, onUnmounted } from 'vue'
 import dayjs from 'dayjs'
 import { debounce } from 'lodash'
 
 import { ETopicTeam } from '@/core/constants/enum'
 import useCommon from '@/core/hooks/useCommon'
-import type { IOption } from '@/core/interfaces/model/option'
+import type { IOptionModel } from '@/core/interfaces/model/option'
 import type { ITopic } from '@/core/interfaces/model/topic'
 import type { IUser } from '@/core/interfaces/model/user'
-import { getAccountById } from '@/services/account.service'
 import {
-  getOptionsRefById,
+  getOptionsByTopicId,
   handleMultipleVote,
-  handleSingleVote,
-  getRankByTopicId
+  handleSingleVote
 } from '@/services/option.service'
-import { getTopicRef, updateTopic } from '@/services/topic.service'
+import { getTopicById, updateTopic } from '@/services/topic.service'
 import { useCommonStore } from '@/stores'
 import OptionCard from './OptionCard.vue'
+import { useUserStore } from '@/stores/user'
+import { useSocketStore, type VoteUpdateData } from '@/stores/socket'
 
 // Lazy load the form component
 const FormCreateOption = defineAsyncComponent(() => import('./FormCreateOption.vue'))
@@ -198,40 +203,45 @@ const { getParams, handleRouter } = useCommon('useCommonStore')
 const { id } = getParams()
 const common = useCommonStore()
 
+// Data state
+const currentAccount = useUserStore().getUser as IUser
+const userList = useUserStore().getUserList as IUser[]
+const userMap = userList.reduce((acc, user) => {
+  acc[user.id] = user
+  return acc
+}, {} as Record<string, IUser>)
+const currentTopic = ref<ITopic | null>(null)
+const currentOptions = ref<IOptionModel[]>([])
+const socketStore = useSocketStore()
+
 // Component state
-const currentAccount = ref<IUser | null>(null)
 const showOverlay = ref<boolean>(false)
 const currentTime = ref(new Date().getTime())
-const listVoteBy = ref<IUser[]>([])
+const listVoteBy = ref<string[]>([])
 const dialog = ref<boolean>(false)
 const alertVote = ref<string>('')
 const alertVoteType = ref<string>('success')
 
 /** Computed Properties */
-const topicRef = computed(() => {
-  return getTopicRef(id.toString());
-})
-const currentTopic = useDocument<ITopic>(topicRef)
 // Get top 3 options by vote count
-const topOptionsRef = computed(() => {
-  return getRankByTopicId(id.toString())
+const topOptions = computed(() => {
+  // Sort options by voteCount in descending order and take top 3
+  const rank: IOptionModel[] = [...currentOptions.value]
+    .sort((a, b) => b.vote_count - a.vote_count)
+    .slice(0, 3)
+
+  return rank
 })
-const topOptions = useCollection<IOption>(topOptionsRef)
-// Get all options by topic id realtime
-const optionsRef = computed(() => {
-  return getOptionsRefById(id.toString())
-})
-const options = useCollection<IOption>(optionsRef)
 
 // Track user's voting state
 const voteState = computed(() => {
-  if (!currentAccount.value) return []
+  if (!currentAccount) return []
 
-  const votedIndices = options.value
+  const votedIndices = currentOptions.value
     .map((option, index) => ({
-      optionId: option.id,
+      optionId: option._id,
       index,
-      isVoted: option.voteBy.some((voter) => voter.id === currentAccount.value?.id)
+      isVoted: option.user_votes.has(currentAccount.id)
     }))
     .filter((vote) => vote.isVoted)
     .map((vote) => vote.index)
@@ -290,7 +300,7 @@ const update = async () => {
     team: ETopicTeam.ALL
   }
   topicInfo.status = false
-  updateTopic(topicInfo.id, topicInfo);
+  updateTopic(topicInfo.id, topicInfo)
 }
 
 // Handle vote changes with debounce
@@ -302,18 +312,14 @@ const handleChangeVote = debounce(async (optionIndex: number) => {
 
   try {
     showOverlay.value = true
-    const optionId = options.value[optionIndex].id
-
-    if (!currentAccount.value) {
-      throw new Error('User not authenticated')
-    }
+    const optionId = currentOptions.value[optionIndex]._id
 
     if (currentTopic.value?.option) {
-      await handleMultipleVote(optionId, currentAccount.value)
+      await handleMultipleVote(optionId, currentAccount)
     } else {
       const previousOptionId =
-        voteState.value.length > 0 ? options.value[voteState.value[0]].id : null
-      await handleSingleVote(optionId, currentAccount.value, previousOptionId)
+        voteState.value.length > 0 ? currentOptions.value[voteState.value[0]]._id : null
+      await handleSingleVote(optionId, currentAccount, previousOptionId)
     }
   } catch (error) {
     console.error('Vote error:', error)
@@ -333,18 +339,47 @@ const showAlert = (message: string, type: string) => {
 }
 
 // Show vote list dialog
-const onClickSeeMore = (option: IOption) => {
-  listVoteBy.value = option.voteBy
+const onClickSeeMore = (option: IOptionModel) => {
+  listVoteBy.value = Object.keys(option.user_votes)
   dialog.value = true
 }
 
 // Component lifecycle hooks
 onMounted(async () => {
-  // Reset account if needed
-  const isResetAccount = localStorage.getItem('isResetAccount')
-  if (isResetAccount !== 'true') {
-    localStorage.clear()
-    localStorage.setItem('isResetAccount', 'true')
+  try {
+    currentTopic.value = await getTopicById(id.toString())
+    const data = await getOptionsByTopicId(id.toString())
+    currentOptions.value = data.options
+
+    // Connect to socket and join topic
+    socketStore.connect()
+    socketStore.joinTopic(id.toString())
+
+    // Set up socket event handlers
+    socketStore.socket?.on('new_option', (data: IOptionModel) => {
+      if (data.topic_id === id.toString()) {
+        currentOptions.value.push(data)
+      }
+    })
+
+    socketStore.socket?.on('vote_option', (data: VoteUpdateData) => {
+      if (data.topic_id === id.toString()) {
+        const optionIndex = currentOptions.value.findIndex((opt) => opt._id === data.option_id)
+        if (optionIndex !== -1) {
+          const option = currentOptions.value[optionIndex]
+          if (data.action === 'vote') {
+            // Add user to voteBy array if not already present
+            option.user_votes.set(data.user_id, new Date())
+            option.vote_count = data.count
+          } else {
+            // Remove user from voteBy array
+            option.user_votes.delete(data.user_id)
+          }
+          option.vote_count = data.count
+        }
+      }
+    })
+  } catch {
     handleRouter.pushPath('/')
   }
 
@@ -352,16 +387,12 @@ onMounted(async () => {
   setInterval(() => {
     currentTime.value = new Date().getTime()
   }, 1000)
+})
 
-  // Load user data
-  const accountId = localStorage.getItem('account_info')
-  if (!accountId) {
-    handleRouter.pushPath('/')
-    return
-  }
-
-  const userData = await getAccountById(accountId!)
-  currentAccount.value = userData
+// Clean up socket connection on component unmount
+onUnmounted(() => {
+  socketStore.leaveTopic()
+  socketStore.disconnect()
 })
 </script>
 

@@ -190,9 +190,7 @@
                   {{ item.status === true || item.date.toDate() >= new Date() ? 'Mở' : 'Đóng' }}
                 </td>
                 <td>
-                  {{
-                    dayjs(new Date((item?.date as any)?.seconds * 1000)).format('DD/MM/YYYY HH:mm')
-                  }}
+                  {{ dayjs(new Date(item?.date?.seconds * 1000)).format('DD/MM/YYYY HH:mm') }}
                 </td>
                 <td>
                   <v-btn
