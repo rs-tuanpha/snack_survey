@@ -25,17 +25,18 @@ const checkAuth = (router: Router) => {
     }
 
     if (token && !userStore.getUser) {
+      const id = Cookies.get('account_id')
+      const email = Cookies.get('account_email')
       const username = Cookies.get('account_username')
-      const email = Cookies.get('account_info')
-      const avatar = Cookies.get('account_avatar')
-      const team = Cookies.get('account_team')
+      const avatar = Cookies.get('account_avatar') ?? ''
+      const team = Cookies.get('account_team') ?? ''
 
       userStore.setUser({
-        id: '',
-        username,
+        id,
         email,
-        avatar: avatar || '',
-        team: team || ''
+        username,
+        avatar,
+        team
       })
     }
 

@@ -126,12 +126,10 @@
               height: 232px;
               min-height: 232px;
               max-height: 232px;
-              "
+            "
             @on-click-see-more="onClickSeeMore(option)"
             @handle-change-vote="handleChangeVote(index)"
           ></option-card>
-
-          <!-- <p v-for="option in currentOptions" :key="option._id">Hello {{ option._id }}</p> -->
         </div>
         <section v-else>
           <p style="font-size: large">No option yet!</p>
@@ -191,11 +189,12 @@ import {
 } from '@/services/option.service'
 import { getTopicById, updateTopic } from '@/services/topic.service'
 import { useCommonStore } from '@/stores'
-import OptionCard from './OptionCard.vue'
+// import OptionCard from './OptionCard.vue'
 import { useUserStore } from '@/stores/user'
 import { useSocketStore, type VoteUpdateData } from '@/stores/socket'
 
 // Lazy load the form component
+const OptionCard = defineAsyncComponent(() => import('./OptionCard.vue'))
 const FormCreateOption = defineAsyncComponent(() => import('./FormCreateOption.vue'))
 
 // Common hook for routing and store access
