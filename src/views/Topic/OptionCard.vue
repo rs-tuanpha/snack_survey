@@ -53,6 +53,7 @@
           {{ option?.title ?? '' }}
         </p>
         <a
+          v-if="option?.link"
           :href="option?.link"
           target="_blank"
           style="
@@ -78,13 +79,13 @@
             >
               <v-avatar color="secondary" class="m-1" size="30">
                 <v-img
-                  v-if="userMap[userId].avatar"
+                  v-if="userMap[userId]?.avatar"
                   :src="userMap[userId].avatar"
                   :alt="userMap[userId].username"
                 ></v-img>
-                <span v-else>{{ userMap[userId].email.charAt(0).toLocaleUpperCase() }}</span>
+                <span v-else>{{ userMap[userId]?.email?.charAt(0).toLocaleUpperCase() }}</span>
                 <v-tooltip activator="parent" location="top">{{
-                  userMap[userId].username
+                  userMap[userId]?.username
                 }}</v-tooltip>
               </v-avatar>
             </div>
@@ -103,10 +104,11 @@
             </div>
           </div>
           <v-icon
+            v-if="props.option.user_votes && !lodash.isEmpty(props.option.user_votes)"
             icon="mdi-thumb-up"
             size="x-large"
             :color="
-              props.option.user_votes.has(String(currentAccount?.id))
+              props.option.user_votes.hasOwnProperty(String(currentAccount?.id))
                 ? 'red-darken-1'
                 : 'blue-darken-3'
             "
@@ -117,10 +119,12 @@
     </v-card>
   </div>
 </template>
+
 <script setup lang="ts">
 import type { IOptionModel } from '@/core/interfaces/model/option'
 import type { IUser } from '@/core/interfaces/model/user'
 import type { StyleValue } from 'vue'
+import lodash from 'lodash'
 import { RANK_ICON, DEFAULT_CARD_IMG } from '@/core/constants/app'
 import { useUserStore } from '@/stores'
 
@@ -131,6 +135,7 @@ const props = defineProps<{
   currentAccount: IUser | null
   cardStyle?: StyleValue
 }>()
+
 const emits = defineEmits<{
   (e: 'handleChangeVote', index: number): void
   (e: 'onClickSeeMore', payload: IOptionModel): void

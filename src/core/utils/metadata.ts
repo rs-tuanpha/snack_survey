@@ -8,8 +8,6 @@ export interface Metadata {
 
 export const fetchOpenGraphMetadata = async (url: string): Promise<Metadata | null> => {
   try {
-    
-
     const apiKey = process.env.VUE_APP_LINKPREVIEW_KEY ?? ''
     const response = await fetch(`https://api.linkpreview.net/?key=${apiKey}&q=${url}`)
     const data = await response.json()
@@ -49,7 +47,6 @@ export const fetchNoembedMetaData = async (url: string) => {
   try {
     const response = await fetch(`https://noembed.com/embed?url=${encodeURIComponent(url)}`)
     const data = await response.json()
-    console.log('TEST fetchNoembedMetaData', data)
     return {
       title: data.title ?? '',
       description: data.description ?? '',

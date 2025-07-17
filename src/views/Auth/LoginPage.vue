@@ -121,7 +121,8 @@ const handleLogin = async () => {
         Cookies.set('is_first_login', 'true', cookieConfig)
       }
       // Store user info in cookie
-      Cookies.set('account_info', email.value, cookieConfig)
+      Cookies.set('account_id', selectedUser.id, cookieConfig)
+      Cookies.set('account_email', selectedUser.email, cookieConfig)
       Cookies.set('account_username', selectedUser.username, cookieConfig)
       Cookies.set('account_avatar', selectedUser.avatar || '', cookieConfig)
       Cookies.set('account_team', selectedUser.team || '', cookieConfig)
