@@ -72,7 +72,9 @@ export const useSocketStore = defineStore('socket', {
     joinTopic(topicId: string) {
       if (!this.socket || !this.connected) return
 
-      this.socket.emit('join_topic', topicId)
+      this.socket.emit('join_topic', {
+        "topicId": topicId
+    })
       this.currentTopic = topicId
       console.log('Joined topic:', topicId)
     },
