@@ -134,6 +134,7 @@ const handleSearch = () => {
 }
 
 const goTopicVote = (id: string) => {
+  console.log('TEST', id)
   handleRouter.pushName('topicVote', { params: { id } })
 }
 
@@ -147,7 +148,7 @@ const fetchTopics = async () => {
   if (!userData.team) return
 
   try {
-    topics.value = await getTopicList({ team: userData.team })
+    topics.value = await getTopicList({ team: userData.team, page: 1, limit: 99 })
   } catch (error) {
     console.error('Error fetching topics:', error)
   }

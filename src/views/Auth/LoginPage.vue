@@ -114,10 +114,10 @@ const handleLogin = async () => {
         sameSite: 'strict'
       }
       // Store token in cookie
-      Cookies.set('auth_token', response.token, cookieConfig)
+      Cookies.set('auth_token', response.data.tokens.accessToken, cookieConfig)
 
       // Store isFirstLogin flag if true
-      if (response.isFirstLogin) {
+      if (response.data.user.is_first_login) {
         Cookies.set('is_first_login', 'true', cookieConfig)
       }
       // Store user info in cookie
@@ -128,7 +128,7 @@ const handleLogin = async () => {
       Cookies.set('account_team', selectedUser.team || '', cookieConfig)
 
       // Navigate based on isFirstLogin
-      if (response.isFirstLogin) {
+      if (response.data.user.is_first_login) {
         router.push('/change_password')
       } else {
         router.push('/')

@@ -1,5 +1,5 @@
 import { useFirestore, useCollection } from 'vuefire'
-import { collection, getDocs, query, orderBy, getDoc, doc, updateDoc } from 'firebase/firestore'
+import { collection, getDocs, query, orderBy, doc, updateDoc } from 'firebase/firestore'
 import {
   adaptTopicModelToTopic,
   type ITopic,
@@ -11,6 +11,8 @@ const db = useFirestore()
 
 type GetTopicListParams = {
   team?: ETopicTeam
+  page?: number
+  limit?: number
 }
 
 type GetTopicListResponse = {
@@ -82,9 +84,6 @@ export const getTopics = useCollection(
   query(collection(db, 'topics'), orderBy('updatedAt', 'desc'))
 )
 
-export const getTopicRef = (topicId: string) => {
-  return doc(db, 'topics', topicId)
-}
 /** Update topic firebase data by id */
 export const updateTopic = async (topicId: string, topicInfo: ITopic) => {
   try {
@@ -103,10 +102,5 @@ export const updateTopic = async (topicId: string, topicInfo: ITopic) => {
  * @return {Promise<ITopic | undefined>}
  */
 export const getTopicById = async (topicId: string): Promise<ITopic> => {
-  // const docSnap = await getDoc(doc(db, 'topics', topicId))
-  // if (docSnap.exists()) {
-  //   return { ...docSnap.data(), id: docSnap.id, date: docSnap.data().date.toDate() } as ITopic
-  // }
-  // return undefined
   return adaptTopicModelToTopic(await api.get<ITopicModel>(`/api/topics/${topicId}`))
 }

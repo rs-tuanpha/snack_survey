@@ -2,7 +2,7 @@ import { ETopicRequireField, type ETopicTeam, type ETopicVoteType } from '@/core
 import type { IUser } from './user'
 
 export interface ITopicModel {
-  _id: string
+  id: string
   title: string
   description?: string
   start_date: Date
@@ -32,7 +32,7 @@ export interface ITopic {
 
 export function adaptTopicModelToTopic(model: ITopicModel): ITopic {
   return {
-    id: model._id,
+    id: model.id,
     name: model.title,
     description: model.description,
     date: model.start_date,

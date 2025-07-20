@@ -1,12 +1,18 @@
-import { collection, doc, getDoc } from 'firebase/firestore'
-import { useCollection } from 'vuefire'
-import { db } from '@/plugins/firebase'
 import type { IUser } from '@/core/interfaces/model/user'
 import api from './axios.service'
 
 interface LoginResponse {
-  token: string
-  isFirstLogin: boolean
+  success: boolean
+  message: string
+  data: {
+    user: {
+      is_first_login: boolean
+    }
+    tokens: {
+      accessToken: string
+      refreshToken: string
+    }
+  }
 }
 
 /**
@@ -24,16 +30,10 @@ export const login = async (email: string, password: string): Promise<LoginRespo
   }
 }
 
-/**
- * get all account document in fb
- * @return { Promise<IUser[]>}
- */
-export const getAccounts = useCollection<IUser>(collection(db, 'accounts'))
-
 export const getAccountList = async (): Promise<IUser[]> => {
   try {
-    const res = await api.get<IUser[]>('/api/users')
-    return res
+    const res = await api.get<{ users: IUser[] }>('/api/users?page=1&limit=100')
+    return res.users
   } catch {
     alert('An Error occure when fetching data!')
     return []

@@ -314,7 +314,7 @@ const handleChangeVote = debounce(async (optionIndex: number) => {
     const optionId = currentOptions.value[optionIndex]._id
 
     if (currentTopic.value?.option) {
-      await handleMultipleVote(optionId, currentAccount)
+      await handleMultipleVote(optionId, currentTopic.value.id, currentAccount)
     } else {
       const previousOptionId =
         voteState.value.length > 0 ? currentOptions.value[voteState.value[0]]._id : null

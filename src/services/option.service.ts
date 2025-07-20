@@ -143,47 +143,41 @@ export const handleSingleVote = async (
   currentUser: IUser,
   previousOptionId: string | null
 ): Promise<void> => {
-  await runTransaction(db, async (transaction) => {
-    // Handle previous vote if exists
-    if (previousOptionId) {
-      const prevOptionRef = doc(db, 'options', previousOptionId)
-      const prevOptionDoc = await transaction.get(prevOptionRef)
-
-      if (prevOptionDoc.exists()) {
-        const prevOptionData = prevOptionDoc.data()
-        const prevVoteBy = (prevOptionData.voteBy || []) as IUser[]
-        const prevUserVoteIndex = prevVoteBy.findIndex((voter) => voter.id === currentUser.id)
-
-        if (prevUserVoteIndex !== -1) {
-          prevVoteBy.splice(prevUserVoteIndex, 1)
-          transaction.update(prevOptionRef, {
-            voteBy: prevVoteBy,
-            voteCount: prevOptionData.voteCount - 1
-          })
-        }
-      }
-    }
-
-    // Handle new vote
-    const optionRef = doc(db, 'options', optionId)
-    const optionDoc = await transaction.get(optionRef)
-
-    if (!optionDoc.exists()) {
-      throw new Error('Option không tồn tại')
-    }
-
-    const optionData = optionDoc.data()
-    const voteBy = (optionData.voteBy || []) as IUser[]
-    const userVoteIndex = voteBy.findIndex((voter) => voter.id === currentUser.id)
-
-    if (userVoteIndex === -1) {
-      voteBy.push(currentUser)
-      transaction.update(optionRef, {
-        voteBy,
-        voteCount: optionData.voteCount + 1
-      })
-    }
-  })
+  // await runTransaction(db, async (transaction) => {
+  //   // Handle previous vote if exists
+  //   if (previousOptionId) {
+  //     const prevOptionRef = doc(db, 'options', previousOptionId)
+  //     const prevOptionDoc = await transaction.get(prevOptionRef)
+  //     if (prevOptionDoc.exists()) {
+  //       const prevOptionData = prevOptionDoc.data()
+  //       const prevVoteBy = (prevOptionData.voteBy || []) as IUser[]
+  //       const prevUserVoteIndex = prevVoteBy.findIndex((voter) => voter.id === currentUser.id)
+  //       if (prevUserVoteIndex !== -1) {
+  //         prevVoteBy.splice(prevUserVoteIndex, 1)
+  //         transaction.update(prevOptionRef, {
+  //           voteBy: prevVoteBy,
+  //           voteCount: prevOptionData.voteCount - 1
+  //         })
+  //       }
+  //     }
+  //   }
+  //   // Handle new vote
+  //   const optionRef = doc(db, 'options', optionId)
+  //   const optionDoc = await transaction.get(optionRef)
+  //   if (!optionDoc.exists()) {
+  //     throw new Error('Option không tồn tại')
+  //   }
+  //   const optionData = optionDoc.data()
+  //   const voteBy = (optionData.voteBy || []) as IUser[]
+  //   const userVoteIndex = voteBy.findIndex((voter) => voter.id === currentUser.id)
+  //   if (userVoteIndex === -1) {
+  //     voteBy.push(currentUser)
+  //     transaction.update(optionRef, {
+  //       voteBy,
+  //       voteCount: optionData.voteCount + 1
+  //     })
+  //   }
+  // })
 }
 
 /**
@@ -192,33 +186,39 @@ export const handleSingleVote = async (
  * @param currentUserId - ID of the current user
  * @returns Promise<void>
  */
-export const handleMultipleVote = async (optionId: string, currentUser: IUser): Promise<void> => {
-  await runTransaction(db, async (transaction) => {
-    const optionRef = doc(db, 'options', optionId)
-    const optionDoc = await transaction.get(optionRef)
+export const handleMultipleVote = async (
+  optionId: string,
+  topicId: string,
+  currentUser: IUser
+): Promise<void> => {
+  console.log('TEST 1')
+  await api.post<any>('/api/votes', { topic_id: topicId, option_id: optionId })
+  // await runTransaction(db, async (transaction) => {
+  //   // const optionRef = doc(db, 'options', optionId)
+  //   // const optionDoc = await transaction.get(optionRef)
 
-    if (!optionDoc.exists()) {
-      throw new Error('Option không tồn tại')
-    }
+  //   // if (!optionDoc.exists()) {
+  //   //   throw new Error('Option không tồn tại')
+  //   // }
 
-    const optionData = optionDoc.data()
-    const voteBy = (optionData.voteBy || []) as IUser[]
-    const userVoteIndex = voteBy.findIndex((voter) => voter.id === currentUser.id)
+  //   // const optionData = optionDoc.data()
+  //   // const voteBy = (optionData.voteBy || []) as IUser[]
+  //   // const userVoteIndex = voteBy.findIndex((voter) => voter.id === currentUser.id)
 
-    if (userVoteIndex !== -1) {
-      // Unvote
-      voteBy.splice(userVoteIndex, 1)
-      transaction.update(optionRef, {
-        voteBy,
-        voteCount: optionData.voteCount - 1
-      })
-    } else {
-      // Vote
-      voteBy.push(currentUser)
-      transaction.update(optionRef, {
-        voteBy,
-        voteCount: optionData.voteCount + 1
-      })
-    }
-  })
+  //   // if (userVoteIndex !== -1) {
+  //   //   // Unvote
+  //   //   voteBy.splice(userVoteIndex, 1)
+  //   //   // transaction.update(optionRef, {
+  //   //   //   voteBy,
+  //   //   //   voteCount: optionData.voteCount - 1
+  //   //   // })
+  //   // } else {
+  //   //   // Vote
+  //   //   voteBy.push(currentUser)
+  //   //   // transaction.update(optionRef, {
+  //   //   //   voteBy,
+  //   //   //   voteCount: optionData.voteCount + 1
+  //   //   // })
+  //   // }
+  // })
 }
