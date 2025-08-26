@@ -30,7 +30,7 @@ export default defineConfig({
       VUE_APP_MEASURE_MEMBER_ID: process.env.VUE_APP_MEASURE_MEMBER_ID,
       VUE_APP_ADMIN_PATH: process.env.VUE_APP_ADMIN_PATH,
       VUE_APP_LINKPREVIEW_KEY: process.env.VUE_APP_LINKPREVIEW_KEY,
-      VITE_VUE_APP_API_PATH: process.env.VITE_VUE_APP_API_PATH
+      VUE_APP_API_BASE_URL: process.env.VUE_APP_API_BASE_URL
     }
   },
   base: '/snack_survey/'

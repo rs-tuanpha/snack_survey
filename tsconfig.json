@@ -1,21 +1,15 @@
 {
-  "extends": "@vue/tsconfig/tsconfig.web.json",
-  "include": ["env.d.ts", "src/**/*", "src/**/*.vue"],
+  "extends": "@vue/tsconfig/tsconfig.json",
   "compilerOptions": {
-    "ignoreDeprecations": "5.0",
-    "target": "esnext",
-    "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
-    "baseUrl": ".",
     "verbatimModuleSyntax": true,
+    // Override deprecated options from @vue/tsconfig base
+    "preserveValueImports": false,
+    "importsNotUsedAsValues": "remove",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "types": ["vite/client"],
     "paths": {
       "@/*": ["./src/*"]
     }
-  },
-
-  "references": [
-    {
-      "path": "./tsconfig.node.json"
-    }
-  ]
+  }
 }

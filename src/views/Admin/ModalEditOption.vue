@@ -39,6 +39,8 @@
                 class="mt-2 bg-blue-darken-2"
                 @click="updateOption"
                 variant="elevated"
+                :loading="updateOptionMutation.isPending.value"
+                :disabled="updateOptionMutation.isPending.value"
               >
                 Cập nhật</v-btn
               >
@@ -70,7 +72,7 @@ import {
   checkTitleRequired
 } from './Admin.validate'
 import { ENotificationColor } from '@/core/constants/enum'
-import { getOptionsByTopicId, putOptionData } from '@/services/option.service'
+import { useUpdateOption } from '@/composables/useOptions'
 import type { IOption } from '@/core/interfaces/model/option'
 import type { IState } from '@/core/interfaces/model/state'
 import type { ITopic } from '@/core/interfaces/model/topic'
@@ -82,6 +84,9 @@ const props = defineProps<{
 }>()
 
 const emits = defineEmits(['onClose', 'update:optionList'])
+
+// Composables
+const updateOptionMutation = useUpdateOption()
 
 // State
 const dialogVisible = ref(true)
@@ -97,7 +102,7 @@ const handleClose = () => {
   emits('onClose')
 }
 /**
- * validate topic data and create option
+ * validate topic data and update option
  */
 const updateOption = async () => {
   try {
@@ -106,15 +111,19 @@ const updateOption = async () => {
       optionFormData &&
       handleValidateAddOption(optionFormData, props.topicState.data) === true
     ) {
-      await putOptionData(optionFormData)
-      const topicData = await getOptionsByTopicId(props.topicState.data.id)
-      emits('update:optionList', topicData.value)
+      await updateOptionMutation.mutateAsync({
+        optionId: optionFormData.id,
+        optionData: {
+          title: optionFormData.title
+        }
+      })
       hasError.value = false
       message.value = 'Cập nhật thành công'
     }
-  } catch {
+  } catch (error) {
     hasError.value = true
     message.value = 'Cập nhật không thành công!'
+    console.error('Failed to update option:', error)
   } finally {
     setTimeout(() => {
       message.value = ''

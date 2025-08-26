@@ -42,18 +42,18 @@
       max-width="638"
       width="100%"
     >
-      <v-col v-for="topic in filteredTopics" :key="topic.id" cols="12" sm="12">
+      <v-col v-for="topic in filteredTopics" :key="topic._id" cols="12" sm="12">
         <v-hover v-slot="{ isHovering, props }">
           <v-card
             color="indigo-lighten-5"
             :elevation="isHovering ? 12 : 2"
             v-bind="props"
             :class="isHovering ? 'bg-indigo-lighten-2' : ''"
-            @click="goTopicVote(topic.id)"
+            @click="goTopicVote(topic._id)"
           >
             <template v-slot:title>
               <div class="d-flex justify-space-between">
-                <div>{{ topic.name }}</div>
+                <div>{{ topic.title }}</div>
               </div>
             </template>
           </v-card>
@@ -103,10 +103,12 @@ import type { IUser } from '@/core/interfaces/model/user'
 import useCommon from '@/core/hooks/useCommon'
 import { useUserStore } from '@/stores/user'
 import Cookies from 'js-cookie'
+import { AuthStorage } from '@/core/utils/storage'
 
 const { handleRouter } = useCommon('useCommonStore')
 const userStore = useUserStore()
-const userData = useUserStore().getUser!
+// const userData = useUserStore().getUser!
+const userData = AuthStorage.getUserData()
 
 // State
 const activeTab = ref<'open' | 'close'>('open')
@@ -118,13 +120,13 @@ const voteList = ref<IUser[]>([])
 // Computed
 const filteredTopics = computed(() => {
   const tabFiltered = topics.value.filter((topic) =>
-    activeTab.value === 'open' ? topic.status : !topic.status
+    activeTab.value === 'open' ? topic.isActive : !topic.isActive
   )
 
   if (!searchTerm.value) return tabFiltered
 
   return tabFiltered.filter((topic) =>
-    topic.name.toLowerCase().includes(searchTerm.value.toLowerCase())
+    topic.title.toLowerCase().includes(searchTerm.value.toLowerCase())
   )
 })
 
@@ -134,7 +136,6 @@ const handleSearch = () => {
 }
 
 const goTopicVote = (id: string) => {
-  console.log('TEST', id)
   handleRouter.pushName('topicVote', { params: { id } })
 }
 
@@ -145,7 +146,7 @@ const handleLogout = () => {
 }
 
 const fetchTopics = async () => {
-  if (!userData.team) return
+  if (!userData?.team) return
 
   try {
     topics.value = await getTopicList({ team: userData.team, page: 1, limit: 99 })

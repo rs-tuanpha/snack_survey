@@ -1,61 +1,72 @@
-import type { Router } from 'vue-router'
-import Cookies from 'js-cookie'
-import { useUserStore } from '@/stores/user'
-import { getAccountList } from '@/services/account.service'
+import type { Router } from 'vue-router';
+import { AuthStorage } from '@/core/utils/storage';
+import { logger } from '@/core/utils/logger';
+import { useAuthStore } from '@/stores/auth';
 
+/**
+ * Enhanced authentication router guard with cookie storage integration
+ */
 const checkAuth = (router: Router) => {
   router.beforeEach(async (to, from, next) => {
-    const token = Cookies.get('auth_token')
-    const isFirstLogin = Cookies.get('is_first_login')
-    const isLoginPage = to.path === '/login'
-    const isResetPasswordPage = to.path === '/change_password'
-    const userStore = useUserStore()
-
-    // If trying to access protected page without token, redirect to login
-    if (!isLoginPage && !token) {
-      next('/login')
-      return
-    }
-
-    // If user has isFirstLogin flag and tries to access any page except change_password,
-    // redirect to change_password
-    if (isFirstLogin && !isResetPasswordPage && token) {
-      next('/change_password')
-      return
-    }
-
-    if (token && !userStore.getUser) {
-      const id = Cookies.get('account_id')
-      const email = Cookies.get('account_email')
-      const username = Cookies.get('account_username')
-      const avatar = Cookies.get('account_avatar') ?? ''
-      const team = Cookies.get('account_team') ?? ''
-
-      userStore.setUser({
-        id,
-        email,
-        username,
-        avatar,
-        team
-      })
-    }
-
-    if (token && userStore.getUserList.length == 0) {
-      try {
-        const data = await getAccountList()
-        userStore.setUserList(data)
-      } catch (error) {
-        console.error(error)
+    try {
+      logger.router.debug(`Checking authentication for route: ${to.path}`);
+      
+      const publicRoutes = ['/login', '/register'];
+      const isPublicRoute = publicRoutes.includes(to.path);
+      
+      // Check authentication status using AuthStorage (cookies)
+      const isAuthenticated = AuthStorage.isAuthenticated();
+      
+      logger.router.debug(`Authentication status: ${isAuthenticated}`);
+      
+      if (!isAuthenticated && !isPublicRoute) {
+        // Not authenticated and trying to access protected route
+        logger.router.info('Redirecting to login (not authenticated)');
+        next('/login');
       }
+      if (isAuthenticated && isPublicRoute) {
+        // Authenticated but trying to access public route (login/register)
+        logger.router.info('Redirecting to home (already authenticated)');
+        next('/');
+      }
+      // Allow navigation
+      logger.router.debug('Navigation allowed');
+      next();
+    } catch (error) {
+      logger.router.error('Router Guard Error:', error);
+      // On error, redirect to login for safety
+      next('/login');
     }
-
-    // Otherwise, proceed normally
-    next()
-  })
+  });
 
   router.afterEach((to, from) => {
-    // You can add analytics or other after-navigation logic here
-  })
-}
+    // Log navigation for debugging
+    logger.router.debug(`Navigation completed: ${from.path} → ${to.path}`);
+  });
+};
 
-export default checkAuth
+/**
+ * Initialize authentication state when router is set up
+ * This should be called after the router is created
+ */
+export const initializeAuthRouter = async (router: Router) => {
+  try {
+    logger.router.debug('Initializing authentication state...');
+    
+    // Initialize auth store to restore state from storage
+    const authStore = useAuthStore();
+    if (!authStore.isInitialized) {
+      await authStore.initializeAuth();
+      logger.router.info('Authentication state initialized');
+    } else {
+      logger.router.debug('Authentication state already initialized');
+    }
+    
+    // Router is available for future use if needed
+    logger.router.debug(`Router instance available: ${!!router}`);
+  } catch (error) {
+    logger.router.error('Failed to initialize authentication:', error);
+  }
+};
+
+export default checkAuth;

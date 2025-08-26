@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { io, Socket } from 'socket.io-client'
-import type { IOptionModel } from '@/core/interfaces/model/option'
+import type { IOption } from '@/core/interfaces/model/option'
 
 interface ISocketState {
   socket: Socket | null
@@ -18,7 +18,7 @@ export interface VoteUpdateData {
 }
 
 export interface NewOptionData {
-  option: IOptionModel
+  option: IOption
 }
 
 const URL = process.env.NODE_ENV === 'production' ? undefined : 'http://localhost:8000'
@@ -48,7 +48,7 @@ export const useSocketStore = defineStore('socket', {
       })
 
       // Listen for new options
-      this.socket.on('new_option', (data: IOptionModel) => {
+      this.socket.on('new_option', (data: IOption) => {
         // Handle new option event
         console.log('New option received:', data)
       })

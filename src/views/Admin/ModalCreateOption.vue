@@ -39,6 +39,8 @@
                 class="mt-2 bg-blue-darken-2"
                 @click="createOption"
                 variant="elevated"
+                :loading="createOptionMutation.isPending.value"
+                :disabled="createOptionMutation.isPending.value"
               >
                 Tạo mới</v-btn
               >
@@ -70,7 +72,7 @@ import {
   checkTitleRequired,
   checkLinkRequired
 } from './Admin.validate'
-import { getOptionsByTopicId, postNewOption } from '@/services/option.service'
+import { useCreateOption } from '@/composables/useOptions'
 import { ENotificationColor } from '@/core/constants/enum'
 import type { IOption } from '@/core/interfaces/model/option'
 import type { IState } from '@/core/interfaces/model/state'
@@ -80,6 +82,9 @@ const props = defineProps<{
   topicState: IState<ITopic>
 }>()
 const emits = defineEmits(['onClose'])
+
+// Composables
+const createOptionMutation = useCreateOption()
 
 // State
 const dialogVisible = ref(true)
@@ -107,31 +112,17 @@ const createOption = async () => {
       optionFormData &&
       handleValidateAddOption(optionFormData, topicStateData) === true
     ) {
-      const topicData = await getOptionsByTopicId(topicStateData.id)
-      setTimeout(async () => {
-        const optionList = topicData.value as IOption[]
-        let checkIsDuplicate = false
-        optionList.forEach((option) => {
-          if (
-            option.title === optionFormData?.title ||
-            (optionFormData?.link && optionFormData.link === option.link)
-          ) {
-            hasError.value = true
-            message.value = 'Option này đã tồn tại, vui lòng nhập lại!'
-            checkIsDuplicate = true
-            return
-          }
-        })
-        if (!checkIsDuplicate) {
-          await postNewOption(optionFormData.title, optionFormData.link, topicStateData.id)
-          hasError.value = false
-          message.value = 'Tạo mới thành công'
-        }
-      }, 200)
+      await createOptionMutation.mutateAsync({
+        title: optionFormData.title,
+        topic_id: topicStateData.id
+      })
+      hasError.value = false
+      message.value = 'Tạo mới thành công'
     }
-  } catch {
-    hasError.value = false
+  } catch (error) {
+    hasError.value = true
     message.value = 'Tạo mới không thành công!'
+    console.error('Failed to create option:', error)
   } finally {
     setTimeout(() => {
       optionFormData.title = ''

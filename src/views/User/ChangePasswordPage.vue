@@ -64,7 +64,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import api from '@/services/axios.service'
+import api from '@/core/api'
 import Cookies from 'js-cookie'
 
 const router = useRouter()

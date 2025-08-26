@@ -1,5 +1,5 @@
 export const ENV_CONFIG = {
-  API_URL: import.meta.env.VITE_VUE_APP_API_PATH
+  API_URL: import.meta.env.VUE_APP_API_BASE_URL
 }
 
 export const DEFAULT_EMPTY = '-'

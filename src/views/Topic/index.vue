@@ -3,14 +3,16 @@
     <!-- Left Area: Topic Details and Top 3 Options -->
     <v-sheet max-width="638" rounded width="100%" class="mx-auto left-area">
       <!-- Topic Information Section -->
-      <div class="mx-auto left-area" style="width: 100% !important; max-width: 400px">
-        <h1 class="text-white text-h4 mb-2">{{ currentTopic?.name }}</h1>
-        <p class="text-white text-body-1 mb-1 text-break">{{ currentTopic?.description }}</p>
+      <div
+        v-if="currentTopic"
+        class="mx-auto left-area"
+        style="width: 100% !important; max-width: 400px"
+      >
+        <h1 class="text-white text-h4 mb-2">{{ currentTopic.title }}</h1>
+        <p class="text-white text-body-1 mb-1 text-break">{{ currentTopic.description }}</p>
         <p class="text-white text-body-1 mb-8">
           Thời hạn:
-          {{
-            currentTopic?.date && dayjs(new Date(currentTopic.date)).format('DD/MM/YYYY, HH:MM:ss')
-          }}
+          {{ currentTopic?.endDate && formatEndDateUTC(currentTopic.endDate) }}
         </p>
         <!-- Countdown Timer Display -->
         <p v-if="Boolean(countdown)" class="text-white font-weight-medium mb-4">
@@ -78,7 +80,7 @@
         <div style="flex: 1">
           <!-- Topic Closed Alert -->
           <v-alert
-            v-if="!common.loading && !currentTopic?.status && !alertVote"
+            v-if="!common.loading && !currentTopic?.isActive && !alertVote"
             variant="outlined"
             type="warning"
             class="w-100 pt-2 pb-2"
@@ -101,7 +103,7 @@
         </div>
         <!-- Option Creation Form -->
         <form-create-option
-          v-if="currentTopic?.link && currentTopic?.status"
+          v-if="currentTopic?.optionRequiredField && currentTopic?.isActive"
           :id="id.toString()"
           :options="currentOptions"
           :topic-state="currentTopic"
@@ -113,7 +115,7 @@
         <div v-if="currentOptions.length" class="right-area__list">
           <option-card
             v-for="(option, index) in currentOptions"
-            :key="option._id"
+            :key="option.id"
             :index="index"
             :is-rank-card="false"
             :option="option"
@@ -152,7 +154,7 @@
       <v-divider></v-divider>
       <v-card-text max-height="300px" class="pa-3">
         <div v-for="userId in listVoteBy" :key="userId" class="mr-1">
-          <div class="mt-1">
+          <div v-if="userMap[userId]" class="mt-1">
             <v-avatar color="secondary" class="m-1" size="30">
               <v-img
                 v-if="userMap[userId].avatar"
@@ -173,13 +175,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineAsyncComponent, onMounted, ref, onUnmounted } from 'vue'
-import dayjs from 'dayjs'
+import { computed, defineAsyncComponent, onMounted, ref, onUnmounted, watch } from 'vue'
 import { debounce } from 'lodash'
 
 import { ETopicTeam } from '@/core/constants/enum'
 import useCommon from '@/core/hooks/useCommon'
-import type { IOptionModel } from '@/core/interfaces/model/option'
+import { adaptApiOptionToIOption, type IOption } from '@/core/interfaces/model/option'
 import type { ITopic } from '@/core/interfaces/model/topic'
 import type { IUser } from '@/core/interfaces/model/user'
 import {
@@ -192,6 +193,8 @@ import { useCommonStore } from '@/stores'
 // import OptionCard from './OptionCard.vue'
 import { useUserStore } from '@/stores/user'
 import { useSocketStore, type VoteUpdateData } from '@/stores/socket'
+import { useAuthStore } from '@/stores/auth'
+import { AuthStorage } from '@/core/utils/storage'
 
 // Lazy load the form component
 const OptionCard = defineAsyncComponent(() => import('./OptionCard.vue'))
@@ -201,32 +204,35 @@ const FormCreateOption = defineAsyncComponent(() => import('./FormCreateOption.v
 const { getParams, handleRouter } = useCommon('useCommonStore')
 const { id } = getParams()
 const common = useCommonStore()
+const authStore = useAuthStore()
 
 // Data state
-const currentAccount = useUserStore().getUser as IUser
-const userList = useUserStore().getUserList as IUser[]
-const userMap = userList.reduce((acc, user) => {
-  acc[user.id] = user
-  return acc
-}, {} as Record<string, IUser>)
+const currentAccount = AuthStorage.getUserData()
+const { availableUsers } = useAuthStore()
+const userMap = computed(() =>
+  availableUsers.reduce((acc, user) => {
+    acc[user.id] = user
+    return acc
+  }, {} as Record<string, IUser>)
+)
 const currentTopic = ref<ITopic | null>(null)
-const currentOptions = ref<IOptionModel[]>([])
+const currentOptions = ref<IOption[]>([])
 const socketStore = useSocketStore()
 
 // Component state
 const showOverlay = ref<boolean>(false)
-const currentTime = ref(new Date().getTime())
+const currentTime = ref(Date.now()) // Use UTC timestamp for consistent comparison
 const listVoteBy = ref<string[]>([])
 const dialog = ref<boolean>(false)
 const alertVote = ref<string>('')
-const alertVoteType = ref<string>('success')
+const alertVoteType = ref<'success' | 'error' | 'warning' | 'info'>('success')
 
 /** Computed Properties */
 // Get top 3 options by vote count
 const topOptions = computed(() => {
   // Sort options by voteCount in descending order and take top 3
-  const rank: IOptionModel[] = [...currentOptions.value]
-    .sort((a, b) => b.vote_count - a.vote_count)
+  const rank: IOption[] = [...currentOptions.value]
+    .sort((a, b) => b.voteCount - a.voteCount)
     .slice(0, 3)
 
   return rank
@@ -238,38 +244,64 @@ const voteState = computed(() => {
 
   const votedIndices = currentOptions.value
     .map((option, index) => ({
-      optionId: option._id,
+      optionId: option.id,
       index,
-      isVoted: option.user_votes.has(currentAccount.id)
+      isVoted: option.userVotes?.has(currentAccount.id) || false
     }))
     .filter((vote) => vote.isVoted)
     .map((vote) => vote.index)
   return votedIndices
 })
 
+// Time calculation constants
+const TIME_CONSTANTS = {
+  SECOND: 1000,
+  MINUTE: 1000 * 60,
+  HOUR: 1000 * 60 * 60,
+  DAY: 1000 * 60 * 60 * 24
+} as const
+
+// Cache end date timestamp to avoid repeated parsing
+// Parse as UTC to prevent timezone conversion issues
+const endDateTimestamp = computed(() => {
+  if (!currentTopic.value?.endDate) return null
+
+  // Parse the ISO string as UTC without timezone conversion
+  const endDate = currentTopic.value.endDate
+  const isoString = typeof endDate === 'string' ? endDate : endDate.toISOString()
+
+  // Create UTC date using Date constructor with UTC values
+  const utcDate = new Date(isoString.replace(/[+-]\d{2}:\d{2}$/, 'Z'))
+
+  return utcDate.getTime()
+})
+
 // Calculate remaining time until topic deadline
 const timeRemaining = computed(() => {
-  if (currentTopic.value?.date) {
-    const difference =
-      new Date((currentTopic.value?.date as any)?.seconds * 1000).getTime() - currentTime.value
-    if (difference <= 0) {
-      update()
-      return {
-        days: 0,
-        hours: 0,
-        minutes: 0,
-        seconds: 0
-      }
-    }
-
-    const days = Math.floor(difference / (1000 * 60 * 60 * 24))
-    const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
-    const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60))
-    const seconds = Math.floor((difference % (1000 * 60)) / 1000)
-
-    return { days, hours, minutes, seconds }
+  // Early return if no end date
+  if (!endDateTimestamp.value) {
+    return { days: -1, hours: -1, minutes: -1, seconds: -1 }
   }
-  return { days: -1, hours: -1, minutes: -1, seconds: -1 }
+
+  const difference = endDateTimestamp.value - currentTime.value
+
+  // Return zero values if time has passed (avoid side effects in computed)
+  if (difference <= 0) {
+    return { days: 0, hours: 0, minutes: 0, seconds: 0 }
+  }
+
+  // Calculate time components using constants
+  const days = Math.floor(difference / TIME_CONSTANTS.DAY)
+  const hours = Math.floor((difference % TIME_CONSTANTS.DAY) / TIME_CONSTANTS.HOUR)
+  const minutes = Math.floor((difference % TIME_CONSTANTS.HOUR) / TIME_CONSTANTS.MINUTE)
+  const seconds = Math.floor((difference % TIME_CONSTANTS.MINUTE) / TIME_CONSTANTS.SECOND)
+
+  return { days, hours, minutes, seconds }
+})
+
+// Watch for when time expires to trigger update
+const isExpired = computed(() => {
+  return endDateTimestamp.value && endDateTimestamp.value <= currentTime.value
 })
 
 // Format countdown display
@@ -285,6 +317,30 @@ const countdown = computed(() => {
   return parts.join(', ')
 })
 
+/** Utility Functions */
+// Format end date to display as UTC time without timezone conversion
+const formatEndDateUTC = (endDate: string | Date): string => {
+  try {
+    // Parse as UTC and format to show the exact time as intended
+    const inputString = typeof endDate === 'string' ? endDate : endDate.toISOString()
+    const isoString = inputString.replace(/[+-]\d{2}:\d{2}$/, 'Z')
+    const utcDate = new Date(isoString)
+
+    // Format using UTC methods to maintain the original time
+    const day = String(utcDate.getUTCDate()).padStart(2, '0')
+    const month = String(utcDate.getUTCMonth() + 1).padStart(2, '0')
+    const year = utcDate.getUTCFullYear()
+    const hours = String(utcDate.getUTCHours()).padStart(2, '0')
+    const minutes = String(utcDate.getUTCMinutes()).padStart(2, '0')
+    const seconds = String(utcDate.getUTCSeconds()).padStart(2, '0')
+
+    return `${day}/${month}/${year}, ${hours}:${minutes}:${seconds}`
+  } catch (error) {
+    console.error('Error formatting end date:', error)
+    return 'Invalid date'
+  }
+}
+
 /** Methods */
 // Update topic status when deadline is reached
 const update = async () => {
@@ -298,26 +354,29 @@ const update = async () => {
     option: true,
     team: ETopicTeam.ALL
   }
-  topicInfo.status = false
-  updateTopic(topicInfo.id, topicInfo)
+  // // topicInfo.is_active = false
+  // updateTopic(topicInfo.id, {
+  //   is_active: false
+  // })
 }
 
 // Handle vote changes with debounce
 const handleChangeVote = debounce(async (optionIndex: number) => {
-  if (!currentTopic.value?.status) {
+  if (!currentTopic.value?.isActive) {
     showAlert('Topic này đã đóng!', 'error')
     return
   }
 
   try {
     showOverlay.value = true
-    const optionId = currentOptions.value[optionIndex]._id
+    const optionId = currentOptions.value[optionIndex].id
 
-    if (currentTopic.value?.option) {
-      await handleMultipleVote(optionId, currentTopic.value.id, currentAccount)
+    if (currentTopic.value?.isMutable) {
+      await handleMultipleVote(optionId)
     } else {
       const previousOptionId =
-        voteState.value.length > 0 ? currentOptions.value[voteState.value[0]]._id : null
+        voteState.value.length > 0 ? currentOptions.value[voteState.value[0]].id : null
+      if (!currentAccount) return
       await handleSingleVote(optionId, currentAccount, previousOptionId)
     }
   } catch (error) {
@@ -329,7 +388,7 @@ const handleChangeVote = debounce(async (optionIndex: number) => {
 }, 300)
 
 // Show temporary alert message
-const showAlert = (message: string, type: string) => {
+const showAlert = (message: string, type: 'success' | 'error' | 'warning' | 'info') => {
   alertVote.value = message
   alertVoteType.value = type
   setTimeout(() => {
@@ -338,43 +397,52 @@ const showAlert = (message: string, type: string) => {
 }
 
 // Show vote list dialog
-const onClickSeeMore = (option: IOptionModel) => {
-  listVoteBy.value = Object.keys(option.user_votes)
+const onClickSeeMore = (option: IOption) => {
+  listVoteBy.value = option.userVotes ? Object.keys(option.userVotes) : []
   dialog.value = true
 }
+
+// Watch for topic expiration to trigger update
+watch(isExpired, (expired) => {
+  if (expired) {
+    update()
+  }
+})
 
 // Component lifecycle hooks
 onMounted(async () => {
   try {
-    currentTopic.value = await getTopicById(id.toString())
-    const data = await getOptionsByTopicId(id.toString())
-    currentOptions.value = data.options
+    await authStore.fetchAvailableUsers()
+    const resTopic = await getTopicById(id.toString())
+    currentTopic.value = resTopic
+    const resOptions = await getOptionsByTopicId(id.toString())
+    currentOptions.value = resOptions.data.data.map(adaptApiOptionToIOption)
 
     // Connect to socket and join topic
     socketStore.connect()
     socketStore.joinTopic(id.toString())
 
     // Set up socket event handlers
-    socketStore.socket?.on('new_option', (data: IOptionModel) => {
-      if (data.topic_id === id.toString()) {
+    socketStore.socket?.on('new_option', (data: IOption) => {
+      if (data.topicId === id.toString()) {
         currentOptions.value.push(data)
       }
     })
 
     socketStore.socket?.on('vote_option', (data: VoteUpdateData) => {
       if (data.topic_id === id.toString()) {
-        const optionIndex = currentOptions.value.findIndex((opt) => opt._id === data.option_id)
+        const optionIndex = currentOptions.value.findIndex((opt) => opt.id === data.option_id)
         if (optionIndex !== -1) {
           const option = currentOptions.value[optionIndex]
           if (data.action === 'vote') {
             // Add user to voteBy array if not already present
-            option.user_votes.set(data.user_id, new Date())
-            option.vote_count = data.count
+            option.userVotes?.set(data.user_id, new Date().toUTCString())
+            option.voteCount = data.count
           } else {
             // Remove user from voteBy array
-            option.user_votes.delete(data.user_id)
+            option.userVotes?.delete(data.user_id)
           }
-          option.vote_count = data.count
+          option.voteCount = data.count
         }
       }
     })
@@ -382,9 +450,9 @@ onMounted(async () => {
     handleRouter.pushPath('/')
   }
 
-  // Start countdown timer
+  // Start countdown timer - use UTC timestamp for consistent comparison
   setInterval(() => {
-    currentTime.value = new Date().getTime()
+    currentTime.value = Date.now()
   }, 1000)
 })
 

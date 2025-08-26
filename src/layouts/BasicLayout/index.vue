@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { defineAsyncComponent } from 'vue'
-const Header = defineAsyncComponent(() => import('@/components/organisms/Header/index.vue'))
+// import { defineAsyncComponent } from 'vue'
+// const Header = defineAsyncComponent(() => import('@/components/organisms/Header/index.vue'))
 
 /**
  * Layout: use for pages're logged

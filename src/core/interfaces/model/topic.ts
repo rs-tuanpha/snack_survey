@@ -1,47 +1,62 @@
-import { ETopicRequireField, type ETopicTeam, type ETopicVoteType } from '@/core/constants/enum'
+import { ETopicRequireField, ETopicTeam, ETopicVoteType } from '@/core/constants/enum'
 import type { IUser } from './user'
 
-export interface ITopicModel {
-  id: string
+// Unified Topic interface based on backend API structure
+export interface ITopic {
+  _id: string
   title: string
   description?: string
-  start_date: Date
-  end_date: Date
-  vote_type: ETopicVoteType
-  option_required_field: ETopicRequireField
-  is_mutable: boolean
-  is_active: boolean
+  votingType: ETopicVoteType
+  timeLimit?: number
+  isActive: boolean
   team: ETopicTeam
-  created_by: string
+  createdAt: string | Date
+  updatedAt: string | Date
+  // Additional fields for frontend use
+  voteBy?: IUser[]
+  optionRequiredField?: ETopicRequireField
+  isMutable?: boolean
+  startDate?: string | Date
+  endDate?: string | Date
+}
+
+// Legacy interface for backward compatibility - will be removed
+export interface ITopicModel extends ITopic {
+  startDate: Date
+  endDate: Date
+  voteType: ETopicVoteType
+  optionRequiredField: ETopicRequireField
+  isMutable: boolean
+  createdBy: string
   updatedAt: Date
 }
 
-export interface ITopic {
-  id: string
-  name: string
+// Adapter function to convert from API Topic to ITopic
+export function adaptApiTopicToITopic(apiTopic: {
+  _id: string
+  title: string
   description?: string
-  date?: Date
-  status?: boolean | null | string
-  link?: boolean | null
-  requireField?: `${ETopicRequireField}`
-  option?: boolean | null
-  team?: `${ETopicTeam}`
-  voteBy?: IUser[]
-  updatedAt?: Date
-}
-
-export function adaptTopicModelToTopic(model: ITopicModel): ITopic {
+  votingType: ETopicVoteType
+  timeLimit?: number
+  isActive: boolean
+  team: ETopicTeam
+  createdAt: string
+  updatedAt: string
+  startDate?: string | Date
+  endDate?: string | Date
+}): ITopic {
   return {
-    id: model.id,
-    name: model.title,
-    description: model.description,
-    date: model.start_date,
-    status: model.is_active ? 'active' : 'inactive',
-    link: model.option_required_field === ETopicRequireField.LINK,
-    requireField: model.option_required_field,
-    option: model.is_mutable,
-    team: model.team,
-    voteBy: [], // Assuming voteBy is not directly mapped from ITopicModel
-    updatedAt: model.updatedAt
+    _id: apiTopic._id,
+    title: apiTopic.title,
+    description: apiTopic.description,
+    votingType: apiTopic.votingType,
+    timeLimit: apiTopic.timeLimit,
+    isActive: apiTopic.isActive,
+    team: apiTopic.team,
+    createdAt: apiTopic.createdAt,
+    updatedAt: apiTopic.updatedAt,
+    voteBy: [],
+    startDate: apiTopic.startDate,
+    endDate: apiTopic.endDate
   }
 }
