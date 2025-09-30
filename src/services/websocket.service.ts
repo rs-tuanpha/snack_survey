@@ -1,11 +1,13 @@
 import { io, Socket } from 'socket.io-client'
+import { networkOptimizer } from './network-optimizer.service'
 // import type { IUser } from '@/core/interfaces/model/user'
 import type { IOption } from '@/core/interfaces/model/option'
+import type { VoteUpdateData } from '@/stores/socket'
 
 /**
  * WebSocket Service for Snack Survey Application
  * Centralized Socket.io client management with TypeScript type safety
- * 
+ *
  * Features:
  * - Type-safe event handling
  * - Automatic reconnection
@@ -27,7 +29,7 @@ export interface WebSocketEvents {
   'topic:switch': TopicSwitchPayload
   'vote:cast': VoteCastPayload
   'vote:status': VoteStatusPayload
-  
+
   // Server → Client Events
   'topic:joined': TopicJoinedResponse
   'topic:switched': TopicSwitchedResponse
@@ -113,16 +115,17 @@ export interface VoteUpdateResponse {
 }
 
 export interface VoteStatusResponse {
-  topicId: string
-  userVoteStatus: {
-    votedOptions: string[]
-    totalVotes: number
-    lastVoteTime?: string
+  topic_id: string
+  user_id: string
+  votedOptions: string[]
+  totalVotes: number
+  lastVoteTime: string | null
+  voting_stats: {
+    total_participants: number
+    total_votes: number
+    voting_rate: number
   }
-  allOptionsVoteCounts: Array<{
-    optionId: string
-    voteCount: number
-  }>
+  timestamp: string
 }
 
 export interface VoteErrorResponse {
@@ -178,16 +181,19 @@ export class WebSocketService {
     reconnectAttempts: 0,
     lastError: null
   }
-  
+
   private eventHandlers: Map<string, Function[]> = new Map()
   private reconnectTimer: NodeJS.Timeout | null = null
   private maxReconnectAttempts = 5
   private reconnectDelay = 1000 // Start with 1 second
-  
+  private voteQueue: VoteCastPayload[] = [] // Queue for offline votes
+  private isOffline = false
+  private connectionHealthCheck: NodeJS.Timeout | null = null
+
   // Server configuration
   private readonly serverUrl: string
   private readonly namespace = '/topics'
-  
+
   constructor(serverUrl?: string) {
     this.serverUrl = serverUrl || this.getDefaultServerUrl()
   }
@@ -201,7 +207,6 @@ export class WebSocketService {
    */
   async connect(userId: string, username: string): Promise<void> {
     if (this.socket?.connected) {
-      console.warn('WebSocket already connected')
       return
     }
 
@@ -220,7 +225,7 @@ export class WebSocketService {
       })
 
       this.setupEventListeners()
-      
+
       // Wait for connection
       await new Promise<void>((resolve, reject) => {
         const timeout = setTimeout(() => {
@@ -232,8 +237,11 @@ export class WebSocketService {
           this.state.connected = true
           this.state.reconnectAttempts = 0
           this.state.lastError = null
-          console.log('WebSocket connected to topics namespace')
+          this.isOffline = false
           this.emit('connection', true)
+          this.startHealthCheck()
+          // Process any queued votes
+          this.processQueuedVotes()
           resolve()
         })
 
@@ -252,6 +260,8 @@ export class WebSocketService {
    * Disconnect from WebSocket server
    */
   disconnect(): void {
+    this.stopHealthCheck()
+
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer)
       this.reconnectTimer = null
@@ -271,9 +281,9 @@ export class WebSocketService {
       lastError: null
     }
 
+    this.isOffline = true
     this.emit('connection', false)
-    console.log('WebSocket disconnected')
-  }
+    }
 
   /**
    * Get current connection state
@@ -320,7 +330,7 @@ export class WebSocketService {
           clearTimeout(timeout)
           this.socket!.off('topic:joined', handleJoined)
           this.socket!.off('error:topic', handleError)
-          
+
           this.state.currentTopicId = topicId
           resolve(data)
         }
@@ -337,7 +347,7 @@ export class WebSocketService {
 
       this.socket.on('topic:joined', handleJoined)
       this.socket.on('error:topic', handleError)
-      
+
       // Emit join request
       this.socket.emit('topic:join', payload)
     })
@@ -377,7 +387,7 @@ export class WebSocketService {
           clearTimeout(timeout)
           this.socket!.off('topic:switched', handleSwitched)
           this.socket!.off('error:topic', handleError)
-          
+
           this.state.currentTopicId = toTopicId
           resolve(data)
         }
@@ -394,7 +404,7 @@ export class WebSocketService {
 
       this.socket.on('topic:switched', handleSwitched)
       this.socket.on('error:topic', handleError)
-      
+
       this.socket.emit('topic:switch', payload)
     })
   }
@@ -418,13 +428,9 @@ export class WebSocketService {
   // ============================================================================
 
   /**
-   * Cast a vote for an option
+   * Cast a vote for an option with enhanced retry logic and network optimization
    */
   async castVote(topicId: string, optionId: string, action: 'vote' | 'unvote'): Promise<VoteUpdateResponse> {
-    if (!this.socket?.connected) {
-      throw new Error('WebSocket not connected')
-    }
-
     if (!this.state.userId || !this.state.username) {
       throw new Error('User not authenticated')
     }
@@ -434,6 +440,33 @@ export class WebSocketService {
       optionId,
       userId: this.state.userId,
       username: this.state.username,
+      action
+    }
+
+    // If offline, queue the vote
+    if (this.isOffline || !this.socket?.connected) {
+      this.queueVote(payload)
+      throw new Error('Vote queued - will be sent when connection is restored')
+    }
+
+    try {
+      // Use network optimizer for better performance
+      return await networkOptimizer.sendWithRetry('vote:cast', payload)
+    } catch (error) {
+      // Fallback to direct send
+      return this.castVoteDirect(topicId, optionId, action)
+    }
+  }
+
+  /**
+   * Direct vote cast (fallback method)
+   */
+  private async castVoteDirect(topicId: string, optionId: string, action: 'vote' | 'unvote'): Promise<VoteUpdateResponse> {
+    const payload: VoteCastPayload = {
+      topicId,
+      optionId,
+      userId: this.state.userId!,
+      username: this.state.username!,
       action
     }
 
@@ -467,7 +500,7 @@ export class WebSocketService {
 
       this.socket.on('vote:update', handleUpdate)
       this.socket.on('error:vote', handleError)
-      
+
       this.socket.emit('vote:cast', payload)
     })
   }
@@ -499,7 +532,7 @@ export class WebSocketService {
       }
 
       const handleResponse = (data: VoteStatusResponse) => {
-        if (data.topicId === topicId) {
+        if (data.topic_id === topicId) {
           clearTimeout(timeout)
           this.socket!.off('vote:status_response', handleResponse)
           this.socket!.off('error:vote', handleError)
@@ -518,7 +551,7 @@ export class WebSocketService {
 
       this.socket.on('vote:status_response', handleResponse)
       this.socket.on('error:vote', handleError)
-      
+
       this.socket.emit('vote:status', payload)
     })
   }
@@ -532,6 +565,20 @@ export class WebSocketService {
    */
   subscribeVoteUpdates(handler: VoteUpdateHandler): () => void {
     return this.subscribe('vote:update', handler)
+  }
+
+  /**
+   * Subscribe to vote status updates (for real-time vote status changes)
+   */
+  subscribeVoteStatusUpdates(handler: (data: VoteStatusResponse) => void): () => void {
+    return this.subscribe('vote:status_response', handler)
+  }
+
+  /**
+   * Subscribe to vote option updates (for real-time vote counts)
+   */
+  subscribeVoteOptionUpdates(handler: (data: VoteUpdateData) => void): () => void {
+    return this.subscribe('vote_option', handler)
   }
 
   /**
@@ -595,15 +642,13 @@ export class WebSocketService {
       this.state.connected = true
       this.state.reconnectAttempts = 0
       this.state.lastError = null
-      console.log('WebSocket connected')
       this.emit('connection', true)
     })
 
     this.socket.on('disconnect', (reason) => {
       this.state.connected = false
-      console.log('WebSocket disconnected:', reason)
       this.emit('connection', false)
-      
+
       // Attempt reconnection if not intentional
       if (reason !== 'io client disconnect') {
         this.scheduleReconnect()
@@ -656,13 +701,11 @@ export class WebSocketService {
     this.state.reconnectAttempts++
     const delay = this.reconnectDelay * Math.pow(2, this.state.reconnectAttempts - 1) // Exponential backoff
 
-    console.log(`Scheduling reconnection attempt ${this.state.reconnectAttempts} in ${delay}ms`)
-
     this.reconnectTimer = setTimeout(async () => {
       if (this.state.userId && this.state.username) {
         try {
           await this.connect(this.state.userId, this.state.username)
-          
+
           // Rejoin topic if we were in one
           if (this.state.currentTopicId) {
             await this.joinTopic(this.state.currentTopicId)
@@ -678,9 +721,9 @@ export class WebSocketService {
     if (!this.eventHandlers.has(event)) {
       this.eventHandlers.set(event, [])
     }
-    
+
     this.eventHandlers.get(event)!.push(handler)
-    
+
     // Return unsubscribe function
     return () => {
       const handlers = this.eventHandlers.get(event)
@@ -706,10 +749,87 @@ export class WebSocketService {
     }
   }
 
+  /**
+   * Queue vote for offline processing
+   */
+  private queueVote(payload: VoteCastPayload): void {
+    this.voteQueue.push(payload)
+    }
+
+  /**
+   * Process queued votes when connection is restored
+   */
+  private async processQueuedVotes(): Promise<void> {
+    if (this.voteQueue.length === 0) return
+
+    const votesToProcess = [...this.voteQueue]
+    this.voteQueue = []
+
+    for (const vote of votesToProcess) {
+      try {
+        await this.castVote(vote.topicId, vote.optionId, vote.action)
+        } catch (error) {
+        console.error('Failed to process queued vote:', error)
+        // Re-queue failed votes
+        this.voteQueue.push(vote)
+      }
+    }
+  }
+
+  /**
+   * Start connection health monitoring
+   */
+  private startHealthCheck(): void {
+    if (this.connectionHealthCheck) {
+      clearInterval(this.connectionHealthCheck)
+    }
+
+    this.connectionHealthCheck = setInterval(() => {
+      if (this.socket?.connected) {
+        // Send ping to check connection health
+        this.socket.emit('ping')
+      } else {
+        this.isOffline = true
+        this.emit('connection', false)
+      }
+    }, 30000) // Check every 30 seconds
+  }
+
+  /**
+   * Stop connection health monitoring
+   */
+  private stopHealthCheck(): void {
+    if (this.connectionHealthCheck) {
+      clearInterval(this.connectionHealthCheck)
+      this.connectionHealthCheck = null
+    }
+  }
+
+  /**
+   * Get queued votes count
+   */
+  public getQueuedVotesCount(): number {
+    return this.voteQueue.length
+  }
+
+  /**
+   * Clear queued votes
+   */
+  public clearQueuedVotes(): void {
+    this.voteQueue = []
+  }
+
+  /**
+   * Check if service is offline
+   */
+  public isServiceOffline(): boolean {
+    return this.isOffline
+  }
+
   private getDefaultServerUrl(): string {
     // Use environment variable or default to localhost
-    return process.env.NODE_ENV === 'production' 
-      ? window.location.origin 
+    return process.env.NODE_ENV === 'production'
+      ? window.location.origin
       : 'http://localhost:8000'
   }
 }

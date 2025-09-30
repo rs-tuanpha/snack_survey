@@ -4,12 +4,12 @@
       <div class="d-flex align-center">
         <v-avatar
           size="36px"
-          :icon="userStore.getUser?.avatar ? '' : 'mdi-account-circle'"
+          :icon="userData?.avatar ? '' : 'mdi-account-circle'"
           class="mr-2"
         >
-          <v-img alt="Avatar" :src="userStore.getUser?.avatar"></v-img>
+          <v-img alt="Avatar" :src="userData?.avatar"></v-img>
         </v-avatar>
-        <i> Tài khoản: </i><strong>{{ userStore.getUser?.username }}</strong>
+        <i> Tài khoản: </i><strong>{{ userData?.username }}</strong>
       </div>
       <v-btn class="ma-2 logout-btn" color="red" @click="handleLogout">
         <v-icon icon="mdi-logout-variant"></v-icon>
@@ -75,7 +75,7 @@
     </v-sheet>
   </v-container>
 
-  <v-dialog v-model="showVoteDialog" width="auto">
+  <!-- <v-dialog v-model="showVoteDialog" width="auto">
     <v-card>
       <v-card-title>Danh sách vote</v-card-title>
       <v-divider></v-divider>
@@ -92,30 +92,36 @@
         </div>
       </v-card-text>
     </v-card>
-  </v-dialog>
+  </v-dialog> -->
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onBeforeMount } from 'vue'
 import { getTopicList } from '@/services/topic.service'
+import { getCurrentUserProfile } from '@/services/user.service'
 import type { ITopic } from '@/core/interfaces/model/topic'
 import type { IUser } from '@/core/interfaces/model/user'
+import { EUserRole, ETopicTeam } from '@/core/constants/enum'
 import useCommon from '@/core/hooks/useCommon'
 import { useUserStore } from '@/stores/user'
-import Cookies from 'js-cookie'
-import { AuthStorage } from '@/core/utils/storage'
+import { useCookie } from '@/core/hooks/useCookie'
+import { CookieKeys } from '@/core/utils/cookieUtils'
 
-const { handleRouter } = useCommon('useCommonStore')
+const { handleRouter, storage } = useCommon('useCommonStore')
 const userStore = useUserStore()
-// const userData = useUserStore().getUser!
-const userData = AuthStorage.getUserData()
+
+// Use cookie hook for user data
+const userDataCookie = useCookie(CookieKeys.USER_DATA, '')
+const tokenCookie = useCookie(CookieKeys.ACCESS_TOKEN, '')
+const refreshTokenCookie = useCookie(CookieKeys.REFRESH_TOKEN, '')
+const userData = ref<IUser | null>(null)
 
 // State
 const activeTab = ref<'open' | 'close'>('open')
 const topics = ref<ITopic[]>([])
 const searchTerm = ref('')
-const showVoteDialog = ref(false)
-const voteList = ref<IUser[]>([])
+// const showVoteDialog = ref(false)
+// const voteList = ref<IUser[]>([])
 
 // Computed
 const filteredTopics = computed(() => {
@@ -140,27 +146,60 @@ const goTopicVote = (id: string) => {
 }
 
 const handleLogout = () => {
-  Cookies.remove('auth_token', { path: '/' })
-  localStorage.clear()
+  tokenCookie.remove()
+  refreshTokenCookie.remove()
+  userDataCookie.remove()
+  storage.removeLocalStorage('user')
+  storage.removeLocalStorage('topics')
+  storage.removeLocalStorage('app_preferences')
   handleRouter.pushPath('/login')
 }
 
+const getUserData = async () => {
+  try {
+    const userProfile = await getCurrentUserProfile()
+
+    // Map API response to IUser format
+    userData.value = {
+      id: userProfile._id,
+      email: userProfile.email,
+      username: userProfile.username,
+      avatar: userProfile.avatar,
+      role: userProfile.role as EUserRole,
+      team: userProfile.team as ETopicTeam
+    }
+    userStore.setUser(userData.value)
+  } catch (error) {
+    console.error('Error fetching user data:', error)
+    // Fallback to cookie data if API fails
+    const cookieUserData = userDataCookie.value
+    if (cookieUserData && typeof cookieUserData === 'string') {
+      try {
+        userData.value = JSON.parse(cookieUserData)
+      } catch (parseError) {
+        console.error('Error parsing cookie user data:', parseError)
+      }
+    }
+  }
+}
+
 const fetchTopics = async () => {
-  if (!userData?.team) return
+  if (!userData.value?.team) return
 
   try {
-    topics.value = await getTopicList({ team: userData.team, page: 1, limit: 99 })
+    topics.value = await getTopicList({ team: userData.value.team, page: 1, limit: 99 })
   } catch (error) {
     console.error('Error fetching topics:', error)
   }
 }
 
 // Lifecycle
-onMounted(() => {
-  fetchTopics()
+onBeforeMount(async () => {
+  await getUserData()
+  await fetchTopics()
 })
 </script>
 
 <style scoped lang="scss">
-@import './styles.scss';
+@use './styles.scss';
 </style>

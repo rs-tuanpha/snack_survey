@@ -1,10 +1,13 @@
 /**
+ * Enhanced Common Hook
+ * Provides store operations, router utilities, and storage helpers
  * Attentive: only use hook in file *.vue
  */
 
 import { storeToRefs } from 'pinia'
 import * as store from '@/stores'
 import { useRoute, type RouteLocationNormalized, useRouter, type RouteParams, type LocationQuery } from 'vue-router'
+import { logger } from '@/core/utils/logger'
 
 const useCommon = (initStoreName: string) => {
   /**
@@ -90,6 +93,69 @@ const useCommon = (initStoreName: string) => {
     }
   }
 
+  /**
+   * Storage utilities
+   */
+  const storage = {
+    // LocalStorage helpers
+    getLocalStorage: <T>(key: string, defaultValue: T): T => {
+      try {
+        const item = localStorage.getItem(key)
+        return item ? JSON.parse(item) : defaultValue
+      } catch (error) {
+        logger.storage.error(`Failed to get localStorage key ${key}:`, error)
+        return defaultValue
+      }
+    },
+
+    setLocalStorage: <T>(key: string, value: T): void => {
+      try {
+        localStorage.setItem(key, JSON.stringify(value))
+        logger.storage.debug(`Set localStorage key: ${key}`, value)
+      } catch (error) {
+        logger.storage.error(`Failed to set localStorage key ${key}:`, error)
+      }
+    },
+
+    removeLocalStorage: (key: string): void => {
+      try {
+        localStorage.removeItem(key)
+        logger.storage.debug(`Removed localStorage key: ${key}`)
+      } catch (error) {
+        logger.storage.error(`Failed to remove localStorage key ${key}:`, error)
+      }
+    },
+
+    // SessionStorage helpers
+    getSessionStorage: <T>(key: string, defaultValue: T): T => {
+      try {
+        const item = sessionStorage.getItem(key)
+        return item ? JSON.parse(item) : defaultValue
+      } catch (error) {
+        logger.storage.error(`Failed to get sessionStorage key ${key}:`, error)
+        return defaultValue
+      }
+    },
+
+    setSessionStorage: <T>(key: string, value: T): void => {
+      try {
+        sessionStorage.setItem(key, JSON.stringify(value))
+        logger.storage.debug(`Set sessionStorage key: ${key}`, value)
+      } catch (error) {
+        logger.storage.error(`Failed to set sessionStorage key ${key}:`, error)
+      }
+    },
+
+    removeSessionStorage: (key: string): void => {
+      try {
+        sessionStorage.removeItem(key)
+        logger.storage.debug(`Removed sessionStorage key: ${key}`)
+      } catch (error) {
+        logger.storage.error(`Failed to remove sessionStorage key ${key}:`, error)
+      }
+    }
+  }
+
   return {
     // Store
     storeGetters,
@@ -99,7 +165,10 @@ const useCommon = (initStoreName: string) => {
     getRouter,
     getQuery,
     getParams,
-    handleRouter
+    handleRouter,
+
+    // Storage
+    storage
   }
 }
 

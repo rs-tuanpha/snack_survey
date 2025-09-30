@@ -7,6 +7,7 @@ export interface IOption {
   title: string
   topicId: string
   voteCount: number
+  hasUserVoted?: boolean // ✅ New field for user vote status
   createdBy: string
   createdAt: string
   updatedAt: string
@@ -15,7 +16,7 @@ export interface IOption {
   image?: string
   thumbnail?: string | null
   voteBy?: IUser[]
-  userVotes?: Map<string, string>
+  userVotes?: Map<string, string> // ✅ Deprecated: will be removed in future
 }
 
 // Legacy interface for backward compatibility - will be removed
@@ -34,11 +35,12 @@ export function adaptApiOptionToIOption(apiOption: Option): IOption {
     topicId: apiOption.topicId,
     link: apiOption.link,
     image: apiOption.image,
-    voteCount: apiOption.userVotes ? Object.keys(apiOption.userVotes as Record<string, string>).length : 0,
+    voteCount: apiOption.voteCount || 0, // ✅ Use direct voteCount field
+    hasUserVoted: apiOption.hasUserVoted || false, // ✅ Use hasUserVoted field
     createdBy: apiOption.createdBy,
     createdAt: apiOption.createdAt,
     updatedAt: apiOption.updatedAt,
-    userVotes: new Map(Object.entries(apiOption.userVotes as Record<string, string>)),
+    userVotes: new Map(Object.entries(apiOption.userVotes as Record<string, string>)), // ✅ Deprecated
     voteBy: [],
   }
 }

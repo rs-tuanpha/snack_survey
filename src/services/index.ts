@@ -18,13 +18,13 @@ export { default as authService } from './auth.service'
 export { default as topicService } from './topic.service'
 export * from './topic.service'
 
-// Option service  
+// Option service
 export { default as optionService } from './option.service'
 export * from './option.service'
 
 // Vote service
 export { default as voteService } from './vote.service'
-export { 
+export {
   useVoteStatus,
   useVotingStats,
   useVote,
@@ -40,7 +40,7 @@ export {
 
 // User service
 export { default as userService } from './user.service'
-export { 
+export {
   useUsersList,
   useUser,
   useUserProfile,
@@ -59,11 +59,9 @@ export {
 
 // Stats service
 export { default as statsService } from './stats.service'
-export { 
+export {
   useVotingStats as useStatsVotingStats,
-  useVotingStatus as useStatsVotingStatus,
   getVotingStats as getStatsVotingStats,
-  getVotingStatus as getStatsVotingStatus
 } from './stats.service'
 
 // Error handling service

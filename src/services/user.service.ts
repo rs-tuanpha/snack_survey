@@ -1,6 +1,6 @@
 import api from '@/core/api'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
-import type { 
+import type {
   User,
   UserResponse,
   UserListResponse,
@@ -56,9 +56,9 @@ export function useUserProfile() {
  */
 export function useUpdateUser() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
-    mutationFn: ({ userId, userData }: { userId: string; userData: UpdateUserRequest }) => 
+    mutationFn: ({ userId, userData }: { userId: string; userData: UpdateUserRequest }) =>
       updateUser(userId, userData),
     onSuccess: (_, { userId }) => {
       // Invalidate user queries
@@ -77,9 +77,9 @@ export function useUpdateUser() {
  */
 export function useUpdateUserRole() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
-    mutationFn: ({ userId, roleData }: { userId: string; roleData: UpdateUserRoleRequest }) => 
+    mutationFn: ({ userId, roleData }: { userId: string; roleData: UpdateUserRoleRequest }) =>
       updateUserRole(userId, roleData),
     onSuccess: (_, { userId }) => {
       // Invalidate user queries
@@ -97,9 +97,9 @@ export function useUpdateUserRole() {
  */
 export function useUpdateUserTeam() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
-    mutationFn: ({ userId, teamData }: { userId: string; teamData: UpdateUserTeamRequest }) => 
+    mutationFn: ({ userId, teamData }: { userId: string; teamData: UpdateUserTeamRequest }) =>
       updateUserTeam(userId, teamData),
     onSuccess: (_, { userId }) => {
       // Invalidate user queries
@@ -117,7 +117,7 @@ export function useUpdateUserTeam() {
  */
 export function useDeleteUser() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: (userId: string) => deleteUser(userId),
     onSuccess: (_, userId) => {
@@ -238,7 +238,7 @@ export default {
   useUpdateUserRole,
   useUpdateUserTeam,
   useDeleteUser,
-  
+
   // API service functions
   getUsersList,
   getUserById,

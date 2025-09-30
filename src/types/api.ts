@@ -3,6 +3,8 @@
  * Generated from swagger.json documentation
  */
 
+import type { ETopicTeam, EUserRole } from '@/core/constants/enum'
+
 // Types are now inline to match Swagger schema exactly
 
 // Base response structure
@@ -21,7 +23,7 @@ export interface Topic {
   endDate: string
   voteType: 'single' | 'multiple'
   isActive: boolean
-  team: 'FE' | 'PHP' | 'ALL'
+  team: ETopicTeam
   createdBy: string
   totalVotes?: number
   totalParticipants?: number
@@ -35,7 +37,7 @@ export interface CreateTopicRequest {
   startDate: string
   endDate: string
   voteType: 'single' | 'multiple'
-  team: 'FE' | 'PHP' | 'ALL'
+  team: ETopicTeam
   isActive?: boolean
 }
 
@@ -45,7 +47,7 @@ export interface UpdateTopicRequest {
   startDate?: string
   endDate?: string
   voteType?: 'single' | 'multiple'
-  team?: 'FE' | 'PHP' | 'ALL'
+  team?: ETopicTeam
   isActive?: boolean
 }
 
@@ -71,8 +73,9 @@ export interface Option {
   image?: string
   topicId: string
   createdBy: string
-  userVotes?: Record<string, string>
-  voteCount: number
+  userVotes?: Record<string, string> // ✅ Deprecated: will be removed
+  voteCount: number // ✅ New: direct vote count field
+  hasUserVoted?: boolean // ✅ New: user vote status
   lastVoteTime?: string
   createdAt: string
   updatedAt: string
@@ -134,8 +137,8 @@ export interface User {
   username: string
   email: string
   avatar?: string
-  role: 'user' | 'admin'
-  team: 'FE' | 'PHP' | 'ALL'
+  role: EUserRole
+  team: ETopicTeam
   isFirstLogin?: boolean
   createdAt: string
   updatedAt: string
@@ -166,7 +169,7 @@ export interface UpdateUserRoleRequest {
 }
 
 export interface UpdateUserTeamRequest {
-  team: 'FE' | 'PHP' | 'ALL'
+  team: ETopicTeam
 }
 
 // Authentication types - Updated to match Swagger schema
@@ -180,8 +183,8 @@ export interface RegisterRequest {
   email: string
   password: string
   avatar?: string
-  team?: 'FE' | 'PHP' | 'ALL'
-  role?: 'user' | 'admin'
+  team?: ETopicTeam
+  role?: EUserRole
 }
 
 export interface AuthResponse extends BaseResponse {
@@ -207,14 +210,28 @@ export interface ResetPasswordRequest {
   password: string
 }
 
-// Vote related types - Updated to match Swagger schema
+// Vote related types - Updated to match new Backend API
 export interface VotingStatusResponse extends BaseResponse {
   data: {
-    user_id: string
-    topic_id: string
-    voted_options: string[]
-    last_vote_time: string | null
-    total_votes: number
+    // User voting status
+    user_status: {
+      userId: string
+      topicId: string
+      votedOptions: string[]
+      lastVoteTime: string | null
+      totalVotes: number
+    }
+    // Options with vote counts and user vote status
+    options: Array<{
+      _id: string
+      title: string
+      link?: string
+      image?: string
+      voteCount: number
+      hasUserVoted: boolean
+      createdAt: string
+      lastVoteTime?: string
+    }>
   }
 }
 
@@ -249,7 +266,7 @@ export interface ValidationError extends BaseResponse {
 export interface TopicListQuery {
   page?: number
   limit?: number
-  team?: 'FE' | 'PHP' | 'ALL'
+  team?: ETopicTeam
   isActive?: boolean
   search?: string
   startDateFrom?: string
@@ -298,5 +315,6 @@ export const queryKeys = {
     all: ['votes'] as const,
     status: (topicId: string) => [...queryKeys.votes.all, 'status', topicId] as const,
     stats: (topicId: string) => [...queryKeys.votes.all, 'stats', topicId] as const,
+    voters: (optionId: string) => [...queryKeys.votes.all, 'voters', optionId] as const,
   },
 } as const

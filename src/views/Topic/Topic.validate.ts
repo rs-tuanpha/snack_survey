@@ -32,19 +32,19 @@ export const linkRules = [
 ]
 // handle validate add option
 export const handleValidateAddOption = (option: {link: string, title: string}, topic: ITopic) => {
-  if (topic.option_required_field === ETopicRequireField.LINK) {
+  if (topic.optionRequiredField === ETopicRequireField.LINK) {
     return linkRules[0](option.link)
   }
-  if (topic.option_required_field === ETopicRequireField.TITLE) {
+  if (topic.optionRequiredField === ETopicRequireField.TITLE) {
     return titleRules[0](option.title)
   }
   return linkRules[0](option.link) === true && titleRules[0](option.title) === true
 }
 
 export const checkTitleRequired = (topic: ITopic) => {
-  return topic.option_required_field === ETopicRequireField.ALL || topic.option_required_field === ETopicRequireField.TITLE
+  return topic.optionRequiredField === ETopicRequireField.ALL || topic.optionRequiredField === ETopicRequireField.TITLE
 }
 
 export const checkLinkRequired = (topic: ITopic) => {
-  return topic.option_required_field === ETopicRequireField.ALL || topic.option_required_field === ETopicRequireField.LINK
+  return topic.optionRequiredField === ETopicRequireField.ALL || topic.optionRequiredField === ETopicRequireField.LINK
 }

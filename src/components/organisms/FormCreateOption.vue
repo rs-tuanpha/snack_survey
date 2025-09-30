@@ -95,7 +95,7 @@ import {
   titleRules,
   checkLinkRequired,
   checkTitleRequired
-} from '../Admin/Admin.validate'
+} from '@/views/Admin/Admin.validate'
 import { ENotificationColor } from '@/core/constants/enum'
 import type { IOption } from '@/core/interfaces/model/option'
 import type { ITopic } from '@/core/interfaces/model/topic'

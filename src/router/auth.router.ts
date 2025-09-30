@@ -1,7 +1,21 @@
 import type { Router } from 'vue-router';
-import { AuthStorage } from '@/core/utils/storage';
 import { logger } from '@/core/utils/logger';
 import { useAuthStore } from '@/stores/auth';
+import { getCookieRaw, CookieKeys } from '@/core/utils/cookieUtils'
+
+// Simple cookie utilities for router use - using type-safe CookieKeys
+const cookieUtils = {
+  get: (key: keyof typeof CookieKeys): string | null => getCookieRaw(CookieKeys[key]),
+  getJSON: <T>(key: keyof typeof CookieKeys): T | null => {
+    const value = getCookieRaw(CookieKeys[key])
+    if (!value) return null
+    try {
+      return JSON.parse(value) as T
+    } catch {
+      return null
+    }
+  }
+}
 
 /**
  * Enhanced authentication router guard with cookie storage integration
@@ -10,15 +24,17 @@ const checkAuth = (router: Router) => {
   router.beforeEach(async (to, from, next) => {
     try {
       logger.router.debug(`Checking authentication for route: ${to.path}`);
-      
+
       const publicRoutes = ['/login', '/register'];
       const isPublicRoute = publicRoutes.includes(to.path);
-      
+
       // Check authentication status using AuthStorage (cookies)
-      const isAuthenticated = AuthStorage.isAuthenticated();
-      
+      const accessToken = cookieUtils.get('ACCESS_TOKEN')
+      const user = cookieUtils.getJSON('USER_DATA')
+      const isAuthenticated = !!(accessToken && user);
+
       logger.router.debug(`Authentication status: ${isAuthenticated}`);
-      
+
       if (!isAuthenticated && !isPublicRoute) {
         // Not authenticated and trying to access protected route
         logger.router.info('Redirecting to login (not authenticated)');
@@ -47,21 +63,28 @@ const checkAuth = (router: Router) => {
 
 /**
  * Initialize authentication state when router is set up
- * This should be called after the router is created
+ * This should be called after the router is created and storage is hydrated
  */
 export const initializeAuthRouter = async (router: Router) => {
   try {
     logger.router.debug('Initializing authentication state...');
-    
+
+    // Wait for storage manager to be initialized
+    // Storage initialization moved to hooks
+    logger.router.info('Storage initialization skipped (moved to hooks)');
+
     // Initialize auth store to restore state from storage
     const authStore = useAuthStore();
-    if (!authStore.isInitialized) {
-      await authStore.initializeAuth();
-      logger.router.info('Authentication state initialized');
+
+    // Hydrate auth store from storage
+    authStore.initializeFromStorage();
+
+    if (authStore.isAuthenticated) {
+      logger.router.info('Authentication state initialized from storage');
     } else {
-      logger.router.debug('Authentication state already initialized');
+      logger.router.debug('No authentication state found in storage');
     }
-    
+
     // Router is available for future use if needed
     logger.router.debug(`Router instance available: ${!!router}`);
   } catch (error) {

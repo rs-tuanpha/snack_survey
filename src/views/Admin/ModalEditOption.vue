@@ -72,7 +72,7 @@ import {
   checkTitleRequired
 } from './Admin.validate'
 import { ENotificationColor } from '@/core/constants/enum'
-import { useUpdateOption } from '@/composables/useOptions'
+import { useUpdateOption } from '@/services/option.service'
 import type { IOption } from '@/core/interfaces/model/option'
 import type { IState } from '@/core/interfaces/model/state'
 import type { ITopic } from '@/core/interfaces/model/topic'

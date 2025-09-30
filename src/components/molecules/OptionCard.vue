@@ -34,7 +34,7 @@
           color="orange"
         >
           <p style="font-size: 16px; font-weight: 700; color: #252525; margin: 0">
-            {{ userVotes.length }}
+            {{ props.option.voteCount || 0 }}
           </p>
         </v-chip>
         <p
@@ -71,29 +71,20 @@
       <v-card-actions v-if="!isRankCard" style="padding-top: 0">
         <div class="w-100 d-flex justify-space-between align-center">
           <div class="d-flex mt-1">
-            <div
-              v-for="user in userVotes.slice(0, 4)"
-              :key="user.id"
-              style="margin-right: -8px"
-            >
-              <v-avatar color="secondary" class="m-1" size="30">
-                <v-img v-if="user.avatar" :src="user.avatar" :alt="user.username"></v-img>
-                <span v-else>{{ user.username?.charAt(0).toLocaleUpperCase() }}</span>
-                <v-tooltip activator="parent" location="top">{{ user.username }}</v-tooltip>
-              </v-avatar>
-            </div>
-            <div v-if="userVotes.length > 4" class="mr-1">
+            <!-- TODO: Implement lazy loading for voters -->
+            <!-- For now, show vote count as a simple number -->
+            <div class="mr-1">
               <v-avatar
                 color="light-blue-darken-2"
                 class="m-1 cursor-pointer"
                 size="30"
-                @click.stop="onClickSeeMore(option)"
+                @click.stop="showVoters"
               >
-                {{ userVotes.length - 4 }}<sup>+</sup>
+                {{ props.option.voteCount || 0 }}
               </v-avatar>
-              <v-tooltip activator="parent" location="top">{{
-                `${userVotes.length - 4} others people`
-              }}</v-tooltip>
+              <v-tooltip activator="parent" location="top">
+                Click to see voters
+              </v-tooltip>
             </div>
           </div>
           <v-icon
@@ -101,7 +92,7 @@
             icon="mdi-thumb-up"
             size="x-large"
             :color="
-              props.option.userVotes?.has(currentAccount.id)
+              props.option.hasUserVoted
                 ? 'red-darken-1'
                 : 'blue-darken-3'
             "
@@ -115,9 +106,8 @@
 <script setup lang="ts">
 import type { IOption } from '@/core/interfaces/model/option'
 import type { IUser } from '@/core/interfaces/model/user'
-import { computed, type StyleValue } from 'vue'
+import { type StyleValue } from 'vue'
 import { RANK_ICON, DEFAULT_CARD_IMG } from '@/core/constants/app'
-import { useAuthStore } from '@/stores/auth';
 
 const props = defineProps<{
   isRankCard: boolean
@@ -128,29 +118,17 @@ const props = defineProps<{
 }>()
 const emits = defineEmits<{
   (e: 'handleChangeVote', index: number): void
-  (e: 'onClickSeeMore', payload: IOption): void
+  (e: 'showVoters', optionId: string): void
 }>()
 
-const {availableUsers} = useAuthStore()
-const userMap = computed(() => availableUsers.reduce((acc, user) => {
-  acc.set(user.id, user)
-  return acc
-}, new Map<string, IUser>()))
-
-const userVotes = computed(() =>
-  props.option?.userVotes
-    ? Array.from(props.option.userVotes.keys())
-        .map((userId: string) => userMap.value.get(userId))
-        .filter((user): user is IUser => user !== undefined)
-    : []
-)
+// Removed userVotes logic - now using lazy loading for voters
 
 const handleChangeVote = (index: number) => {
   emits('handleChangeVote', index)
 }
 
-const onClickSeeMore = (payload: IOption) => {
-  emits('onClickSeeMore', payload)
+const showVoters = () => {
+  emits('showVoters', (props.option as any)._id || props.option.id)
 }
 </script>
 

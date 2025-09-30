@@ -2,7 +2,6 @@
 /**
  * Component: <UIDialog />
  */
-// TODO: layout is demo not working
 
 defineProps({
   isOpen: {

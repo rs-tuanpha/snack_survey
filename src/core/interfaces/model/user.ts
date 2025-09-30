@@ -5,6 +5,6 @@ export interface IUser {
   username: string
   email: string
   avatar?: string
-  team?: ETopicTeam
-  role?: EUserRole
+  role: EUserRole
+  team: ETopicTeam
 }

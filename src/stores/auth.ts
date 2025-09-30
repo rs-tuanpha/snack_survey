@@ -1,333 +1,253 @@
 import { defineStore } from 'pinia'
-import authService from '@/services/auth.service'
-import { getUsersList } from '@/services/user.service'
-import { AuthStorage, AppStorage, type AuthData } from '@/core/utils/storage'
 import { logger } from '@/core/utils/logger'
+import { EUserRole } from '@/core/constants/enum'
+import { getCookieRaw, setCookieRaw, deleteCookieRaw, CookieKeys } from '@/core/utils/cookieUtils'
 import type { IUser } from '@/core/interfaces/model/user'
-import type { ILoginPayload } from '@/services/auth.service'
-import { ETopicTeam, EUserRole } from '@/core/constants/enum'
+
+// Simple cookie utilities for store use - using type-safe CookieKeys
+const cookieUtils = {
+  get: (key: keyof typeof CookieKeys): string | null => getCookieRaw(CookieKeys[key]),
+  set: (key: keyof typeof CookieKeys, value: string, days = 7): void => setCookieRaw(CookieKeys[key], value, days),
+  remove: (key: keyof typeof CookieKeys): void => deleteCookieRaw(CookieKeys[key]),
+  getJSON: <T>(key: keyof typeof CookieKeys): T | null => {
+    const value = getCookieRaw(CookieKeys[key])
+    if (!value) return null
+    try {
+      return JSON.parse(value) as T
+    } catch {
+      return null
+    }
+  },
+  setJSON: (key: keyof typeof CookieKeys, value: any, days = 7): void => {
+    setCookieRaw(CookieKeys[key], JSON.stringify(value), days)
+  }
+}
 
 interface IAuthState {
-  user: IUser | null
+  isAuthenticated: boolean
+  role: EUserRole
   accessToken: string | null
-  refreshTokenValue: string | null
-  availableUsers: IUser[]
-  loadingUsers: boolean
-  isInitialized: boolean
+  refreshToken: string | null
+  user: IUser | null
 }
 
 const initState: IAuthState = {
-  user: null,
+  isAuthenticated: false,
+  role: EUserRole.USER,
   accessToken: null,
-  refreshTokenValue: null,
-  availableUsers: [],
-  loadingUsers: false,
-  isInitialized: false
+  refreshToken: null,
+  user: null
 }
 
 export const useAuthStore = defineStore('auth', {
   state: (): IAuthState => {
     return { ...initState }
   },
-  
+
   getters: {
     // Enhanced authentication check
     isAuthenticated: (state): boolean => {
-      return !!(state.accessToken && state.user)
+      return state.isAuthenticated && !!state.accessToken
     },
-    
-    // Get user display name
-    userDisplayName: (state): string => {
-      return state.user?.username || state.user?.email || 'Unknown User'
-    },
-    
+
     // Check if user has specific role
-    hasRole: (state) => (role: string): boolean => {
-      return state.user?.role === role
+    hasRole:
+      (state) =>
+      (role: EUserRole): boolean => {
+        return state.role === role
+      },
+
+    // Get current user
+    getCurrentUser: (state): IUser | null => {
+      return state.user
     },
-    
-    // Backward compatibility getter for refreshToken
-    refreshToken: (state): string | null => {
-      return state.refreshTokenValue
+
+    // Check if user is admin
+    isAdmin: (state): boolean => {
+      return state.role === EUserRole.ADMIN
     }
   },
-  
+
   actions: {
     /**
-     * Initialize authentication state from stored data
-     * Should be called when app starts
+     * Set authentication data and persist to cookies
      */
-    async initializeAuth(): Promise<void> {
+    setAuthData(authData: {
+      accessToken: string
+      refreshToken?: string
+      user: IUser
+    }): void {
+      this.accessToken = authData.accessToken
+      this.refreshToken = authData.refreshToken || null
+      this.user = authData.user
+      this.role = authData.user.role
+      this.isAuthenticated = true
+
+      // Persist to cookies
+      cookieUtils.set('ACCESS_TOKEN', authData.accessToken)
+      if (authData.refreshToken) {
+        cookieUtils.set('REFRESH_TOKEN', authData.refreshToken)
+      }
+      cookieUtils.setJSON('USER_DATA', authData.user)
+
+      logger.auth.debug('Auth data set and persisted to cookies', {
+        hasAccessToken: !!this.accessToken,
+        hasRefreshToken: !!this.refreshToken,
+        userId: this.user?.id,
+        role: this.role
+      })
+    },
+
+    /**
+     * Set access token and persist to cookies
+     */
+    setToken(accessToken: string): void {
+      this.accessToken = accessToken
+      this.isAuthenticated = true
+
+      // Update token in cookies
+      cookieUtils.set('ACCESS_TOKEN', accessToken)
+
+      logger.auth.debug('Token updated and persisted to cookies', this.accessToken)
+    },
+
+    /**
+     * Set refresh token and persist to cookies
+     */
+    setRefreshToken(refreshToken: string): void {
+      this.refreshToken = refreshToken
+
+      // Update refresh token in cookies
+      cookieUtils.set('REFRESH_TOKEN', refreshToken)
+
+      logger.auth.debug('Refresh token updated and persisted to cookies')
+    },
+
+    /**
+     * Set user role
+     */
+    setRole(role: EUserRole): void {
+      this.role = role
+
+      // Update user data in cookies if user exists
+      if (this.user) {
+        this.user.role = role
+        cookieUtils.setJSON('USER_DATA', this.user)
+      }
+
+      logger.auth.debug('Role updated and persisted to cookies', this.role)
+    },
+
+    /**
+     * Set user data and persist to cookies
+     */
+    setUser(user: IUser): void {
+      this.user = user
+      this.role = user.role
+
+      // Update user data in cookies
+      cookieUtils.setJSON('USER_DATA', user)
+
+      logger.auth.debug('User data updated and persisted to cookies', user)
+    },
+
+    /**
+     * Update access token (for token refresh)
+     */
+    updateAccessToken(accessToken: string): void {
+      this.accessToken = accessToken
+      cookieUtils.set('ACCESS_TOKEN', accessToken)
+      logger.auth.debug('Access token refreshed and persisted')
+    },
+
+    /**
+     * Clear all authentication data
+     */
+    clearToken(): void {
+      this.accessToken = null
+      this.refreshToken = null
+      this.user = null
+      this.isAuthenticated = false
+      this.role = EUserRole.USER
+
+      // Clear from cookies
+      cookieUtils.remove('ACCESS_TOKEN')
+      cookieUtils.remove('REFRESH_TOKEN')
+      cookieUtils.remove('USER_DATA')
+
+      logger.auth.debug('All auth data cleared from store and cookies')
+    },
+
+    /**
+     * Initialize from storage
+     */
+    initializeFromStorage(): void {
       try {
-        logger.auth.debug('Initializing authentication state...')
-        
-        // Try to restore auth data from cookies
-        const authData = AuthStorage.getAuthData()
-        
+        const accessToken = cookieUtils.get('ACCESS_TOKEN')
+        const refreshToken = cookieUtils.get('REFRESH_TOKEN')
+        const user = cookieUtils.getJSON<IUser>('USER_DATA')
+
+        const authData = accessToken && user ? {
+          accessToken,
+          refreshToken: refreshToken || undefined,
+          user
+        } : null
+
         if (authData && authData.accessToken && authData.user) {
-          logger.auth.info('Found stored auth data, restoring state...')
-          
-          // Restore state from stored data
-          this.user = authData.user
           this.accessToken = authData.accessToken
-          this.refreshTokenValue = authData.refreshToken || null
-          
-          logger.auth.info('Authentication state restored successfully')
+          this.refreshToken = authData.refreshToken || null
+          this.user = authData.user
+          this.role = authData.user.role
+          this.isAuthenticated = true
+
+          logger.auth.debug('Auth store hydrated from cookies', {
+            hasAccessToken: !!this.accessToken,
+            hasRefreshToken: !!this.refreshToken,
+            userId: this.user?.id,
+            role: this.role
+          })
         } else {
-          logger.auth.debug('No stored auth data found')
-        }
-        
-        // Try to restore available users from localStorage
-        const storedUsers = AppStorage.getAvailableUsers()
-        if (storedUsers.length > 0) {
-          this.availableUsers = storedUsers
-          logger.auth.info(`Restored ${storedUsers.length} available users`)
-        }
-        
-        this.isInitialized = true
-        logger.auth.info('Auth store initialization complete')
-        
-      } catch (error) {
-        logger.auth.error('Failed to initialize auth state:', error)
-        this.isInitialized = true // Mark as initialized even if failed
-      }
-    },
-
-    /**
-     * Persist current authentication data to storage
-     */
-    persistAuthData(): void {
-      try {
-        if (this.accessToken && this.user) {
-          const authData: AuthData = {
-            accessToken: this.accessToken,
-            refreshToken: this.refreshTokenValue || undefined,
-            user: this.user
-          }
-          
-          AuthStorage.setAuthData(authData)
-          logger.auth.debug('Auth data persisted to storage')
+          logger.auth.debug('No auth data found in cookies')
         }
       } catch (error) {
-        logger.auth.error('Failed to persist auth data:', error)
+        logger.auth.error('Failed to hydrate auth store:', error)
       }
     },
 
     /**
-     * Enhanced login with cookie storage
+     * Check if user has permission for specific action
      */
-    async login(payload: ILoginPayload) {
+    hasPermission(permission: string): boolean {
+      // Implement permission logic based on role
+      switch (this.role) {
+        case EUserRole.ADMIN:
+          return true // Admin has all permissions
+        case EUserRole.USER:
+          return ['read', 'write'].includes(permission)
+        default:
+          return false
+      }
+    },
+
+    /**
+     * Refresh authentication (call API to refresh token)
+     */
+    async refreshAuth(): Promise<boolean> {
       try {
-        logger.auth.debug('Attempting login...')
-        const response = await authService.login(payload)
-        
-        if (response) {
-          // Update store state
-          this.user = response.data.user
-          this.accessToken = response.data.tokens.accessToken
-          this.refreshTokenValue = response.data.tokens.refreshToken || null
-          
-          // Persist to cookies
-          this.persistAuthData()
-          
-          logger.auth.info('Login successful, auth data stored')
+        if (!this.refreshToken) {
+          logger.auth.warn('No refresh token available')
+          return false
         }
-        
-        return response
+
+        // This would typically call an API to refresh the token
+        // For now, we'll just return true if we have a refresh token
+        logger.auth.debug('Auth refresh attempted')
+        return true
       } catch (error) {
-        logger.auth.error('Login failed:', error)
-        throw error
+        logger.auth.error('Failed to refresh auth:', error)
+        this.clearToken()
+        return false
       }
-    },
-
-    /**
-     * Enhanced logout with complete cleanup
-     */
-    logout(): void {
-      try {
-        logger.auth.debug('Logging out...')
-        
-        // Call service logout (if needed)
-        authService.logout()
-        
-        // Clear store state
-        this.user = null
-        this.accessToken = null
-        this.refreshTokenValue = null
-        
-        // Clear all stored auth data
-        AuthStorage.clearAuthData()
-        
-        logger.auth.info('Logout complete, all auth data cleared')
-      } catch (error) {
-        logger.auth.error('Error during logout:', error)
-        // Still clear state even if storage clear fails
-        this.user = null
-        this.accessToken = null
-        this.refreshTokenValue = null
-      }
-    },
-
-    /**
-     * Enhanced token refresh with cookie sync
-     */
-    async refreshAccessToken() {
-      try {
-        logger.auth.debug('Refreshing token...')
-        const response = await authService.refreshToken()
-        
-        if (response?.data) {
-          // Update store state
-          this.accessToken = response.data.accessToken
-          if (response.data.refreshToken) {
-            this.refreshTokenValue = response.data.refreshToken
-          }
-          
-          // Persist updated tokens to cookies
-          this.persistAuthData()
-          
-          logger.auth.info('Token refreshed successfully')
-        }
-        
-        return response
-      } catch (error) {
-        logger.auth.error('Failed to refresh token:', error)
-        // Logout if refresh fails
-        this.logout()
-        throw error
-      }
-    },
-
-    /**
-     * Update user data and persist to storage
-     */
-    updateUserData(user: IUser): void {
-      try {
-        this.user = user
-        this.persistAuthData()
-        logger.auth.debug('User data updated and persisted')
-      } catch (error) {
-        logger.auth.error('Failed to update user data:', error)
-      }
-    },
-
-    /**
-     * Enhanced token management with cookie sync
-     */
-    setTokens(accessToken: string, refreshToken?: string): void {
-      try {
-        this.accessToken = accessToken
-        this.refreshTokenValue = refreshToken || null
-        
-        // Persist to cookies
-        this.persistAuthData()
-        
-        logger.auth.debug('Tokens updated and persisted')
-      } catch (error) {
-        logger.auth.error('Failed to set tokens:', error)
-      }
-    },
-
-    /**
-     * Clear tokens and storage
-     */
-    clearTokens(): void {
-      try {
-        this.accessToken = null
-        this.refreshTokenValue = null
-        
-        // Clear from storage
-        AuthStorage.clearAuthData()
-        
-        logger.auth.debug('Tokens cleared')
-      } catch (error) {
-        logger.auth.error('Failed to clear tokens:', error)
-      }
-    },
-
-    /**
-     * Enhanced available users management with localStorage
-     */
-    async fetchAvailableUsers(): Promise<IUser[]> {
-      try {
-        this.loadingUsers = true
-        logger.auth.debug('Fetching available users...')
-        
-        // Use new user service with pagination
-        const users = await getUsersList({ page: 1, limit: 100 })
-        
-        // Convert User[] to IUser[] for compatibility
-        const iUsers: IUser[] = users.map(user => ({
-          id: user._id,
-          email: user.email,
-          username: user.username,
-          avatar: user.avatar,
-          role: user.role as EUserRole,
-          team: user.team as ETopicTeam
-        }))
-        
-        this.availableUsers = iUsers
-        
-        // Persist to localStorage
-        AppStorage.setAvailableUsers(iUsers)
-        
-        logger.auth.info(`Fetched and stored ${iUsers.length} available users`)
-        return iUsers
-      } catch (error) {
-        logger.auth.error('Failed to fetch users:', error)
-        this.availableUsers = []
-        throw error
-      } finally {
-        this.loadingUsers = false
-      }
-    },
-
-    /**
-     * Get available users from storage (without API call)
-     */
-    getStoredAvailableUsers(): IUser[] {
-      try {
-        const storedUsers = AppStorage.getAvailableUsers()
-        if (storedUsers.length > 0) {
-          this.availableUsers = storedUsers
-        }
-        return this.availableUsers
-      } catch (error) {
-        console.error('❌ Failed to get stored users:', error)
-        return []
-      }
-    },
-
-    /**
-     * Check if user has voted for specific option
-     */
-    hasUserVoted(): boolean {
-      // This would need to be implemented based on your voting logic
-      // For now, return false as placeholder
-      return false
-    },
-
-    /**
-     * Get authentication status from storage (without store state)
-     */
-    getStoredAuthStatus(): boolean {
-      return AuthStorage.isAuthenticated()
-    },
-
-    /**
-     * Force re-initialization of auth state
-     */
-    async reinitialize(): Promise<void> {
-      this.isInitialized = false
-      await this.initializeAuth()
-    },
-
-    /**
-     * Backward compatibility method for refreshToken
-     * @deprecated Use refreshAccessToken instead
-     */
-    async refreshToken() {
-      return this.refreshAccessToken()
     }
   }
 })

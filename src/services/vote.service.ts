@@ -1,11 +1,29 @@
 import api from '@/core/api'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import type { IUser } from '@/core/interfaces/model/user'
-import type { 
-  VotingStatusResponse,
-  VotingStatsResponse,
+import {
+  type VotingStatusResponse,
+  type VotingStatsResponse,
   queryKeys
 } from '@/types/api'
+
+/**
+ * Voters response interface
+ */
+export interface VotersResponse {
+  success: boolean
+  message: string
+  timestamp: string
+  data: {
+    voters: Array<{
+      userId: string
+      username: string
+      email: string
+      votedAt: string
+    }>
+    totalVotes: number
+  }
+}
 
 // ============================================================================
 // TYPE DEFINITIONS
@@ -87,13 +105,26 @@ export function useVotingStats(topicId: string) {
 }
 
 /**
+ * TanStack Query hook for getting option voters (lazy loading)
+ */
+export function useOptionVoters(optionId: string, enabled: boolean = false) {
+  return useQuery({
+    queryKey: queryKeys.votes.voters(optionId),
+    queryFn: () => getOptionVoters(optionId),
+    enabled: !!optionId && enabled,
+    staleTime: 60000, // 1 minute
+    gcTime: 300000, // 5 minutes
+  })
+}
+
+/**
  * Vote for an option
  */
 export function useVote() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
-    mutationFn: ({ optionId, topicId }: { optionId: string; topicId: string }) => 
+    mutationFn: ({ optionId, topicId }: { optionId: string; topicId: string }) =>
       vote(optionId, topicId),
     onSuccess: (_, { topicId }) => {
       // Invalidate vote-related queries
@@ -112,9 +143,9 @@ export function useVote() {
  */
 export function useUnvote() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
-    mutationFn: ({ optionId, topicId }: { optionId: string; topicId: string }) => 
+    mutationFn: ({ optionId, topicId }: { optionId: string; topicId: string }) =>
       unvote(optionId, topicId),
     onSuccess: (_, { topicId }) => {
       // Invalidate vote-related queries
@@ -133,9 +164,9 @@ export function useUnvote() {
  */
 export function useToggleVote() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
-    mutationFn: ({ optionId, topicId }: { optionId: string; topicId: string }) => 
+    mutationFn: ({ optionId, topicId }: { optionId: string; topicId: string }) =>
       toggleVote(optionId, topicId),
     onSuccess: (_, { topicId }) => {
       // Invalidate vote-related queries
@@ -158,35 +189,9 @@ export function useToggleVote() {
  */
 export async function vote(optionId: string, topicId: string): Promise<VoteResponse> {
   try {
-    console.log(`Voting for option: ${optionId} in topic: ${topicId}`)
-    
-    const requestData: VoteRequest = {
-      topicId,
-      optionId
-    }
-    
-    const response = await api.post<VoteResponse>('/vote', requestData)
-    
-    console.log(`Vote successful for option ${optionId}:`, {
-      voteCount: response.data.data.voteCount,
-      userHasVoted: response.data.data.userHasVoted
-    })
-
+    const response = await api.post<VoteResponse>(`/api/options/${optionId}/vote`)
     return response.data
   } catch (error: any) {
-    console.error(`Failed to vote for option ${optionId} in topic ${topicId}:`, error)
-    
-    // Handle specific vote error responses
-    if (error.response?.data) {
-      const errorData = error.response.data as VoteErrorResponse
-      console.error('Vote error details:', {
-        message: errorData.message,
-        statusCode: errorData.statusCode,
-        voteCount: errorData.voteCount,
-        userHasVoted: errorData.userHasVoted
-      })
-    }
-    
     throw error
   }
 }
@@ -196,20 +201,9 @@ export async function vote(optionId: string, topicId: string): Promise<VoteRespo
  */
 export async function unvote(optionId: string, topicId: string): Promise<VoteResponse> {
   try {
-    console.log(`Removing vote for option: ${optionId} in topic: ${topicId}`)
-    
-    // The backend automatically handles vote toggle logic
-    // Same endpoint as vote(), server determines if it's vote or unvote based on current state
-    const result = await vote(optionId, topicId)
-    
-    console.log(`Unvote successful for option ${optionId}:`, {
-      voteCount: result.data.voteCount,
-      userHasVoted: result.data.userHasVoted
-    })
-    
-    return result
+    const response = await api.delete<VoteResponse>(`/api/options/${optionId}/vote`)
+    return response.data
   } catch (error) {
-    console.error(`Failed to unvote option ${optionId} in topic ${topicId}:`, error)
     throw error
   }
 }
@@ -219,18 +213,9 @@ export async function unvote(optionId: string, topicId: string): Promise<VoteRes
  */
 export async function getVoteStatus(topicId: string): Promise<VotingStatusResponse> {
   try {
-    console.log(`Getting vote status for topic: ${topicId}`)
-    
-    const response = await api.get<VotingStatusResponse>(`/vote/status/${topicId}`)
-    
-    console.log(`Vote status retrieved for topic ${topicId}:`, {
-      totalVotes: response.data.data.total_votes,
-      optionsCount: response.data.data.voted_options.length
-    })
-
+    const response = await api.get<VotingStatusResponse>(`/api/vote/status/${topicId}`)
     return response.data
   } catch (error) {
-    console.error(`Failed to get vote status for topic ${topicId}:`, error)
     throw error
   }
 }
@@ -240,18 +225,21 @@ export async function getVoteStatus(topicId: string): Promise<VotingStatusRespon
  */
 export async function getVotingStats(topicId: string): Promise<VotingStatsResponse> {
   try {
-    console.log(`Getting voting stats for topic: ${topicId}`)
-    
     const response = await api.get<VotingStatsResponse>(`/api/vote/stats/${topicId}`)
-    
-    console.log(`Voting stats retrieved for topic ${topicId}:`, {
-      totalVotes: response.data.data.total_votes,
-      totalParticipants: response.data.data.total_participants
-    })
-
     return response.data
   } catch (error) {
-    console.error(`Failed to get voting stats for topic ${topicId}:`, error)
+    throw error
+  }
+}
+
+/**
+ * Get voters for a specific option
+ */
+export async function getOptionVoters(optionId: string): Promise<VotersResponse> {
+  try {
+    const response = await api.get<VotersResponse>(`/api/vote/voters/${optionId}`)
+    return response.data
+  } catch (error) {
     throw error
   }
 }
@@ -261,16 +249,9 @@ export async function getVotingStats(topicId: string): Promise<VotingStatsRespon
  */
 export async function toggleVote(optionId: string, topicId: string): Promise<VoteResponse> {
   try {
-    console.log(`Toggling vote for option: ${optionId} in topic: ${topicId}`)
-    
     const result = await vote(optionId, topicId)
-    
-    const action = result.data.userHasVoted ? 'voted' : 'unvoted'
-    console.log(`Vote toggle successful - ${action} for option ${optionId}`)
-    
     return result
   } catch (error) {
-    console.error(`Failed to toggle vote for option ${optionId} in topic ${topicId}:`, error)
     throw error
   }
 }
@@ -280,17 +261,10 @@ export async function toggleVote(optionId: string, topicId: string): Promise<Vot
  */
 export async function hasUserVoted(optionId: string, topicId: string): Promise<boolean> {
   try {
-    console.log(`Checking if user has voted for option: ${optionId} in topic: ${topicId}`)
-    
     const voteStatus = await getVoteStatus(topicId)
-    const option = voteStatus.data.voted_options.find(opt => opt === optionId)
-    
-    const hasVoted = !!option
-    console.log(`User vote status for option ${optionId}: ${hasVoted}`)
-    
-    return hasVoted
+    const option = voteStatus.data.options.find(opt => opt._id === optionId)
+    return option?.hasUserVoted || false
   } catch (error) {
-    console.error(`Failed to check vote status for option ${optionId} in topic ${topicId}:`, error)
     throw error
   }
 }
@@ -304,6 +278,7 @@ const voteService = {
   unvote,
   getVoteStatus,
   getVotingStats,
+  getOptionVoters,
   toggleVote,
   hasUserVoted
 }
@@ -316,18 +291,11 @@ export default {
   // TanStack Query hooks
   useVoteStatus,
   useVotingStats,
+  useOptionVoters,
   useVote,
   useUnvote,
   useToggleVote,
-  
-  // API service functions
-  vote,
-  unvote,
-  getVoteStatus,
-  getVotingStats,
-  toggleVote,
-  hasUserVoted,
-  
+
   // Legacy service object
   ...voteService
 }

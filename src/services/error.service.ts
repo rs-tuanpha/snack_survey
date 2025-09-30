@@ -14,7 +14,7 @@ export function useErrorHandler() {
    */
   const handleError = (err: any) => {
     console.error('API Error:', err)
-    
+
     if (err?.message) {
       error.value = err.message
     } else if (typeof err === 'string') {
@@ -47,21 +47,21 @@ export function useErrorHandler() {
         clearError()
       }
       loading.value = true
-      
+
       const result = await asyncFn()
-      
+
       if (options?.onSuccess) {
         options.onSuccess(result)
       }
-      
+
       return result
     } catch (err) {
       handleError(err)
-      
+
       if (options?.onError) {
         options.onError(err as ApiError)
       }
-      
+
       return null
     } finally {
       loading.value = false
@@ -73,7 +73,7 @@ export function useErrorHandler() {
    */
   const showError = (message: string, autoClearMs = 5000) => {
     error.value = message
-    
+
     if (autoClearMs > 0) {
       setTimeout(() => {
         clearError()
@@ -104,7 +104,7 @@ export function useErrorHandler() {
       503: 'Dịch vụ tạm thời không khả dụng',
       504: 'Hết thời gian chờ phản hồi từ máy chủ'
     }
-    
+
     return errorMessages[code] || 'Đã xảy ra lỗi không xác định'
   }
 

@@ -247,8 +247,8 @@
 <script setup lang="ts">
 import { ref, watch, reactive, defineAsyncComponent } from 'vue'
 import VueDatePicker from '@vuepic/vue-datepicker'
-import { useTopicsList, useCreateTopic, useUpdateTopic, useDeleteTopic } from '@/composables/useTopics'
-import { useOptionsByTopic, useDeleteOption } from '@/composables/useOptions'
+import { useTopicsList, useCreateTopic, useUpdateTopic, useDeleteTopic } from '@/services/topic.service'
+import { useOptionsByTopic, useDeleteOption } from '@/services/option.service'
 import { nameRules, descriptionRules } from './Admin.validate'
 import { initOption, initTopic, initTopicState } from './Admin.state'
 import type { ITopic } from '@/core/interfaces/model/topic'
@@ -371,8 +371,7 @@ const handleEditTopic = async (id: string) => {
     type.value = 'update'
     showAddBtn.value = true
   } else {
-    console.log('No such document!')
-  }
+    }
 }
 
 const getOptions = async (topicId: string, isSetOption: boolean = false) => {

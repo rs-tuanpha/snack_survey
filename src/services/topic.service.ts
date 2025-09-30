@@ -4,15 +4,16 @@ import {
   adaptApiTopicToITopic,
   type ITopic
 } from '@/core/interfaces/model/topic'
-import type { 
-  Topic, 
-  CreateTopicRequest, 
-  UpdateTopicRequest, 
-  TopicResponse, 
+import type {
+  Topic,
+  CreateTopicRequest,
+  UpdateTopicRequest,
+  TopicResponse,
   TopicListResponse,
-  TopicListQuery,
-  queryKeys
+  TopicListQuery
 } from '@/types/api'
+import { queryKeys } from '@/types/api'
+import { ETopicTeam } from '@/core/constants/enum'
 
 // ============================================================================
 // TANSTACK QUERY HOOKS
@@ -59,7 +60,7 @@ export function useClosedTopics(team?: string | null) {
  */
 export function useTopics() {
   return useQuery({
-    queryKey: queryKeys.topics.lists(),
+    queryKey: queryKeys.topics.all,
     queryFn: getTopics,
     staleTime: 1000 * 60 * 2, // 2 minutes
     gcTime: 1000 * 60 * 5, // 5 minutes
@@ -84,13 +85,13 @@ export function useTopic(topicId: string) {
  */
 export function useCreateTopic() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: (topicData: CreateTopicRequest) => createTopic(topicData),
     onSuccess: () => {
       // Invalidate and refetch topic lists
-      queryClient.invalidateQueries({ queryKey: queryKeys.topics.lists() })
       queryClient.invalidateQueries({ queryKey: queryKeys.topics.all })
+      queryClient.invalidateQueries({ queryKey: queryKeys.topics.lists() })
     },
     onError: (error) => {
       console.error('Failed to create topic:', error)
@@ -103,15 +104,15 @@ export function useCreateTopic() {
  */
 export function useUpdateTopic() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
-    mutationFn: ({ topicId, topicData }: { topicId: string; topicData: UpdateTopicRequest }) => 
+    mutationFn: ({ topicId, topicData }: { topicId: string; topicData: UpdateTopicRequest }) =>
       updateTopic(topicId, topicData),
     onSuccess: (_, { topicId }) => {
       // Invalidate specific topic and lists
       queryClient.invalidateQueries({ queryKey: queryKeys.topics.detail(topicId) })
-      queryClient.invalidateQueries({ queryKey: queryKeys.topics.lists() })
       queryClient.invalidateQueries({ queryKey: queryKeys.topics.all })
+      queryClient.invalidateQueries({ queryKey: queryKeys.topics.lists() })
     },
     onError: (error) => {
       console.error('Failed to update topic:', error)
@@ -124,14 +125,14 @@ export function useUpdateTopic() {
  */
 export function useDeleteTopic() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: (topicId: string) => deleteTopic(topicId),
     onSuccess: (_, topicId) => {
       // Remove the topic from cache and invalidate lists
       queryClient.removeQueries({ queryKey: queryKeys.topics.detail(topicId) })
-      queryClient.invalidateQueries({ queryKey: queryKeys.topics.lists() })
       queryClient.invalidateQueries({ queryKey: queryKeys.topics.all })
+      queryClient.invalidateQueries({ queryKey: queryKeys.topics.lists() })
     },
     onError: (error) => {
       console.error('Failed to delete topic:', error)
@@ -165,7 +166,7 @@ export const getOpenTopicList = async (team: string | null): Promise<ITopic[]> =
   try {
     const query: TopicListQuery = {
       isActive: true,
-      team: team as 'FE' | 'PHP' | 'ALL' | undefined
+      team: team as ETopicTeam | undefined
     }
     const response = await api.get<TopicListResponse>('/api/topics', { params: query })
     return response.data.data.map((item) => adaptApiTopicToITopic(item))
@@ -181,7 +182,7 @@ export const getCloseTopicList = async (team: string | null): Promise<ITopic[]> 
   try {
     const query: TopicListQuery = {
       isActive: false,
-      team: team as 'FE' | 'PHP' | 'ALL' | undefined
+      team: team as ETopicTeam | undefined
     }
     const response = await api.get<TopicListResponse>('/api/topics', { params: query })
     return response.data.data.map((item) => adaptApiTopicToITopic(item))
@@ -196,7 +197,7 @@ export const getCloseTopicList = async (team: string | null): Promise<ITopic[]> 
 export const getTopics = async (): Promise<ITopic[]> => {
   try {
     const response = await api.get<TopicListResponse>('/api/topics', {
-      params: { sortBy: 'updatedAt', sortOrder: 'desc' }
+      params: { sort_by: 'updatedAt', sort_order: 'desc' }
     })
     return response.data.data.map((item) => adaptApiTopicToITopic(item))
   } catch (err) {
@@ -255,7 +256,7 @@ export default {
   useCreateTopic,
   useUpdateTopic,
   useDeleteTopic,
-  
+
   // API service functions
   getTopicList,
   getOpenTopicList,

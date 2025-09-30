@@ -3,11 +3,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { adaptApiOptionToIOption, type IOption } from '@/core/interfaces/model/option'
 import type { IUser } from '@/core/interfaces/model/user'
 import { fetchDOMMetadata, fetchOpenGraphMetadata } from '@/core/utils/metadata'
-import { 
-  type Option, 
-  type CreateOptionRequest, 
-  type UpdateOptionRequest, 
-  type OptionResponse, 
+import {
+  type Option,
+  type CreateOptionRequest,
+  type UpdateOptionRequest,
+  type OptionResponse,
   type OptionListResponse,
   type OptionCreationResponse,
   type OptionUpdateResponse,
@@ -65,7 +65,7 @@ export function useAllOptions() {
  */
 export function useCreateOption() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: (optionData: CreateOptionRequest) => createOption(optionData),
     onSuccess: (_, variables) => {
@@ -85,9 +85,9 @@ export function useCreateOption() {
  */
 export function useUpdateOption() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
-    mutationFn: ({ optionId, optionData }: { optionId: string; optionData: UpdateOptionRequest }) => 
+    mutationFn: ({ optionId, optionData }: { optionId: string; optionData: UpdateOptionRequest }) =>
       updateOption(optionId, optionData),
     onSuccess: (data, { optionId }) => {
       // Invalidate options for the topic and specific option
@@ -107,7 +107,7 @@ export function useUpdateOption() {
  */
 export function useDeleteOption() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: (optionId: string) => deleteOption(optionId),
     onSuccess: (_, optionId) => {
@@ -126,7 +126,7 @@ export function useDeleteOption() {
  */
 export function useVoteOption() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: (optionId: string) => voteOption(optionId),
     onSuccess: (data) => {
@@ -146,16 +146,16 @@ export function useVoteOption() {
  */
 export function useSingleVote() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
-    mutationFn: ({ 
-      optionId, 
-      currentUser, 
-      previousOptionId 
-    }: { 
+    mutationFn: ({
+      optionId,
+      currentUser,
+      previousOptionId
+    }: {
       optionId: string
       currentUser: IUser
-      previousOptionId: string | null 
+      previousOptionId: string | null
     }) => handleSingleVote(optionId, currentUser, previousOptionId),
     onSuccess: () => {
       // Invalidate all option queries to refresh vote counts
@@ -172,7 +172,7 @@ export function useSingleVote() {
  */
 export function useMultipleVote() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: (optionId: string) => handleMultipleVote(optionId),
     onSuccess: () => {
@@ -182,6 +182,22 @@ export function useMultipleVote() {
     onError: (error) => {
       console.error('Failed to handle multiple vote:', error)
     },
+  })
+}
+
+/**
+ * Get voters for a specific option (lazy loading)
+ */
+export function useOptionVoters(
+  optionId: string,
+  params: { page?: number; limit?: number } = {}
+) {
+  return useQuery({
+    queryKey: ['options', optionId, 'voters', params],
+    queryFn: () => getOptionVoters(optionId, params),
+    enabled: !!optionId,
+    staleTime: 1000 * 30, // 30 seconds
+    gcTime: 1000 * 60 * 2, // 2 minutes
   })
 }
 
@@ -261,14 +277,17 @@ export async function voteOption(optionId: string): Promise<OptionVoteResponse> 
 }
 
 /**
- * Get voting status for a topic
+ * Get voters for a specific option (lazy loading)
  */
-export async function getVotingStatus(topicId: string): Promise<any> {
+export async function getOptionVoters(
+  optionId: string,
+  params: { page?: number; limit?: number } = {}
+): Promise<any> {
   try {
-    const response = await api.get(`/api/vote/status/${topicId}`)
+    const response = await api.get(`/api/options/${optionId}/voters`, { params })
     return response.data
   } catch (error) {
-    console.error(`Failed to get voting status for topic ${topicId}:`, error)
+    console.error(`Failed to get voters for option ${optionId}:`, error)
     throw error
   }
 }
@@ -291,7 +310,6 @@ export const getRankByTopicId = async (topicId: string): Promise<Option[]> => {
     })
     return response.data.data
   } catch (err) {
-    console.log('err', err)
     return []
   }
 }
@@ -304,7 +322,6 @@ export const getAllOptions = async (): Promise<IOption[]> => {
     const response = await api.get<OptionListResponse>('/api/options')
     return response.data.data.map(adaptApiOptionToIOption)
   } catch (err) {
-    console.log('err', err)
     return []
   }
 }
@@ -364,7 +381,7 @@ export const handleSingleVote = async (
     if (previousOptionId) {
       await api.delete(`/api/options/${previousOptionId}/vote`)
     }
-    
+
     // Cast new vote
     await api.post<OptionVoteResponse>(`/api/options/${optionId}/vote`)
   } catch (e) {
@@ -397,15 +414,16 @@ export default {
   useVoteOption,
   useSingleVote,
   useMultipleVote,
-  
+  useOptionVoters,
+
   // API service functions
   fetchOptionsByTopic,
   createOption,
   updateOption,
   deleteOption,
   voteOption,
-  getVotingStatus,
-  
+  getOptionVoters,
+
   // Legacy functions
   getOptionsByTopicId,
   getRankByTopicId,

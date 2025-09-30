@@ -45,7 +45,7 @@
               <v-icon icon="mdi-format-list-bulleted" class="mr-2"></v-icon>
               <span>Thông tin Topic</span>
             </v-card-title>
-            
+
             <v-card-text>
               <v-form ref="formRef" v-model="formValid" @submit.prevent="handleSubmit">
                 <!-- Topic Name -->
@@ -208,6 +208,7 @@ import { ref, computed, onMounted, reactive, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useTopicStore } from '@/stores/topic'
 import { useAuthStore } from '@/stores/auth'
+import { useCreateTopic, useUpdateTopic, getTopicById } from '@/services/topic.service'
 import type { ITopic } from '@/core/interfaces/model/topic'
 import { ETopicTeam, ETopicRequireField, ETopicVoteType, EUserRole } from '@/core/constants/enum'
 import VueDatePicker from '@vuepic/vue-datepicker'
@@ -326,8 +327,8 @@ const requireFieldRules = [
 const dateFormat = 'dd/MM/yyyy HH:mm'
 
 // Vue Query mutations
-const createMutation = topicStore.useCreateTopicMutation()
-const updateMutation = topicStore.useUpdateTopicMutation()
+const createMutation = useCreateTopic()
+const updateMutation = useUpdateTopic()
 
 // Methods
 const validateDate = () => {
@@ -335,12 +336,12 @@ const validateDate = () => {
     dateError.value = 'Thời hạn voting là bắt buộc'
     return false
   }
-  
+
   if (formData.date <= new Date()) {
     dateError.value = 'Thời hạn voting phải sau thời điểm hiện tại'
     return false
   }
-  
+
   dateError.value = ''
   return true
 }
@@ -354,7 +355,7 @@ const resetForm = () => {
   formData.requireField = ETopicRequireField.TITLE
   formData.status = true
   dateError.value = ''
-  
+
   if (formRef.value) {
     formRef.value.resetValidation()
   }
@@ -362,9 +363,10 @@ const resetForm = () => {
 
 const loadTopicForEdit = async () => {
   if (!topicId.value) return
-  
+
   try {
-    const topic = await topicStore.loadTopicDetail(topicId.value)
+    // Load topic detail from service
+    const topic = await getTopicById(topicId.value)
     if (topic) {
       formData.name = topic.name || ''
       formData.description = topic.description || ''
@@ -382,12 +384,12 @@ const loadTopicForEdit = async () => {
 
 const handleSubmit = async () => {
   if (!formRef.value) return
-  
+
   const { valid } = await formRef.value.validate()
   if (!valid || !validateDate()) return
-  
+
   submitting.value = true
-  
+
   try {
     const topicData: Partial<ITopic> = {
       name: formData.name.trim(),
@@ -397,7 +399,7 @@ const handleSubmit = async () => {
       requireField: formData.requireField as `${ETopicRequireField}`,
       status: formData.status
     }
-    
+
     if (isEditMode.value) {
       await updateMutation.mutateAsync({
         id: topicId.value,
@@ -409,12 +411,12 @@ const handleSubmit = async () => {
       showSnackbar('Topic đã được tạo thành công!', 'success')
       resetForm()
     }
-    
+
     // Navigate back to topic list after a short delay
     setTimeout(() => {
       goToTopicList()
     }, 1500)
-    
+
   } catch (error) {
     console.error('Failed to save topic:', error)
     showSnackbar(
@@ -428,7 +430,7 @@ const handleSubmit = async () => {
 
 const handleCancel = () => {
   if (submitting.value) return
-  
+
   // Show confirmation if form has data
   const hasData = formData.name || formData.description || formData.date
   if (hasData) {
@@ -461,7 +463,7 @@ onMounted(async () => {
     showSnackbar('Bạn không có quyền truy cập trang này', 'error')
     return
   }
-  
+
   if (isEditMode.value) {
     await loadTopicForEdit()
   }

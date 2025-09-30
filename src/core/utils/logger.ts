@@ -16,6 +16,9 @@ interface LoggerConfig {
   enableApiLogs: boolean
   enableRouterLogs: boolean
   enableStorageLogs: boolean
+  enableUILogs: boolean
+  enableSocketLogs: boolean
+  enableTopicLogs: boolean
 }
 
 class Logger {
@@ -24,27 +27,33 @@ class Logger {
   constructor() {
     // Set default config based on environment
     const isDevelopment = process.env.NODE_ENV === 'development'
-    
+
     this.config = {
       level: isDevelopment ? LogLevel.DEBUG : LogLevel.ERROR,
       enableConsole: isDevelopment,
       enableAuthLogs: isDevelopment,
       enableApiLogs: isDevelopment,
       enableRouterLogs: isDevelopment,
-      enableStorageLogs: isDevelopment
+      enableStorageLogs: isDevelopment,
+      enableUILogs: isDevelopment,
+      enableSocketLogs: isDevelopment,
+      enableTopicLogs: isDevelopment
     }
   }
 
   private shouldLog(level: LogLevel, category?: string): boolean {
     if (!this.config.enableConsole) return false
     if (level > this.config.level) return false
-    
+
     // Category-specific logging control
     if (category === 'auth' && !this.config.enableAuthLogs) return false
     if (category === 'api' && !this.config.enableApiLogs) return false
     if (category === 'router' && !this.config.enableRouterLogs) return false
     if (category === 'storage' && !this.config.enableStorageLogs) return false
-    
+    if (category === 'ui' && !this.config.enableUILogs) return false
+    if (category === 'socket' && !this.config.enableSocketLogs) return false
+    if (category === 'topic' && !this.config.enableTopicLogs) return false
+
     return true
   }
 
@@ -113,12 +122,33 @@ class Logger {
     debug: (message: string, ...args: any[]) => this.debug('app', message, ...args)
   }
 
+  ui = {
+    error: (message: string, ...args: any[]) => this.error('ui', message, ...args),
+    warn: (message: string, ...args: any[]) => this.warn('ui', message, ...args),
+    info: (message: string, ...args: any[]) => this.info('ui', message, ...args),
+    debug: (message: string, ...args: any[]) => this.debug('ui', message, ...args)
+  }
+
+  socket = {
+    error: (message: string, ...args: any[]) => this.error('socket', message, ...args),
+    warn: (message: string, ...args: any[]) => this.warn('socket', message, ...args),
+    info: (message: string, ...args: any[]) => this.info('socket', message, ...args),
+    debug: (message: string, ...args: any[]) => this.debug('socket', message, ...args)
+  }
+
+  topic = {
+    error: (message: string, ...args: any[]) => this.error('topic', message, ...args),
+    warn: (message: string, ...args: any[]) => this.warn('topic', message, ...args),
+    info: (message: string, ...args: any[]) => this.info('topic', message, ...args),
+    debug: (message: string, ...args: any[]) => this.debug('topic', message, ...args)
+  }
+
   // Configuration methods
   setLevel(level: LogLevel): void {
     this.config.level = level
   }
 
-  setCategoryEnabled(category: 'auth' | 'api' | 'router' | 'storage', enabled: boolean): void {
+  setCategoryEnabled(category: 'auth' | 'api' | 'router' | 'storage' | 'ui' | 'socket' | 'topic', enabled: boolean): void {
     switch (category) {
       case 'auth':
         this.config.enableAuthLogs = enabled
@@ -132,6 +162,15 @@ class Logger {
       case 'storage':
         this.config.enableStorageLogs = enabled
         break
+      case 'ui':
+        this.config.enableUILogs = enabled
+        break
+      case 'socket':
+        this.config.enableSocketLogs = enabled
+        break
+      case 'topic':
+        this.config.enableTopicLogs = enabled
+        break
     }
   }
 
@@ -141,6 +180,9 @@ class Logger {
     this.config.enableApiLogs = true
     this.config.enableRouterLogs = true
     this.config.enableStorageLogs = true
+    this.config.enableUILogs = true
+    this.config.enableSocketLogs = true
+    this.config.enableTopicLogs = true
   }
 
   disableAll(): void {
@@ -149,6 +191,9 @@ class Logger {
     this.config.enableApiLogs = false
     this.config.enableRouterLogs = false
     this.config.enableStorageLogs = false
+    this.config.enableUILogs = false
+    this.config.enableSocketLogs = false
+    this.config.enableTopicLogs = false
   }
 
   // Production mode - only errors
@@ -159,6 +204,9 @@ class Logger {
     this.config.enableApiLogs = false
     this.config.enableRouterLogs = false
     this.config.enableStorageLogs = false
+    this.config.enableUILogs = false
+    this.config.enableSocketLogs = false
+    this.config.enableTopicLogs = false
   }
 }
 

@@ -10,15 +10,18 @@ import { logger, LogLevel } from '@/core/utils/logger'
 export const configureProductionLogger = (): void => {
   // Production mode - only errors and critical warnings
   logger.enableProductionMode()
-  
+
   // Disable all debug and info logs
   logger.setLevel(LogLevel.ERROR)
-  
+
   // Only enable console for critical errors
   logger.setCategoryEnabled('auth', false)
   logger.setCategoryEnabled('api', false)
   logger.setCategoryEnabled('router', false)
   logger.setCategoryEnabled('storage', false)
+  logger.setCategoryEnabled('ui', false)
+  logger.setCategoryEnabled('socket', false)
+  logger.setCategoryEnabled('topic', false)
 }
 
 /**
@@ -43,7 +46,7 @@ export const configureTestingLogger = (): void => {
  */
 export const autoConfigureLogger = (): void => {
   const env = process.env.NODE_ENV
-  
+
   switch (env) {
     case 'production':
       configureProductionLogger()
