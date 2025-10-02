@@ -1,6 +1,6 @@
 import { io, Socket } from 'socket.io-client'
 import { networkOptimizer } from './network-optimizer.service'
-// import type { IUser } from '@/core/interfaces/model/user'
+import { useAuthStore } from '@/stores/auth'
 import type { IOption } from '@/core/interfaces/model/option'
 import type { VoteUpdateData } from '@/stores/socket'
 
@@ -205,19 +205,27 @@ export class WebSocketService {
   /**
    * Connect to WebSocket server
    */
-  async connect(userId: string, username: string): Promise<void> {
+  async connect(userId?: string, username?: string): Promise<void> {
     if (this.socket?.connected) {
       return
     }
 
-    this.state.userId = userId
-    this.state.username = username
+    // Get user info from auth store if not provided
+    const authStore = useAuthStore()
+    const user = authStore.getCurrentUser
+    
+    if (!user && (!userId || !username)) {
+      throw new Error('User not authenticated and no user data provided')
+    }
+
+    this.state.userId = userId || user?.id || ''
+    this.state.username = username || user?.username || ''
 
     try {
       this.socket = io(`${this.serverUrl}${this.namespace}`, {
         auth: {
-          userId,
-          username
+          userId: this.state.userId,
+          username: this.state.username
         },
         transports: ['websocket', 'polling'],
         timeout: 10000,
@@ -702,17 +710,15 @@ export class WebSocketService {
     const delay = this.reconnectDelay * Math.pow(2, this.state.reconnectAttempts - 1) // Exponential backoff
 
     this.reconnectTimer = setTimeout(async () => {
-      if (this.state.userId && this.state.username) {
-        try {
-          await this.connect(this.state.userId, this.state.username)
+      try {
+        await this.connect()
 
-          // Rejoin topic if we were in one
-          if (this.state.currentTopicId) {
-            await this.joinTopic(this.state.currentTopicId)
-          }
-        } catch (error) {
-          console.error('Reconnection failed:', error)
+        // Rejoin topic if we were in one
+        if (this.state.currentTopicId) {
+          await this.joinTopic(this.state.currentTopicId)
         }
+      } catch (error) {
+        console.error('Reconnection failed:', error)
       }
     }, delay)
   }

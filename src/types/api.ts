@@ -23,6 +23,7 @@ export interface Topic {
   endDate: string
   voteType: 'single' | 'multiple'
   isActive: boolean
+  isMutable: boolean
   team: ETopicTeam
   createdBy: string
   totalVotes?: number
@@ -73,9 +74,7 @@ export interface Option {
   image?: string
   topicId: string
   createdBy: string
-  userVotes?: Record<string, string> // ✅ Deprecated: will be removed
   voteCount: number // ✅ New: direct vote count field
-  hasUserVoted?: boolean // ✅ New: user vote status
   lastVoteTime?: string
   createdAt: string
   updatedAt: string
@@ -210,29 +209,13 @@ export interface ResetPasswordRequest {
   password: string
 }
 
+export interface VoteStatusData {
+  options: Array<string>;
+}
+
 // Vote related types - Updated to match new Backend API
 export interface VotingStatusResponse extends BaseResponse {
-  data: {
-    // User voting status
-    user_status: {
-      userId: string
-      topicId: string
-      votedOptions: string[]
-      lastVoteTime: string | null
-      totalVotes: number
-    }
-    // Options with vote counts and user vote status
-    options: Array<{
-      _id: string
-      title: string
-      link?: string
-      image?: string
-      voteCount: number
-      hasUserVoted: boolean
-      createdAt: string
-      lastVoteTime?: string
-    }>
-  }
+  data: VoteStatusData
 }
 
 export interface VotingStatsResponse extends BaseResponse {

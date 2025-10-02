@@ -1,5 +1,4 @@
 import { ETopicRequireField, ETopicTeam, ETopicVoteType } from '@/core/constants/enum'
-import type { IUser } from './user'
 import type { Topic } from '@/types/api'
 
 // Unified Topic interface based on backend API structure
@@ -8,13 +7,10 @@ export interface ITopic {
   title: string
   description?: string
   votingType: ETopicVoteType
-  timeLimit?: number
   isActive: boolean
   team: ETopicTeam
   createdAt: string | Date
   updatedAt: string | Date
-  // Additional fields for frontend use
-  voteBy?: IUser[]
   optionRequiredField?: ETopicRequireField
   isMutable?: boolean
   startDate?: string | Date
@@ -39,12 +35,11 @@ export function adaptApiTopicToITopic(apiTopic: Topic): ITopic {
     title: apiTopic.title,
     description: apiTopic.description,
     votingType: apiTopic.voteType as ETopicVoteType, // Map voteType to votingType
-    timeLimit: undefined, // API doesn't have timeLimit field
+    isMutable: apiTopic.isMutable,
     isActive: apiTopic.isActive,
-    team: apiTopic.team,
-    createdAt: apiTopic.createdAt,
+    team: apiTopic.team as ETopicTeam,
+    createdAt: apiTopic.createdAt ?? "",
     updatedAt: apiTopic.updatedAt,
-    voteBy: [],
     startDate: apiTopic.startDate,
     endDate: apiTopic.endDate
   }

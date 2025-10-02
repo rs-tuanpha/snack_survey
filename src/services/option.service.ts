@@ -185,22 +185,6 @@ export function useMultipleVote() {
   })
 }
 
-/**
- * Get voters for a specific option (lazy loading)
- */
-export function useOptionVoters(
-  optionId: string,
-  params: { page?: number; limit?: number } = {}
-) {
-  return useQuery({
-    queryKey: ['options', optionId, 'voters', params],
-    queryFn: () => getOptionVoters(optionId, params),
-    enabled: !!optionId,
-    staleTime: 1000 * 30, // 30 seconds
-    gcTime: 1000 * 60 * 2, // 2 minutes
-  })
-}
-
 // ============================================================================
 // API SERVICE FUNCTIONS
 // ============================================================================
@@ -272,22 +256,6 @@ export async function voteOption(optionId: string): Promise<OptionVoteResponse> 
     return response.data
   } catch (error) {
     console.error(`Failed to vote for option ${optionId}:`, error)
-    throw error
-  }
-}
-
-/**
- * Get voters for a specific option (lazy loading)
- */
-export async function getOptionVoters(
-  optionId: string,
-  params: { page?: number; limit?: number } = {}
-): Promise<any> {
-  try {
-    const response = await api.get(`/api/options/${optionId}/voters`, { params })
-    return response.data
-  } catch (error) {
-    console.error(`Failed to get voters for option ${optionId}:`, error)
     throw error
   }
 }
@@ -364,7 +332,7 @@ export const putOptionData = async (option: IOption) => {
   const updateData: UpdateOptionRequest = {
     title: option.title
   }
-  const response = await api.put<OptionUpdateResponse>(`/api/options/${option.id}`, updateData)
+  const response = await api.put<OptionUpdateResponse>(`/api/options/${option._id}`, updateData)
   return response.data.data
 }
 
@@ -414,7 +382,6 @@ export default {
   useVoteOption,
   useSingleVote,
   useMultipleVote,
-  useOptionVoters,
 
   // API service functions
   fetchOptionsByTopic,
@@ -422,7 +389,6 @@ export default {
   updateOption,
   deleteOption,
   voteOption,
-  getOptionVoters,
 
   // Legacy functions
   getOptionsByTopicId,

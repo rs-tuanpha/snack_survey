@@ -96,7 +96,7 @@
                 ? 'red-darken-1'
                 : 'blue-darken-3'
             "
-            @click.prevent="handleChangeVote(index)"
+            @click.prevent="handleChangeVote(option._id)"
           ></v-icon>
         </div>
       </v-card-actions>
@@ -117,18 +117,18 @@ const props = defineProps<{
   cardStyle?: StyleValue
 }>()
 const emits = defineEmits<{
-  (e: 'handleChangeVote', index: number): void
+  (e: 'onChangeVote', optionId: string): void
   (e: 'showVoters', optionId: string): void
 }>()
 
 // Removed userVotes logic - now using lazy loading for voters
 
-const handleChangeVote = (index: number) => {
-  emits('handleChangeVote', index)
+const handleChangeVote = (optionId: string) => {
+  emits('onChangeVote', optionId)
 }
 
 const showVoters = () => {
-  emits('showVoters', (props.option as any)._id || props.option.id)
+  emits('showVoters', props.option._id)
 }
 </script>
 

@@ -12,7 +12,7 @@
         <p class="text-white text-body-1 mb-1 text-break">{{ currentTopic.description }}</p>
         <p class="text-white text-body-1 mb-8">
           Thời hạn:
-          {{ currentTopic?.endDate && formatEndDateUTC(currentTopic.endDate) }}
+          {{ currentTopic?.endDate && formatDateUTC(currentTopic.endDate) }}
         </p>
         <!-- Countdown Timer Display -->
         <p v-if="Boolean(countdown)" class="text-white font-weight-medium mb-4">
@@ -23,11 +23,7 @@
         </p>
 
         <!-- Connection Status -->
-        <connection-status
-          :show-details="true"
-          :show-queued-votes="true"
-          class="mb-4"
-        />
+        <connection-status :show-details="true" :show-queued-votes="true" class="mb-4" />
       </div>
 
       <!-- Top 3 Options Display -->
@@ -122,7 +118,7 @@
         <div v-if="currentOptions.length" class="right-area__list">
           <option-card
             v-for="(option, index) in currentOptions"
-            :key="option.id"
+            :key="option._id"
             :index="index"
             :is-rank-card="false"
             :option="option"
@@ -137,7 +133,7 @@
               max-height: 232px;
             "
             @on-click-see-more="onClickSeeMore(option)"
-            @handle-change-vote="handleChangeVote(index)"
+            @on-change-vote="handleChangeVote"
             @show-voters="showVoters"
           ></option-card>
         </div>
@@ -197,34 +193,33 @@ import { useQueryClient } from '@tanstack/vue-query'
 
 import useCommon from '@/core/hooks/useCommon'
 import type { IOption } from '@/core/interfaces/model/option'
-import {
-  useOptionsByTopic,
-  useTopRankedOptions
-} from '@/services/option.service'
+import { useUserStore } from '@/stores/user'
+import { useSocketStore, type VoteUpdateData } from '@/stores/socket'
+import { useSocketVoteStore } from '@/stores/socket-vote.store'
+import { useOptionsByTopic } from '@/services/option.service'
 import { useTopic } from '@/services/topic.service'
 import {
-  useVoteStatus
-} from '@/services/socket-only-vote.service'
-import {
-  useSocketVote,
   useSocketVoteUpdates,
   useSocketConnection,
   useOptimisticVote
 } from '@/services/socket-vote.service'
 import { useUsersList } from '@/services/user.service'
-import { useUserStore } from '@/stores/user'
-import { useSocketStore, type VoteUpdateData } from '@/stores/socket'
-import { useSocketVoteStore } from '@/stores/socket-vote.store'
 import { realtimeSyncService } from '@/services/realtime-sync.service'
 import type { VoteStatusResponse } from '@/services/websocket.service'
-import type { User } from '@/types/api'
-import { queryKeys } from '@/types/api'
+import { useUnvote, useVote, useVoteStatus } from '@/services/vote.service'
+import { type User, queryKeys } from '@/types/api'
+import router from '@/router'
+import { formatDateUTC } from '@/core/utils/date'
 
 // Lazy load the form component
 const OptionCard = defineAsyncComponent(() => import('@/components/molecules/OptionCard.vue'))
 const VotersDialog = defineAsyncComponent(() => import('@/components/organisms/VotersDialog.vue'))
-const FormCreateOption = defineAsyncComponent(() => import('@/components/organisms/FormCreateOption.vue'))
-const ConnectionStatus = defineAsyncComponent(() => import('@/components/atoms/ConnectionStatus.vue'))
+const FormCreateOption = defineAsyncComponent(
+  () => import('@/components/organisms/FormCreateOption.vue')
+)
+const ConnectionStatus = defineAsyncComponent(
+  () => import('@/components/atoms/ConnectionStatus.vue')
+)
 
 // Common hook for routing and store access
 const { getParams, handleRouter } = useCommon('useCommonStore')
@@ -247,34 +242,18 @@ const userMap = computed(() => {
 // TanStack Query hooks for data fetching
 const { data: topicData, isLoading: topicLoading } = useTopic(id.toString())
 const { data: optionsData, isLoading: optionsLoading } = useOptionsByTopic(id.toString())
-const { data: topRankedData, isLoading: topRankedLoading } = useTopRankedOptions(id.toString())
-const { data: voteStatusData, isLoading: voteStatusLoading } = useVoteStatus(id.toString())
+const { data: voteData, isLoading: voteStatusLoading } = useVoteStatus(id.toString())
+/** @type {Set<string>} Set of option ids that user has voted */
+const voteStatusData = ref<Set<string>>(new Set(voteData.value?.data?.options || []))
+const { mutateAsync: handleVote } = useVote()
+const { mutateAsync: handleUnvote } = useUnvote()
 
-// Socket-based vote hooks
-const {
-  state: socketVoteState,
-  castVote: socketCastVote,
-  toggleVote: socketToggleVote
-} = useSocketVote()
+const { startListening: startVoteUpdates, stopListening: stopVoteUpdates } = useSocketVoteUpdates()
 
-const {
-  startListening: startVoteUpdates,
-  stopListening: stopVoteUpdates
-} = useSocketVoteUpdates()
+const { startListening: startConnectionListening, stopListening: stopConnectionListening } =
+  useSocketConnection()
 
-const {
-  startListening: startConnectionListening,
-  stopListening: stopConnectionListening
-} = useSocketConnection()
-
-const {
-  applyOptimisticVote,
-  confirmOptimisticVote,
-  rollbackOptimisticVote,
-  hasPendingVote,
-  clearOptimisticVotes
-} = useOptimisticVote()
-
+const { hasPendingVote, clearOptimisticVotes } = useOptimisticVote()
 
 // Query client for cache management
 const queryClient = useQueryClient()
@@ -292,12 +271,11 @@ const selectedOptionId = ref<string | null>(null)
 const showVotersDialog = ref(false)
 
 // Combined loading state from TanStack Query and socket operations
-const isLoading = computed(() =>
-  topicLoading.value ||
-  optionsLoading.value ||
-  topRankedLoading.value ||
-  voteStatusLoading.value ||
-  socketVoteState.value.isLoading
+const isLoading = computed(
+  () =>
+    topicLoading.value ||
+    optionsLoading.value ||
+    voteStatusLoading.value
 )
 
 /** Computed Properties */
@@ -307,11 +285,6 @@ const currentTopic = computed(() => topicData.value || null)
 // Use vote status data if available, otherwise fallback to options data
 // Vote status data comes from Vote collection and includes real-time vote counts
 const currentOptions = computed(() => {
-  if (voteStatusData.value?.data?.options) {
-    // Use vote status data which includes hasUserVoted flag from Vote collection
-    return voteStatusData.value.data.options.map(transformVoteStatusOption)
-  }
-
   if (optionsData.value?.data) {
     // Fallback to options data (also uses Vote collection for vote counts)
     return optionsData.value.data.map(transformOptionData)
@@ -322,25 +295,13 @@ const currentOptions = computed(() => {
 
 // Get top 3 options by vote count from dedicated hook
 const topOptions = computed(() => {
-  if (!topRankedData.value) return []
-
-  // Transform API data to IOption format using helper function
-  return topRankedData.value.map(transformOptionData)
-})
-
-// Track user's voting state
-const userVoteState = computed(() => {
-  if (!currentAccount) return []
-
-  const votedIndices = currentOptions.value
-    .map((option, index) => ({
-      optionId: option.id,
-      index,
-      isVoted: option.hasUserVoted || false
-    }))
-    .filter((vote) => vote.isVoted)
-    .map((vote) => vote.index)
-  return votedIndices
+  if (!optionsData.value) return []
+  // Avoid mutating the original data array in a computed property
+  return optionsData.value.data
+    .slice() // create a shallow copy to prevent side effects
+    .sort((a, b) => b.voteCount - a.voteCount)
+    .slice(0, 3)
+    .map(transformOptionData)
 })
 
 // Time calculation constants
@@ -410,54 +371,30 @@ const countdown = computed(() => {
 /** Utility Functions */
 // Helper function to transform API option data to IOption format
 const transformOptionData = (option: any): IOption => ({
-  id: option._id,
-  title: option.title,
-  link: option.link,
-  image: option.image,
-  topicId: option.topicId,
-  createdBy: option.createdBy,
-  userVotes: new Map(), // Deprecated field, kept for compatibility
-  voteCount: option.voteCount,
-  hasUserVoted: option.hasUserVoted || false,
-  createdAt: option.createdAt,
-  updatedAt: option.updatedAt
-})
-
-// Helper function to transform vote status option data to IOption format
-const transformVoteStatusOption = (option: any): IOption => ({
-  id: option._id,
-  title: option.title,
-  link: option.link,
-  image: option.image,
-  topicId: id.toString(),
-  createdBy: '', // Not available in vote status response
-  userVotes: new Map(), // Deprecated field, kept for compatibility
-  voteCount: option.voteCount,
-  hasUserVoted: option.hasUserVoted || false,
-  createdAt: option.createdAt,
-  updatedAt: option.createdAt // Use createdAt as fallback
+  ...option,
+  hasUserVoted: voteStatusData.value.has(option._id) || false
 })
 
 // Helper function to update vote status cache with vote data
-const updateVoteStatusCacheWithVote = (topicId: string, optionId: string, voteCount: number, hasUserVoted: boolean) => {
-  queryClient.setQueryData(
-    queryKeys.votes.status(topicId),
-    (oldData: any) => {
-      if (!oldData?.data?.options) return oldData
+const updateVoteStatusCacheWithVote = (
+  topicId: string,
+  optionId: string,
+  voteCount: number,
+  hasUserVoted: boolean
+) => {
+  queryClient.setQueryData(queryKeys.votes.status(topicId), (oldData: any) => {
+    if (!oldData?.data?.options) return oldData
 
-      return {
-        ...oldData,
-        data: {
-          ...oldData.data,
-          options: oldData.data.options.map((option: any) =>
-            option._id === optionId
-              ? { ...option, voteCount, hasUserVoted }
-              : option
-          )
-        }
+    return {
+      ...oldData,
+      data: {
+        ...oldData.data,
+        options: oldData.data.options.map((option: any) =>
+          option._id === optionId ? { ...option, voteCount, hasUserVoted } : option
+        )
       }
     }
-  )
+  })
 }
 
 // Helper function to invalidate caches for new options
@@ -468,28 +405,6 @@ const invalidateOptionsCache = (topicId: string) => {
 }
 
 
-// Format end date to display as UTC time without timezone conversion
-const formatEndDateUTC = (endDate: string | Date): string => {
-  try {
-    // Parse as UTC and format to show the exact time as intended
-    const inputString = typeof endDate === 'string' ? endDate : endDate.toISOString()
-    const isoString = inputString.replace(/[+-]\d{2}:\d{2}$/, 'Z')
-    const utcDate = new Date(isoString)
-
-    // Format using UTC methods to maintain the original time
-    const day = String(utcDate.getUTCDate()).padStart(2, '0')
-    const month = String(utcDate.getUTCMonth() + 1).padStart(2, '0')
-    const year = utcDate.getUTCFullYear()
-    const hours = String(utcDate.getUTCHours()).padStart(2, '0')
-    const minutes = String(utcDate.getUTCMinutes()).padStart(2, '0')
-    const seconds = String(utcDate.getUTCSeconds()).padStart(2, '0')
-
-    return `${day}/${month}/${year}, ${hours}:${minutes}:${seconds}`
-  } catch (error) {
-    return 'Invalid date'
-  }
-}
-
 /** Methods */
 // Update topic status when deadline is reached
 const update = async () => {
@@ -497,19 +412,17 @@ const update = async () => {
 }
 
 // Handle vote changes with Socket.IO and optimistic updates
-const handleChangeVote = debounce(async (optionIndex: number) => {
+const handleChangeVote = debounce(async (optionId: string) => {
   if (!currentTopic.value?.isActive) {
     showAlert('Topic này đã đóng!', 'error')
     return
   }
 
   if (!currentAccount) {
-    showAlert('Vui lòng đăng nhập để vote', 'error')
+    router.push('/login')
     return
   }
 
-  const optionId = currentOptions.value[optionIndex].id
-  const hasVoted = currentOptions.value[optionIndex].hasUserVoted
   const topicId = id.toString()
 
   // Check if vote is pending
@@ -520,94 +433,30 @@ const handleChangeVote = debounce(async (optionIndex: number) => {
 
   try {
     if (currentTopic.value?.isMutable) {
-      // Multiple vote mode - use socket toggle vote
-      const action = hasVoted ? 'unvote' : 'vote'
-
-      // Apply optimistic update with enhanced conflict resolution
-      const operationId = applyOptimisticVote(optionId, topicId, action)
-
-      try {
-        const result = await socketToggleVote(topicId, optionId, hasVoted || false)
-
-        if (result.success) {
-          confirmOptimisticVote(operationId)
-          showAlert(hasVoted ? 'Đã bỏ vote' : 'Đã vote thành công', 'success')
-        } else {
-          rollbackOptimisticVote(operationId)
-          showAlert(result.error || 'Vote thất bại', 'error')
+      if (voteStatusData.value.has(optionId)) {
+        const res = await handleUnvote({ optionId, topicId })
+        if (res.success) {
+          voteStatusData.value.delete(optionId)
+          return
         }
-      } catch (error) {
-        rollbackOptimisticVote(operationId)
-        showAlert('Kết nối bị gián đoạn - vote sẽ được gửi khi kết nối lại', 'warning')
+        showAlert(res.message, 'error')
+        return
       }
-    } else {
-      // Single vote mode
-      if (hasVoted) {
-        // Unvote current option
-        const unvoteOperationId = applyOptimisticVote(optionId, topicId, 'unvote')
-
-        try {
-          const result = await socketCastVote(topicId, optionId, 'unvote')
-
-          if (result.success) {
-            confirmOptimisticVote(unvoteOperationId)
-            showAlert('Đã bỏ vote', 'success')
-          } else {
-            rollbackOptimisticVote(unvoteOperationId)
-            showAlert(result.error || 'Bỏ vote thất bại', 'error')
-          }
-        } catch (error) {
-          rollbackOptimisticVote(unvoteOperationId)
-          showAlert('Kết nối bị gián đoạn - vote sẽ được gửi khi kết nối lại', 'warning')
-        }
-      } else {
-        // Vote for new option (unvote previous if exists)
-        const previousOptionId = userVoteState.value.length > 0
-          ? currentOptions.value[userVoteState.value[0]].id
-          : null
-
-        // Apply optimistic updates with operation tracking
-        let previousOperationId: string | null = null
-        if (previousOptionId) {
-          previousOperationId = applyOptimisticVote(previousOptionId, topicId, 'unvote')
-        }
-        const voteOperationId = applyOptimisticVote(optionId, topicId, 'vote')
-
-        try {
-          // First unvote previous option if exists
-          if (previousOptionId && previousOperationId) {
-            const unvoteResult = await socketCastVote(topicId, previousOptionId, 'unvote')
-            if (unvoteResult.success) {
-              confirmOptimisticVote(previousOperationId)
-            } else {
-              rollbackOptimisticVote(previousOperationId)
-            }
-          }
-
-          // Then vote for new option
-          const voteResult = await socketCastVote(topicId, optionId, 'vote')
-
-          if (voteResult.success) {
-            confirmOptimisticVote(voteOperationId)
-            showAlert('Đã vote thành công', 'success')
-          } else {
-            rollbackOptimisticVote(voteOperationId)
-            showAlert(voteResult.error || 'Vote thất bại', 'error')
-          }
-        } catch (error) {
-          // Rollback optimistic updates on error
-          if (previousOperationId) {
-            rollbackOptimisticVote(previousOperationId)
-          }
-          rollbackOptimisticVote(voteOperationId)
-          showAlert('Kết nối bị gián đoạn - vote sẽ được gửi khi kết nối lại', 'warning')
-        }
+      const res = await handleVote({ optionId, topicId })
+      if (res.success) {
+        voteStatusData.value.add(optionId)
+        return
       }
+      showAlert(res.message, 'error')
+      return
     }
+
+    showAlert('Topic đang đóng, vui lòng trở lại sau', 'error')
+    return
   } catch (error) {
     showAlert('Có lỗi xảy ra khi vote', 'error')
   }
-}, 300)
+}, 100)
 
 // Show temporary alert message
 const showAlert = (message: string, type: 'success' | 'error' | 'warning' | 'info') => {
@@ -620,7 +469,7 @@ const showAlert = (message: string, type: 'success' | 'error' | 'warning' | 'inf
 
 // Show vote list dialog
 const onClickSeeMore = (option: IOption) => {
-  listVoteBy.value = option.userVotes ? Object.keys(option.userVotes) : []
+  listVoteBy.value = []
   dialog.value = true
 }
 
@@ -664,13 +513,13 @@ const setupSocketConnection = async () => {
     })
 
     // Handle real-time vote updates
-    socketStore.socket?.on('vote_option', (data: VoteUpdateData) => {
-      if (data.topic_id === id.toString()) {
+    socketStore.socket?.on('vote:update', (data: VoteUpdateData) => {
+      if (data.topicId === id.toString()) {
         // Update vote status cache with new vote count
         updateVoteStatusCacheWithVote(
-          data.topic_id,
-          data.option_id,
-          data.count,
+          data.topicId,
+          data.optionId,
+          data.voteCount,
           data.action === 'vote'
         )
       }
@@ -680,10 +529,7 @@ const setupSocketConnection = async () => {
     socketStore.socket?.on('vote:status_response', (data: VoteStatusResponse) => {
       if (data.topic_id === id.toString()) {
         // Update vote status cache
-        queryClient.setQueryData(
-          queryKeys.votes.status(data.topic_id),
-          data
-        )
+        queryClient.setQueryData(queryKeys.votes.status(data.topic_id), data)
       }
     })
   } catch (error) {

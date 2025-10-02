@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { io, Socket } from 'socket.io-client'
 import { logger } from '@/core/utils/logger'
 import { useQueryClient } from '@tanstack/vue-query'
+import { useAuthStore } from './auth'
 import type { IOption } from '@/core/interfaces/model/option'
 
 interface ISocketState {
@@ -15,12 +16,13 @@ interface ISocketState {
 }
 
 export interface VoteUpdateData {
-  topic_id: string
-  option_id: string
-  count: number
-  user_id: string
+  topicId: string
+  optionId: string
+  voteCount: number
+  userId: string
   username: string
   action: 'vote' | 'unvote'
+  timestamp: string
 }
 
 export interface NewOptionData {
@@ -161,7 +163,7 @@ export const useSocketStore = defineStore('socket', {
       })
 
       // Listen for vote updates
-      this.socket.on('vote_option', (data: VoteUpdateData) => {
+      this.socket.on('vote:update', (data: VoteUpdateData) => {
         logger.socket.debug('Vote update received:', data)
         this.handleVoteUpdate(data)
       })
@@ -208,16 +210,16 @@ export const useSocketStore = defineStore('socket', {
 
         // Invalidate voting-related queries
         queryClient.invalidateQueries({
-          queryKey: ['options', 'topic', data.topic_id]
+          queryKey: ['options', 'topic', data.topicId]
         })
         queryClient.invalidateQueries({
-          queryKey: ['voting-stats', data.topic_id]
+          queryKey: ['voting-stats', data.topicId]
         })
         queryClient.invalidateQueries({
-          queryKey: ['votes', 'status', data.topic_id]
+          queryKey: ['votes', 'status', data.topicId]
         })
 
-        logger.socket.debug('Invalidated voting queries for topic:', data.topic_id)
+        logger.socket.debug('Invalidated voting queries for topic:', data.topicId)
       } catch (error) {
         logger.socket.error('Failed to handle vote update:', error)
       }
@@ -293,7 +295,16 @@ export const useSocketStore = defineStore('socket', {
       }
 
       try {
-        this.socket.emit('join_topic', { topicId })
+        // Get user info from auth store
+        const authStore = useAuthStore()
+        const user = authStore.getCurrentUser
+        
+        if (!user) {
+          logger.socket.warn('Cannot join topic: user not authenticated')
+          return
+        }
+        
+        this.socket.emit('topic:join', { topicId, userId: user.id, username: user.username })
         this.currentTopic = topicId
         logger.socket.info('Joined topic:', topicId)
       } catch (error) {
@@ -311,7 +322,16 @@ export const useSocketStore = defineStore('socket', {
       }
 
       try {
-        this.socket.emit('leave_topic', { topicId: this.currentTopic })
+        // Get user info from auth store
+        const authStore = useAuthStore()
+        const user = authStore.getCurrentUser
+        
+        if (!user) {
+          logger.socket.warn('Cannot leave topic: user not authenticated')
+          return
+        }
+        
+        this.socket.emit('topic:leave', { topicId: this.currentTopic, userId: user.id, username: user.username })
         logger.socket.info('Left topic:', this.currentTopic)
         this.currentTopic = null
       } catch (error) {
