@@ -2,7 +2,8 @@ import { io, Socket } from 'socket.io-client'
 import { networkOptimizer } from './network-optimizer.service'
 import { useAuthStore } from '@/stores/auth'
 import type { IOption } from '@/core/interfaces/model/option'
-import type { VoteUpdateData } from '@/stores/socket'
+import { ENV_CONFIG } from '@/core/constants/env'
+import { logger } from '@/core/utils/logger'
 
 /**
  * WebSocket Service for Snack Survey Application
@@ -61,6 +62,7 @@ export interface VoteCastPayload {
   userId: string
   username: string
   action: 'vote' | 'unvote'
+  version?: number // Optional client version for conflict detection
 }
 
 export interface VoteStatusPayload {
@@ -108,6 +110,7 @@ export interface VoteUpdateResponse {
   userId: string
   username: string
   timestamp: string
+  version: number // Server version for conflict detection
   userVoteStatus: {
     votedOptions: string[]
     totalVotes: number
@@ -222,7 +225,10 @@ export class WebSocketService {
     this.state.username = username || user?.username || ''
 
     try {
-      this.socket = io(`${this.serverUrl}${this.namespace}`, {
+      const socketUrl = `${this.serverUrl}${this.namespace}`
+      console.log('🔌 Connecting to WebSocket:', socketUrl)
+      
+      this.socket = io(socketUrl, {
         auth: {
           userId: this.state.userId,
           username: this.state.username
@@ -237,11 +243,18 @@ export class WebSocketService {
       // Wait for connection
       await new Promise<void>((resolve, reject) => {
         const timeout = setTimeout(() => {
+          console.error('❌ WebSocket connection timeout')
           reject(new Error('Connection timeout'))
         }, 10000)
 
         this.socket!.on('connect', () => {
           clearTimeout(timeout)
+          console.log('✅ WebSocket connected successfully:', {
+            socketId: this.socket?.id,
+            userId: this.state.userId,
+            username: this.state.username
+          })
+          
           this.state.connected = true
           this.state.reconnectAttempts = 0
           this.state.lastError = null
@@ -255,11 +268,13 @@ export class WebSocketService {
 
         this.socket!.on('connect_error', (error) => {
           clearTimeout(timeout)
+          console.error('❌ WebSocket connection error:', error)
           reject(error)
         })
       })
     } catch (error) {
       this.state.lastError = error instanceof Error ? error.message : 'Unknown error'
+      console.error('❌ WebSocket connection failed:', error)
       throw error
     }
   }
@@ -308,6 +323,12 @@ export class WebSocketService {
    * Join a topic room
    */
   async joinTopic(topicId: string): Promise<TopicJoinedResponse> {
+    console.log('🏠 Joining topic room:', topicId, {
+      userId: this.state.userId,
+      username: this.state.username,
+      socketConnected: this.socket?.connected
+    })
+
     if (this.socket === null || !this.socket?.connected) {
       throw new Error('WebSocket not connected')
     }
@@ -324,6 +345,7 @@ export class WebSocketService {
 
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
+        console.error('❌ Join topic timeout after 10s')
         reject(new Error('Join topic timeout'))
       }, 10000)
 
@@ -334,6 +356,7 @@ export class WebSocketService {
 
       // Listen for the response
       const handleJoined = (data: TopicJoinedResponse) => {
+        console.log('✅ Received topic:joined response:', data)
         if (data.topicId === topicId) {
           clearTimeout(timeout)
           this.socket!.off('topic:joined', handleJoined)
@@ -345,6 +368,7 @@ export class WebSocketService {
       }
 
       const handleError = (error: TopicErrorResponse) => {
+        console.error('❌ Received error:topic response:', error)
         if (error.topicId === topicId) {
           clearTimeout(timeout)
           this.socket!.off('topic:joined', handleJoined)
@@ -357,6 +381,7 @@ export class WebSocketService {
       this.socket.on('error:topic', handleError)
 
       // Emit join request
+      console.log('📤 Emitting topic:join event:', payload)
       this.socket.emit('topic:join', payload)
     })
   }
@@ -464,6 +489,80 @@ export class WebSocketService {
       // Fallback to direct send
       return this.castVoteDirect(topicId, optionId, action)
     }
+  }
+
+  /**
+   * Emit vote with version support for optimistic updates
+   */
+  async emitVote(payload: VoteCastPayload & { version?: number }): Promise<{
+    success: boolean
+    data: {
+      voteCount: number
+      version: number
+      action: 'vote' | 'unvote'
+      optionId: string
+      topicId: string
+    }
+    message: string
+    conflict?: boolean
+    serverVersion?: number
+  }> {
+    if (!this.state.userId || !this.state.username) {
+      throw new Error('User not authenticated')
+    }
+
+    // If offline, queue the vote
+    if (this.isOffline || !this.socket?.connected) {
+      this.queueVote(payload)
+      throw new Error('Vote queued - will be sent when connection is restored')
+    }
+
+    return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        reject(new Error('Vote cast timeout'))
+      }, 10000)
+
+      if (this.socket === null) {
+        reject(new Error('WebSocket not connected'))
+        return
+      }
+
+      const handleSuccess = (data: any) => {
+        clearTimeout(timeout)
+        this.socket!.off('success', handleSuccess)
+        this.socket!.off('error:vote', handleError)
+        resolve(data)
+      }
+
+      const handleError = (data: any) => {
+        clearTimeout(timeout)
+        this.socket!.off('success', handleSuccess)
+        this.socket!.off('error:vote', handleError)
+        
+        if (data.type === 'conflict') {
+          resolve({
+            success: false,
+            data: {
+              voteCount: 0,
+              version: 0,
+              action: payload.action,
+              optionId: payload.optionId,
+              topicId: payload.topicId
+            },
+            message: data.message,
+            conflict: true,
+            serverVersion: data.serverVersion
+          })
+        } else {
+          reject(new Error(data.message))
+        }
+      }
+
+      this.socket.on('success', handleSuccess)
+      this.socket.on('error:vote', handleError)
+
+      this.socket.emit('vote:cast', payload)
+    })
   }
 
   /**
@@ -632,6 +731,38 @@ export class WebSocketService {
   }
 
   /**
+   * Listen to socket events (public API)
+   */
+  on(event: string, callback: Function): void {
+    if (!this.socket) {
+      console.warn('Socket not initialized, cannot listen to event:', event)
+      return
+    }
+    
+    this.socket.on(event, (data) => {
+      console.log('📥 Received event:', event, data)
+      callback(data)
+    })
+    console.log('📡 Listening to event:', event)
+  }
+
+  /**
+   * Remove event listener (public API)
+   */
+  off(event: string, callback?: Function): void {
+    if (!this.socket) {
+      return
+    }
+    
+    if (callback) {
+      this.socket.off(event, callback)
+    } else {
+      this.socket.off(event)
+    }
+    console.log('🔇 Removed listener for event:', event)
+  }
+
+  /**
    * Subscribe to general errors
    */
   subscribeErrors(handler: ErrorHandler): () => void {
@@ -693,6 +824,14 @@ export class WebSocketService {
 
     this.socket.on('error:topic', (data: TopicErrorResponse) => {
       this.emit('error:topic', data)
+    })
+
+    // Handle heartbeat from server
+    this.socket.on('heartbeat', () => {
+      console.log('💓 Heartbeat received, responding...')
+      this.socket!.emit('heartbeat_response', {
+        timestamp: new Date().toISOString()
+      })
     })
   }
 
@@ -833,10 +972,8 @@ export class WebSocketService {
   }
 
   private getDefaultServerUrl(): string {
-    // Use environment variable or default to localhost
-    return process.env.NODE_ENV === 'production'
-      ? window.location.origin
-      : 'http://localhost:8000'
+    // Use environment variable from ENV_CONFIG
+    return ENV_CONFIG.SOCKET_URL
   }
 }
 

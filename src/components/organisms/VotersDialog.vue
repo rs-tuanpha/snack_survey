@@ -73,8 +73,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useOptionVoters } from '@/services/vote.service'
+import { ref, computed, onBeforeMount } from 'vue'
+import { getOptionVoters, type VotersResponse } from '@/services/vote.service'
 
 const props = defineProps<{
   modelValue: boolean
@@ -85,17 +85,33 @@ const emits = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
 }>()
 
-// Use TanStack Query hook for lazy loading voters
-const { data: votersData, isLoading, error } = useOptionVoters(
-  props.optionId,
-  props.modelValue // Only fetch when dialog is open
-)
+// State management
+const votersData = ref<VotersResponse | null>(null)
+const isLoading = ref(false)
+const error = ref<string | null>(null)
 
 // Dialog state
 const dialog = computed({
   get: () => props.modelValue,
   set: (value: boolean) => emits('update:modelValue', value)
 })
+
+const optionId = computed(() => props.optionId)
+
+// Fetch voters data
+const fetchVoters = async (optionId: string) => {
+  isLoading.value = true
+  error.value = null
+  
+  try {
+    votersData.value = await getOptionVoters(optionId)
+  } catch (err: any) {
+    error.value = err.message || 'Không thể tải danh sách người vote'
+    votersData.value = null
+  } finally {
+    isLoading.value = false
+  }
+}
 
 // Close dialog
 const closeDialog = () => {
@@ -124,6 +140,14 @@ const formatVoteTime = (votedAt: string) => {
     minute: '2-digit'
   })
 }
+
+// Fetch voters data on before mount
+onBeforeMount(() => {
+  if (dialog.value && optionId.value) {
+    fetchVoters(optionId.value)
+  }
+})
+
 </script>
 
 <script lang="ts">

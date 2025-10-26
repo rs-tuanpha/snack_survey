@@ -31,18 +31,6 @@
       {{ queuedVotesCount }} vote(s) pending
     </v-chip>
 
-    <!-- Connection Error Alert -->
-    <v-alert
-      v-if="showError"
-      type="error"
-      variant="tonal"
-      density="compact"
-      class="mt-2"
-      closable
-      @click:close="clearError"
-    >
-      {{ errorMessage }}
-    </v-alert>
 
     <!-- Reconnection Progress -->
     <v-progress-linear
@@ -55,8 +43,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
 import { useSocketVoteStore } from '@/stores/socket-vote.store'
+import { useSnackbar } from '@/core/hooks/useSnackbar'
 
 // Props
 interface Props {
@@ -71,12 +60,13 @@ const props = withDefaults(defineProps<Props>(), {
 
 // Store
 const socketVoteStore = useSocketVoteStore()
+const { showError } = useSnackbar()
 
 // Computed properties
 const isConnected = computed(() => socketVoteStore.isConnected)
 const isReconnecting = computed(() => socketVoteStore.isReconnecting)
 const lastError = computed(() => socketVoteStore.lastError)
-const hasQueuedVotes = computed(() => socketVoteStore.getConnectionStatus.value.isReconnecting)
+const hasQueuedVotes = computed(() => socketVoteStore.getConnectionStatus.isReconnecting)
 const queuedVotesCount = computed(() => 0) // This would come from WebSocket service
 
 const statusColor = computed(() => {
@@ -102,13 +92,12 @@ const statusText = computed(() => {
   return 'Disconnected'
 })
 
-const showError = computed(() => {
-  return props.showDetails && lastError.value && !isReconnecting.value
-})
-
-const errorMessage = computed(() => {
-  return lastError.value || 'Connection error'
-})
+// Watch for connection errors and show snackbar
+watch(lastError, (newError) => {
+  if (newError && props.showDetails && !isReconnecting.value) {
+    showError(`Connection error: ${newError}`)
+  }
+}, { immediate: true })
 
 // Methods
 const clearError = () => {

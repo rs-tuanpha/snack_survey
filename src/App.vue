@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
 import Loading from '@/components/molecules/Loading/index.vue'
+import GlobalSnackbar from '@/components/atoms/GlobalSnackbar.vue'
 import { computed } from 'vue'
 import { useCommonStore } from '@/stores/_common'
 
@@ -14,6 +15,7 @@ const isLoading = computed(() => commonStore.loading)
 <template>
   <RouterView />
   <Loading :is-loading="isLoading" />
+  <GlobalSnackbar />
 </template>
 <style lang="scss">
 @use '@/assets/styles/global.scss';

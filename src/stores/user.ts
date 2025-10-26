@@ -2,6 +2,7 @@ import type { ETopicTeam } from '@/core/constants/enum'
 import type { IUser } from '@/core/interfaces/model/user'
 import { logger } from '@/core/utils/logger'
 import { defineStore } from 'pinia'
+import { useAuthStore } from './auth'
 
 // Simple localStorage utilities for store use
 const localStorageUtils = {
@@ -183,6 +184,16 @@ export const useUserStore = defineStore('user', {
      */
     initializeFromStorage(): void {
       try {
+        // Priority 1: Get from authStore (đã load từ cookie)
+        const authStore = useAuthStore()
+        if (authStore.user) {
+          this.user = authStore.user
+          localStorageUtils.set('user', authStore.user)
+          logger.debug('User synced from authStore:', authStore.user.id)
+          return
+        }
+
+        // Priority 2: Fallback to localStorage
         const userData = localStorageUtils.get<IUser | null>('user', null)
         if (userData) {
           this.user = userData

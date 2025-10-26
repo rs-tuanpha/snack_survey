@@ -1,6 +1,23 @@
 <template>
   <v-container id="topic">
-    <!-- Left Area: Topic Details and Top 3 Options -->
+    <!-- User Loading State -->
+    <div v-if="userLoading" class="loading-overlay d-flex flex-column align-center justify-center" style="min-height: 200px;">
+      <v-progress-circular indeterminate color="primary" size="64"></v-progress-circular>
+      <p class="mt-4 text-h6">Đang tải thông tin người dùng...</p>
+    </div>
+
+    <!-- User Error State -->
+    <div v-else-if="userError" class="error-overlay d-flex flex-column align-center justify-center" style="min-height: 200px;">
+      <v-icon color="error" size="64">mdi-alert-circle</v-icon>
+      <p class="mt-4 text-h6 text-error">{{ userError }}</p>
+      <v-btn color="primary" @click="() => router.push('/login')" class="mt-2">
+        Đăng nhập lại
+      </v-btn>
+    </div>
+
+    <!-- Main Content -->
+    <div v-else class="w-100 h-100 d-flex">
+      <!-- Left Area: Topic Details and Top 3 Options -->
     <v-sheet max-width="638" rounded width="100%" class="mx-auto left-area">
       <!-- Topic Information Section -->
       <div
@@ -22,19 +39,24 @@
           <span class="text-red ml-1">{{ countdown }}</span>
         </p>
 
-        <!-- Connection Status -->
-        <connection-status :show-details="true" :show-queued-votes="true" class="mb-4" />
+        <!-- Connection Status - Only in development -->
+        <connection-status 
+          v-if="isDevelopment"
+          :show-details="true" 
+          :show-queued-votes="true" 
+          class="mb-4" 
+        />
+        
+        <!-- Removed real-time sync indicators -->
       </div>
 
       <!-- Top 3 Options Display -->
       <div class="left-area__rank">
         <!-- First Place Option -->
-        <option-card
+        <rank-card
           v-if="Boolean(topOptions?.[0])"
           :index="0"
-          :is-rank-card="true"
           :option="topOptions[0]"
-          :current-account="currentAccount"
           card-style="
               position: relative;
               padding: 8px;
@@ -43,68 +65,40 @@
               min-height: 240px;
               max-height: 240px;
               scale: 1.2;"
-        ></option-card>
+        ></rank-card>
         <!-- Second and Third Place Options -->
         <div class="left-area__rank--bottom">
-          <option-card
+          <rank-card
             v-if="Boolean(topOptions?.[1])"
             :index="1"
-            :is-rank-card="true"
             :option="topOptions[1]"
-            :current-account="currentAccount"
             card-style="position: relative;
               padding: 8px;
               width: 220px;
               height: 240px;
               min-height: 240px;
               max-height: 240px;"
-          ></option-card>
-          <option-card
+          ></rank-card>
+          <rank-card
             v-if="Boolean(topOptions?.[2])"
             :index="2"
-            :is-rank-card="true"
             :option="topOptions[2]"
-            :current-account="currentAccount"
             card-style="position: relative;
               padding: 8px;
               width: 220px;
               height: 240px;
               min-height: 240px;
               max-height: 240px;"
-          ></option-card>
+          ></rank-card>
         </div>
       </div>
     </v-sheet>
 
     <!-- Right Area: Options List and Voting -->
     <v-sheet max-width="638" rounded="lg" width="100%" heigth="100%" class="mx-auto right-area">
-      <!-- Alert Messages and Option Creation Form -->
+      <!-- Option Creation Form -->
       <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px">
-        <div style="flex: 1">
-          <!-- Topic Closed Alert -->
-          <v-alert
-            v-if="!isLoading && !currentTopic?.isActive && !alertVote"
-            variant="outlined"
-            type="warning"
-            class="w-100 pt-2 pb-2"
-            style="background-color: white"
-            border="start"
-          >
-            Topic này đã đóng, vui lòng trở lại sau
-          </v-alert>
-          <!-- Vote Status Alert -->
-          <v-alert
-            v-if="alertVote"
-            variant="outlined"
-            :type="alertVoteType"
-            class="w-100 pt-2 pb-2"
-            style="background-color: white"
-            border="start"
-          >
-            {{ alertVote }}</v-alert
-          >
-        </div>
-        <!-- Option Creation Form -->
+        <div style="flex: 1"></div>
         <form-create-option
           v-if="currentTopic?.optionRequiredField && currentTopic?.isActive"
           :id="id.toString()"
@@ -116,26 +110,26 @@
       <!-- Options List -->
       <div class="right-area__list-wrapper">
         <div v-if="currentOptions.length" class="right-area__list">
-          <option-card
-            v-for="(option, index) in currentOptions"
-            :key="option._id"
-            :index="index"
-            :is-rank-card="false"
-            :option="option"
-            :current-account="currentAccount"
-            card-style="
-              position: relative;
-              padding: 4px;
-              width: calc(100% / 3 - 8px);
-              max-width: 200px;
-              height: 232px;
-              min-height: 232px;
-              max-height: 232px;
-            "
-            @on-click-see-more="onClickSeeMore(option)"
-            @on-change-vote="handleChangeVote"
-            @show-voters="showVoters"
-          ></option-card>
+           <option-card
+             v-for="option in currentOptions"
+             :key="option._id"
+             :option="option"
+             :current-account="currentAccount"
+             :is-voting="votingOptions.has(option._id)"
+             :disabled="isVotingDisabled || voteStatusLoading"
+             card-style="
+               position: relative;
+               padding: 4px;
+               width: calc(100% / 3 - 8px);
+               max-width: 200px;
+               height: 232px;
+               min-height: 232px;
+               max-height: 232px;
+             "
+             @on-click-see-more="onClickSeeMore"
+             @on-change-vote="handleChangeVote"
+             @show-voters="showVoters"
+           ></option-card>
         </div>
         <section v-else>
           <p style="font-size: large">No option yet!</p>
@@ -150,39 +144,40 @@
       </v-overlay>
     </div>
 
-    <!-- Voters Dialog -->
-    <voters-dialog
-      v-if="selectedOptionId"
-      v-model="showVotersDialog"
-      :option-id="selectedOptionId"
-    />
-  </v-container>
+      <!-- Voters Dialog -->
+      <voters-dialog
+        v-if="selectedOptionId && showVotersDialog"
+        v-model="showVotersDialog"
+        :option-id="selectedOptionId"
+      />
+    </div> <!-- End Main Content -->
 
-  <!-- Vote List Dialog -->
-  <v-dialog v-model="dialog" width="auto">
-    <v-card>
-      <v-card-title>Danh sách vote</v-card-title>
-      <v-divider></v-divider>
-      <v-card-text max-height="300px" class="pa-3">
-        <div v-for="userId in listVoteBy" :key="userId" class="mr-1">
-          <div v-if="userMap[userId]" class="mt-1">
-            <v-avatar color="secondary" class="m-1" size="30">
-              <v-img
-                v-if="userMap[userId].avatar"
-                :src="userMap[userId].avatar"
-                :alt="userMap[userId].username"
-              ></v-img>
-              <span v-else>{{ userMap[userId].email.charAt(0).toLocaleUpperCase() }}</span>
-              <v-tooltip activator="parent" location="top">{{
-                userMap[userId].username
-              }}</v-tooltip>
-            </v-avatar>
-            <span class="ml-1">{{ userMap[userId].username }}</span>
+    <!-- Vote List Dialog -->
+    <v-dialog v-model="dialog" width="auto">
+      <v-card>
+        <v-card-title>Danh sách vote</v-card-title>
+        <v-divider></v-divider>
+        <v-card-text max-height="300px" class="pa-3">
+          <div v-for="userId in listVoteBy" :key="userId" class="mr-1">
+            <div v-if="userMap[userId]" class="mt-1">
+              <v-avatar color="secondary" class="m-1" size="30">
+                <v-img
+                  v-if="userMap[userId].avatar"
+                  :src="userMap[userId].avatar"
+                  :alt="userMap[userId].username"
+                ></v-img>
+                <span v-else>{{ userMap[userId].email.charAt(0).toLocaleUpperCase() }}</span>
+                <v-tooltip activator="parent" location="top">{{
+                  userMap[userId].username
+                }}</v-tooltip>
+              </v-avatar>
+              <span class="ml-1">{{ userMap[userId].username }}</span>
+            </div>
           </div>
-        </div>
-      </v-card-text>
-    </v-card>
-  </v-dialog>
+        </v-card-text>
+      </v-card>
+    </v-dialog>
+  </v-container>
 </template>
 
 <script setup lang="ts">
@@ -194,25 +189,24 @@ import { useQueryClient } from '@tanstack/vue-query'
 import useCommon from '@/core/hooks/useCommon'
 import type { IOption } from '@/core/interfaces/model/option'
 import { useUserStore } from '@/stores/user'
-import { useSocketStore, type VoteUpdateData } from '@/stores/socket'
 import { useSocketVoteStore } from '@/stores/socket-vote.store'
 import { useOptionsByTopic } from '@/services/option.service'
 import { useTopic } from '@/services/topic.service'
-import {
-  useSocketVoteUpdates,
-  useSocketConnection,
-  useOptimisticVote
-} from '@/services/socket-vote.service'
+// Removed unused imports - these hooks don't exist
 import { useUsersList } from '@/services/user.service'
-import { realtimeSyncService } from '@/services/realtime-sync.service'
-import type { VoteStatusResponse } from '@/services/websocket.service'
-import { useUnvote, useVote, useVoteStatus } from '@/services/vote.service'
+// Removed realtime sync service import
+import type { VoteStatusResponse, VoteUpdateResponse } from '@/services/websocket.service'
+import { webSocketService } from '@/services/websocket.service'
+import { useVoteStatus, useVote, useUnvote } from '@/services/vote.service'
 import { type User, queryKeys } from '@/types/api'
 import router from '@/router'
 import { formatDateUTC } from '@/core/utils/date'
+import { useEnsureUser } from '@/core/hooks/useEnsureUser'
+import { useSnackbar } from '@/core/hooks/useSnackbar'
 
 // Lazy load the form component
 const OptionCard = defineAsyncComponent(() => import('@/components/molecules/OptionCard.vue'))
+const RankCard = defineAsyncComponent(() => import('@/components/molecules/RankCard.vue'))
 const VotersDialog = defineAsyncComponent(() => import('@/components/organisms/VotersDialog.vue'))
 const FormCreateOption = defineAsyncComponent(
   () => import('@/components/organisms/FormCreateOption.vue')
@@ -222,12 +216,26 @@ const ConnectionStatus = defineAsyncComponent(
 )
 
 // Common hook for routing and store access
-const { getParams, handleRouter } = useCommon('useCommonStore')
+const { getParams } = useCommon('useCommonStore')
 const { id } = getParams()
+
+// Snackbar hook
+const { showSuccess, showError, showWarning } = useSnackbar()
 
 // Data state
 const { user: currentAccount } = useUserStore()
 const { data: userList } = useUsersList({ page: 1, limit: 100 })
+
+// Ensure user data is available (from cookie or API)
+const { isLoading: userLoading, error: userError } = useEnsureUser()
+
+// Voting state management
+const votingOptions = ref<Set<string>>(new Set())
+const isVotingDisabled = ref(false)
+
+
+// Development mode check
+const isDevelopment = computed(() => import.meta.env.DEV)
 
 // Socket vote store for real-time state management
 const socketVoteStore = useSocketVoteStore()
@@ -242,29 +250,35 @@ const userMap = computed(() => {
 // TanStack Query hooks for data fetching
 const { data: topicData, isLoading: topicLoading } = useTopic(id.toString())
 const { data: optionsData, isLoading: optionsLoading } = useOptionsByTopic(id.toString())
-const { data: voteData, isLoading: voteStatusLoading } = useVoteStatus(id.toString())
+const { data: voteData, isLoading: voteStatusLoading, error: voteStatusError } = useVoteStatus(id.toString())
 /** @type {Set<string>} Set of option ids that user has voted */
-const voteStatusData = ref<Set<string>>(new Set(voteData.value?.data?.options || []))
-const { mutateAsync: handleVote } = useVote()
-const { mutateAsync: handleUnvote } = useUnvote()
+const voteStatusData = ref<Set<string>>(new Set())
 
-const { startListening: startVoteUpdates, stopListening: stopVoteUpdates } = useSocketVoteUpdates()
+// Watch voteData to update voteStatusData when data loads
+watch(voteData, (newVoteData) => {
+  if (newVoteData?.data?.options) {
+    voteStatusData.value = new Set(newVoteData.data.options)
+  } else if (voteStatusError.value) {
+    console.error('Vote status error:', voteStatusError.value)
+    // Reset vote status on error
+    voteStatusData.value = new Set()
+  }
+}, { immediate: true })
+// Removed unused API vote handlers - using socket vote service instead
 
-const { startListening: startConnectionListening, stopListening: stopConnectionListening } =
-  useSocketConnection()
-
-const { hasPendingVote, clearOptimisticVotes } = useOptimisticVote()
+// Removed unused hooks - these don't exist
 
 // Query client for cache management
 const queryClient = useQueryClient()
-const socketStore = useSocketStore()
+
+// API vote handlers
+const { mutateAsync: handleVote } = useVote()
+const { mutateAsync: handleUnvote } = useUnvote()
 
 // Component state
 const currentTime = ref(Date.now()) // Use UTC timestamp for consistent comparison
 const listVoteBy = ref<string[]>([])
 const dialog = ref<boolean>(false)
-const alertVote = ref<string>('')
-const alertVoteType = ref<'success' | 'error' | 'warning' | 'info'>('success')
 
 // Voters dialog state
 const selectedOptionId = ref<string | null>(null)
@@ -372,7 +386,7 @@ const countdown = computed(() => {
 // Helper function to transform API option data to IOption format
 const transformOptionData = (option: any): IOption => ({
   ...option,
-  hasUserVoted: voteStatusData.value.has(option._id) || false
+  hasUserVoted: !voteStatusLoading.value && voteStatusData.value.has(option._id) || false
 })
 
 // Helper function to update vote status cache with vote data
@@ -382,6 +396,7 @@ const updateVoteStatusCacheWithVote = (
   voteCount: number,
   hasUserVoted: boolean
 ) => {
+  // Update vote status cache
   queryClient.setQueryData(queryKeys.votes.status(topicId), (oldData: any) => {
     if (!oldData?.data?.options) return oldData
 
@@ -393,6 +408,18 @@ const updateVoteStatusCacheWithVote = (
           option._id === optionId ? { ...option, voteCount, hasUserVoted } : option
         )
       }
+    }
+  })
+
+  // Update options cache (this is what the UI actually uses)
+  queryClient.setQueryData(queryKeys.options.byTopic(topicId), (oldData: any) => {
+    if (!oldData?.data) return oldData
+
+    return {
+      ...oldData,
+      data: oldData.data.map((option: any) =>
+        option._id === optionId ? { ...option, voteCount } : option
+      )
     }
   })
 }
@@ -414,7 +441,7 @@ const update = async () => {
 // Handle vote changes with Socket.IO and optimistic updates
 const handleChangeVote = debounce(async (optionId: string) => {
   if (!currentTopic.value?.isActive) {
-    showAlert('Topic này đã đóng!', 'error')
+    showError('Topic này đã đóng!')
     return
   }
 
@@ -423,52 +450,51 @@ const handleChangeVote = debounce(async (optionId: string) => {
     return
   }
 
-  const topicId = id.toString()
-
-  // Check if vote is pending
-  if (hasPendingVote(optionId, topicId)) {
-    showAlert('Vote đang được xử lý, vui lòng chờ...', 'warning')
+  // Prevent spam clicking
+  if (votingOptions.value.has(optionId) || isVotingDisabled.value) {
     return
   }
+
+  const topicId = id.toString()
+
+  // Check if vote is pending (removed socket vote check)
+
+  // Set voting state
+  votingOptions.value.add(optionId)
+  isVotingDisabled.value = true
 
   try {
     if (currentTopic.value?.isMutable) {
       if (voteStatusData.value.has(optionId)) {
-        const res = await handleUnvote({ optionId, topicId })
-        if (res.success) {
-          voteStatusData.value.delete(optionId)
-          return
-        }
-        showAlert(res.message, 'error')
+        // Use API for unvote
+        await handleUnvote({ optionId, topicId })
+        voteStatusData.value.delete(optionId)
+        showSuccess('Bỏ vote thành công!')
         return
       }
-      const res = await handleVote({ optionId, topicId })
-      if (res.success) {
-        voteStatusData.value.add(optionId)
-        return
-      }
-      showAlert(res.message, 'error')
+      
+      // Use API for vote
+      await handleVote({ optionId, topicId })
+      voteStatusData.value.add(optionId)
+      showSuccess('Vote thành công!')
       return
     }
 
-    showAlert('Topic đang đóng, vui lòng trở lại sau', 'error')
+    showError('Topic đang đóng, vui lòng trở lại sau')
     return
   } catch (error) {
-    showAlert('Có lỗi xảy ra khi vote', 'error')
+    console.error('Vote error:', error)
+    showError('Có lỗi xảy ra khi vote')
+  } finally {
+    // Clear voting state
+    votingOptions.value.delete(optionId)
+    isVotingDisabled.value = false
   }
 }, 100)
 
-// Show temporary alert message
-const showAlert = (message: string, type: 'success' | 'error' | 'warning' | 'info') => {
-  alertVote.value = message
-  alertVoteType.value = type
-  setTimeout(() => {
-    alertVote.value = ''
-  }, 2000)
-}
 
 // Show vote list dialog
-const onClickSeeMore = (option: IOption) => {
+const onClickSeeMore = () => {
   listVoteBy.value = []
   dialog.value = true
 }
@@ -493,19 +519,16 @@ const setupSocketConnection = async () => {
     socketVoteStore.initializeTopic(topicId)
 
     // Start listening for vote updates
-    startVoteUpdates()
-    startConnectionListening()
     socketVoteStore.startListening()
 
     // Initialize real-time sync
-    await realtimeSyncService.forceSyncTopic(topicId)
+    // Removed realtime sync service
 
-    // Connect to socket and join topic
-    socketStore.connect()
-    socketStore.joinTopic(topicId)
+    // Connect to socket FIRST
+    await webSocketService.connect()
 
-    // Set up socket event handlers for real-time updates
-    socketStore.socket?.on('new_option', (data: IOption) => {
+    // Setup event listeners BEFORE joining topic
+    webSocketService.on('new_option', (data: IOption) => {
       if (data.topicId === id.toString()) {
         // Invalidate options cache to refetch with new option
         invalidateOptionsCache(id.toString())
@@ -513,7 +536,7 @@ const setupSocketConnection = async () => {
     })
 
     // Handle real-time vote updates
-    socketStore.socket?.on('vote:update', (data: VoteUpdateData) => {
+    webSocketService.on('vote:update', (data: VoteUpdateResponse) => {
       if (data.topicId === id.toString()) {
         // Update vote status cache with new vote count
         updateVoteStatusCacheWithVote(
@@ -526,14 +549,20 @@ const setupSocketConnection = async () => {
     })
 
     // Handle vote status updates (for comprehensive status changes)
-    socketStore.socket?.on('vote:status_response', (data: VoteStatusResponse) => {
+    webSocketService.on('vote:status_response', (data: VoteStatusResponse) => {
       if (data.topic_id === id.toString()) {
         // Update vote status cache
         queryClient.setQueryData(queryKeys.votes.status(data.topic_id), data)
       }
     })
+
+    // NOW join topic after listeners are ready
+    await webSocketService.joinTopic(topicId)
   } catch (error) {
-    handleRouter.pushPath('/')
+    console.error('❌ Socket setup failed:', error)
+    // Don't redirect to home - app can still work without real-time
+    // Show warning to user that real-time updates might not be available
+    showWarning('Không thể kết nối real-time. Bạn vẫn có thể vote bình thường.', 5000)
   }
 
   // Start countdown timer - use UTC timestamp for consistent comparison
@@ -550,19 +579,22 @@ onMounted(async () => {
 // Clean up socket connection on component unmount
 onUnmounted(() => {
   // Stop listening to socket events
-  stopVoteUpdates()
-  stopConnectionListening()
   socketVoteStore.stopListening()
-
-  // Clear optimistic votes
-  clearOptimisticVotes()
+  
+  // Clear socket vote service pending votes
+  // Removed clearPendingVotes
 
   // Clear socket vote store for this topic
   socketVoteStore.clearTopic(id.toString())
 
+  // Remove socket event listeners
+  webSocketService.off('new_option')
+  webSocketService.off('vote:update')
+  webSocketService.off('vote:status_response')
+  
   // Leave topic and disconnect
-  socketStore.leaveTopic()
-  socketStore.disconnect()
+  webSocketService.leaveTopic()
+  webSocketService.disconnect()
 })
 </script>
 

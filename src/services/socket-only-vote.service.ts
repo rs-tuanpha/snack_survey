@@ -62,14 +62,7 @@ export function useSocketVoteStatus(topicId: string) {
           message: 'Vote status retrieved via Socket.IO',
           timestamp: new Date().toISOString(),
           data: {
-            user_status: {
-              userId: '', // Would be populated from auth
-              topicId,
-              votedOptions: topicState.userVoteStatus.votedOptions,
-              totalVotes: topicState.userVoteStatus.totalVotes,
-              lastVoteTime: topicState.userVoteStatus.lastVoteTime
-            },
-            options
+            options: options.map(opt => opt._id)
           }
         }
       }
@@ -82,13 +75,6 @@ export function useSocketVoteStatus(topicId: string) {
           message: 'Vote status retrieved via Socket.IO',
           timestamp: new Date().toISOString(),
           data: {
-            user_status: {
-              userId: response.user_id,
-              topicId: response.topic_id,
-              votedOptions: response.votedOptions,
-              totalVotes: response.totalVotes,
-              lastVoteTime: response.lastVoteTime
-            },
             options: [] // Would be populated from options service
           }
         }

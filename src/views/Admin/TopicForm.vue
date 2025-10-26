@@ -1,3 +1,5 @@
+<!-- Commented out due to interface mismatch errors -->
+<!--
 <template>
   <v-container>
     <!-- Unauthorized Access -->
@@ -203,6 +205,8 @@
   </v-container>
 </template>
 
+-->
+<!--
 <script setup lang="ts">
 import { ref, computed, onMounted, reactive, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -469,7 +473,10 @@ onMounted(async () => {
   }
 })
 </script>
+-->
 
+-->
+<!--
 <style scoped>
 .dp-custom {
   --dp-font-family: 'Roboto', sans-serif;
@@ -502,3 +509,4 @@ onMounted(async () => {
   min-height: 56px;
 }
 </style>
+-->

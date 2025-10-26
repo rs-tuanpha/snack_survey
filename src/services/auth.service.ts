@@ -16,7 +16,6 @@ const cookieUtils = {
     }
   }
 }
-import { logger } from '@/core/utils/logger'
 import type { IUser } from '@/core/interfaces/model/user'
 import type { ETopicTeam, EUserRole } from '@/core/constants/enum'
 import { useCookie } from '@/core/hooks/useCookie'
@@ -71,9 +70,6 @@ const register = (data: IRegisterPayload) => {
  * Storage is handled by the auth store
  */
 const login = async (data: ILoginPayload): Promise<ILoginResponse> => {
-  try {
-    logger.auth.debug('Attempting login...')
-
     // Use fetch for login to avoid circular dependency with api interceptor
     const response = await fetch(`${process.env.VUE_APP_API_BASE_URL}/api/auth/login`, {
       method: 'POST',
@@ -84,18 +80,29 @@ const login = async (data: ILoginPayload): Promise<ILoginResponse> => {
     })
 
     if (!response.ok) {
-      throw new Error(`Login failed: ${response.status} ${response.statusText}`)
+      const errorText = await response.text()
+      let errorMessage = `Login failed: ${response.status} ${response.statusText}`
+      
+      try {
+        const errorData = JSON.parse(errorText)
+        if (errorData.message) {
+          errorMessage = errorData.message
+        }
+      } catch (parseError) {
+        // Use default error message if parsing fails
+      }
+      
+      throw new Error(errorMessage)
     }
 
     const responseData: ILoginResponse = await response.json()
-    logger.auth.info('Login successful')
+    
+    // Validate response structure
+    if (!responseData.success || !responseData.data || !responseData.data.tokens || !responseData.data.user) {
+      throw new Error('Invalid response from server')
+    }
 
-    // Return data without storing - let auth store handle persistence
     return responseData
-  } catch (error) {
-    logger.auth.error('Login failed:', error)
-    throw error
-  }
 }
 
 /**
@@ -103,26 +110,46 @@ const login = async (data: ILoginPayload): Promise<ILoginResponse> => {
  * Storage is handled by the auth store
  */
 const refreshToken = async (): Promise<IRefreshTokenResponse> => {
-  try {
-    logger.auth.debug('Refreshing token...')
-
     // Get refresh token from storage
     const refreshTokenValue = useCookie(CookieKeys.REFRESH_TOKEN, '')
-    if (!refreshTokenValue.exists()) {
+    
+    if (!refreshTokenValue.exists() || !refreshTokenValue.value) {
       throw new Error('No refresh token available')
     }
 
+    // Remove quotes if present (cookies sometimes wrap values in quotes)
+    const cleanRefreshToken = (typeof refreshTokenValue.value === 'string' ? refreshTokenValue.value : String(refreshTokenValue.value))?.replace(/"/g, '') || '';
+
     const response = await api.post<{ accessToken: string; refreshToken?: string }>('/api/auth/refresh-token', {
-      refreshToken: refreshTokenValue.value
+      refreshToken: cleanRefreshToken
     })
 
-    logger.auth.info('Token refresh successful')
+    // Validate response structure
+    if (!response.data || !response.data.accessToken) {
+      throw new Error('Invalid refresh token response')
+    }
 
-    // Return data without storing - let auth store handle persistence
     return response as IRefreshTokenResponse
+}
+
+/**
+ * Validate token without making API call
+ * @param token JWT token to validate
+ * @returns Boolean indicating if token is valid
+ */
+const validateToken = (token: string): boolean => {
+  try {
+    if (!token || typeof token !== 'string' || token.trim() === '') {
+      return false
+    }
+
+    // Decode token to check expiration
+    const payload = JSON.parse(atob(token.split('.')[1]))
+    const currentTime = Math.floor(Date.now() / 1000)
+    
+    return payload.exp > currentTime
   } catch (error) {
-    logger.auth.error('Token refresh failed:', error)
-    throw error
+    return false
   }
 }
 
@@ -132,16 +159,12 @@ const refreshToken = async (): Promise<IRefreshTokenResponse> => {
  */
 const logout = (): void => {
   try {
-    logger.auth.debug('Logging out...')
-
     // Clear auth data from storage
     cookieUtils.remove('ACCESS_TOKEN')
     cookieUtils.remove('REFRESH_TOKEN')
     cookieUtils.remove('USER_DATA')
-
-    logger.auth.info('Logout complete')
   } catch (error) {
-    logger.auth.error('Logout error:', error)
+    console.error('Logout error:', error)
   }
 }
 
@@ -175,5 +198,6 @@ export default {
   logout,
   getCurrentToken,
   isAuthenticated,
-  getCurrentUser
+  getCurrentUser,
+  validateToken
 }

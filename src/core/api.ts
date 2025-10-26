@@ -74,7 +74,9 @@ api.interceptors.request.use(
     }
 
     if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`;
+      // Remove quotes if present (cookies sometimes wrap values in quotes)
+      const cleanToken = token.replace(/"/g, '');
+      config.headers.Authorization = `Bearer ${cleanToken}`;
     }
     return config;
   },
@@ -82,6 +84,25 @@ api.interceptors.request.use(
     return Promise.reject(error);
   }
 );
+
+// Track refresh attempts to prevent multiple concurrent refreshes
+let isRefreshing = false;
+let failedQueue: Array<{
+  resolve: (value: any) => void;
+  reject: (error: any) => void;
+}> = [];
+
+const processQueue = (error: any, token: string | null = null) => {
+  failedQueue.forEach(({ resolve, reject }) => {
+    if (error) {
+      reject(error);
+    } else {
+      resolve(token);
+    }
+  });
+  
+  failedQueue = [];
+};
 
 api.interceptors.response.use(
   (response) => {
@@ -93,15 +114,36 @@ api.interceptors.response.use(
 
     // Handle 401 Unauthorized - try to refresh token
     if (error.response?.status === 401 && !originalRequest._retry) {
+      if (isRefreshing) {
+        // If already refreshing, queue this request
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        }).then(token => {
+          originalRequest.headers.Authorization = `Bearer ${token}`;
+          return api(originalRequest);
+        }).catch(err => {
+          return Promise.reject(err);
+        });
+      }
+
       originalRequest._retry = true;
+      isRefreshing = true;
+
       try {
         // Call refresh token API through auth service
         const refreshResponse = await authService.refreshToken();
 
         // Check if refresh was successful (has accessToken)
-        if (refreshResponse.data.accessToken) {
+        if (refreshResponse.data && refreshResponse.data.accessToken) {
           // Update auth store with new token
           authStore.updateAccessToken(refreshResponse.data.accessToken);
+          
+          if (refreshResponse.data.refreshToken) {
+            authStore.setRefreshToken(refreshResponse.data.refreshToken);
+          }
+
+          // Process queued requests
+          processQueue(null, refreshResponse.data.accessToken);
 
           // Update the original request with new token
           if (originalRequest.headers) {
@@ -111,16 +153,31 @@ api.interceptors.response.use(
           // Retry the original request with new token
           return api(originalRequest);
         } else {
-          // Refresh failed, clear auth state and redirect
+          processQueue(new Error('Token refresh failed'), null);
           authStore.clearToken();
           window.location.href = '/snack_survey/#/login';
           return Promise.reject(new Error('Token refresh failed'));
         }
       } catch (refreshError) {
-        // Refresh failed, clear auth state and redirect
-        authStore.clearToken();
-        window.location.href = '/snack_survey/#/login';
-        return Promise.reject(refreshError);
+        // Check if refresh failed due to expired refresh token
+        const isRefreshTokenExpired = (refreshError as any)?.response?.status === 401 || 
+                                     (refreshError as any)?.message?.includes('refresh token') ||
+                                     (refreshError as any)?.message?.includes('No refresh token available');
+        
+        if (isRefreshTokenExpired) {
+          processQueue(refreshError, null);
+          // Don't clear cookies, just redirect to login
+          window.location.href = '/snack_survey/#/login';
+          return Promise.reject(refreshError);
+        } else {
+          // For other errors, clear cookies
+          processQueue(refreshError, null);
+          authStore.clearToken();
+          window.location.href = '/snack_survey/#/login';
+          return Promise.reject(refreshError);
+        }
+      } finally {
+        isRefreshing = false;
       }
     }
 

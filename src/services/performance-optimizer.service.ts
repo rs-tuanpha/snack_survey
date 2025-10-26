@@ -106,20 +106,20 @@ export class PerformanceOptimizerService {
    */
   private monitorRenderPerformance(): void {
     // Override nextTick to measure render time
-    const originalNextTick = nextTick
+    // const originalNextTick = nextTick
 
-    nextTick = (callback?: () => void) => {
-      this.renderStartTime = performance.now()
+    // nextTick = (callback?: () => void) => {
+    //   this.renderStartTime = performance.now()
 
-      return originalNextTick(() => {
-        const renderTime = performance.now() - this.renderStartTime
-        this.updateMetrics({ renderTime })
+    //   return originalNextTick(() => {
+    //     const renderTime = performance.now() - this.renderStartTime
+    //     this.updateMetrics({ renderTime })
 
-        if (callback) {
-          callback()
-        }
-      })
-    }
+    //     if (callback) {
+    //       callback()
+    //     }
+    //   })
+    // }
   }
 
   /**

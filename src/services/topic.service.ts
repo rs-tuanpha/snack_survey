@@ -147,15 +147,29 @@ export function useDeleteTopic() {
 /**
  * Fetches a list of topics based on the provided parameters.
  */
-export const getTopicList = async (params: TopicListQuery): Promise<ITopic[]> => {
-  const openTopicList: ITopic[] = []
+export const getTopicList = async (params: TopicListQuery): Promise<TopicListResponse> => {
   try {
     const response = await api.get<TopicListResponse>('/api/topics', {
       params
     })
-    return response.data.data.map((item) => adaptApiTopicToITopic(item))
+    return {
+      ...response.data,
+      data: response.data.data.map((item) => adaptApiTopicToITopic(item)) as any
+    }
   } catch (err) {
-    return openTopicList
+    console.error('Error fetching topics:', err)
+    return {
+      success: false,
+      message: 'Failed to fetch topics',
+      timestamp: new Date().toISOString(),
+      data: [],
+      pagination: {
+        page: 1,
+        limit: 20,
+        total: 0,
+        totalPages: 1
+      }
+    }
   }
 }
 

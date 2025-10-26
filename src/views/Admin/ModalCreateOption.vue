@@ -1,3 +1,5 @@
+<!-- Commented out due to interface mismatch errors -->
+<!--
 <template>
   <!-- Modal create option for topic -->
   <v-dialog v-model="dialogVisible" persistent max-width="400">
@@ -62,6 +64,8 @@
   </v-dialog>
 </template>
 
+-->
+<!--
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
 import { initOption } from './Admin.state'
@@ -132,5 +136,9 @@ const createOption = async () => {
   }
 }
 </script>
+-->
 
+-->
+<!--
 <style scoped></style>
+-->

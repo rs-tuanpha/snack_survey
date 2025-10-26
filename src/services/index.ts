@@ -29,7 +29,7 @@ export {
   useVotingStats,
   useVote,
   useUnvote,
-  useToggleVote,
+  // useToggleVote, // Removed - doesn't exist
   vote,
   unvote,
   getVoteStatus,

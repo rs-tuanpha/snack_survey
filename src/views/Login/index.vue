@@ -7,7 +7,7 @@
             <v-toolbar-title>Đăng nhập</v-toolbar-title>
           </v-toolbar>
           <v-card-text>
-            <v-form @submit.prevent="handleLogin">
+            <v-form @submit.prevent="handleFormSubmit">
               <v-autocomplete
                 v-model="selectedUser"
                 :items="userOptions"
@@ -17,11 +17,13 @@
                 item-value="email"
                 return-object
                 :loading="loadingUsers"
-                :rules="[rules.required]"
+                :rules="[rules.userOrEmail]"
                 @update:model-value="onUserSelect"
                 clearable
                 hide-selected
                 :filter="customFilter"
+                :disabled="loadingUsers"
+                :no-data-text="loadingUsers ? 'Đang tải danh sách...' : 'Không có tài khoản nào'"
               >
                 <template v-slot:item="{ props, item }">
                   <v-list-item v-bind="props">
@@ -40,6 +42,19 @@
                   </div>
                 </template>
               </v-autocomplete>
+
+              <!-- Manual email input as fallback -->
+              <v-text-field
+                v-model="email"
+                label="Email (nếu không chọn từ danh sách)"
+                prepend-icon="mdi-email"
+                type="email"
+                :rules="[rules.userOrEmail, rules.email]"
+                :disabled="isEmailDisabled"
+                hint="Chỉ cần điền nếu không chọn từ danh sách trên"
+                persistent-hint
+              ></v-text-field>
+
               <v-text-field
                 v-model="password"
                 label="Password"
@@ -55,7 +70,7 @@
           </v-card-text>
           <v-card-actions>
             <v-spacer></v-spacer>
-            <v-btn color="primary" @click="handleLogin" :loading="loading">Đăng nhập</v-btn>
+            <v-btn color="primary" @click="handleFormSubmit" :loading="loading">Đăng nhập</v-btn>
           </v-card-actions>
         </v-card>
       </v-col>
@@ -64,7 +79,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import authService from '@/services/auth.service'
 import { getUsersList } from '@/services/user.service'
@@ -95,12 +110,15 @@ const rules = {
   email: (value: string) => {
     const pattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
     return pattern.test(value) || 'Invalid e-mail.'
+  },
+  userOrEmail: () => {
+    return selectedUser.value || email.value || 'Please select a user or enter email.'
   }
 }
 
 // Computed property để tạo options cho dropdown
 const userOptions = computed(() => {
-  return users.value.map(user => ({
+  return users.value.map((user) => ({
     ...user,
     displayName: user.username
   }))
@@ -117,11 +135,14 @@ const customFilter = (value: any, query: string) => {
   return username.includes(searchTerm) || email.includes(searchTerm)
 }
 
-// Hàm xử lý khi user chọn từ dropdown
+// Method to handle user selection from dropdown
 const onUserSelect = (user: any) => {
   if (user) {
     selectedUser.value = user
     email.value = user.email
+  } else {
+    // Clear selection
+    clearUserSelection()
   }
 }
 
@@ -129,15 +150,18 @@ const onUserSelect = (user: any) => {
 const initializeUsers = async () => {
   try {
     loadingUsers.value = true
+
     const usersList = await getUsersList({ page: 1, limit: 100 })
 
     // Map users to match expected format
-    users.value = usersList.map(user => ({
+    users.value = usersList.map((user) => ({
       id: user._id,
+      _id: user._id, // Keep original _id as well
       email: user.email,
       username: user.username,
       avatar: user.avatar,
-      team: user.team
+      team: user.team,
+      role: user.role
     }))
 
     // Also update user store for consistency
@@ -151,7 +175,11 @@ const initializeUsers = async () => {
 }
 
 const handleLogin = async () => {
-  if (!email.value || !password.value) {
+  // Get email from selected user or manual input
+  const loginEmail = selectedUser.value?.email || email.value
+
+  // Double-check validation (should already be validated by handleFormSubmit)
+  if (!loginEmail || !password.value) {
     error.value = 'Email and password are required.'
     return
   }
@@ -160,46 +188,110 @@ const handleLogin = async () => {
   error.value = null
 
   try {
-    const response = await authService.login({ email: email.value, password: password.value })
-    if (response.success) {
-      // Prepare user data
-      const userData = {
-        id: response.data.user.id,
-        email: response.data.user.email,
-        username: response.data.user.username,
-        avatar: response.data.user.avatar,
-        role: response.data.user.role,
-        team: response.data.user.team
-      }
+    const response = await authService.login({ email: loginEmail, password: password.value })
 
-      // Set tokens and user data using useCookie hooks
-      accessTokenCookie.set(response.data.tokens.accessToken)
-      if (response.data.tokens.refreshToken) {
-        refreshTokenCookie.set(response.data.tokens.refreshToken)
-      }
-      userDataCookie.set(JSON.stringify(userData))
-
-      // Update auth store state
-      authStore.setAuthData({
-        accessToken: response.data.tokens.accessToken,
-        refreshToken: response.data.tokens.refreshToken,
-        user: userData
-      })
-
-      // Also set user in user store
-      userStore.setUser(userData)
-
-      router.push('/') // Redirecting to home page as /topics does not exist
-    } else {
-      error.value = response.message
+    // Validate response structure
+    if (!response || !response.success || !response.data) {
+      throw new Error('Invalid response from server')
     }
-  } catch (err) {
-    error.value = 'Login failed. Please check your credentials.'
-    console.error(err)
+
+    if (!response.data.tokens || !response.data.user) {
+      throw new Error('Missing authentication data in response')
+    }
+
+    // Prepare user data
+    const userData = {
+      id: response.data.user.id,
+      email: response.data.user.email,
+      username: response.data.user.username,
+      avatar: response.data.user.avatar,
+      role: response.data.user.role,
+      team: response.data.user.team
+    }
+
+    // Set tokens and user data using useCookie hooks
+    accessTokenCookie.set(response.data.tokens.accessToken)
+    if (response.data.tokens.refreshToken) {
+      refreshTokenCookie.set(response.data.tokens.refreshToken)
+    }
+    userDataCookie.set(JSON.stringify(userData)) // Stringify the object
+
+    // Update auth store state
+    authStore.setAuthData({
+      accessToken: response.data.tokens.accessToken,
+      refreshToken: response.data.tokens.refreshToken,
+      user: userData
+    })
+
+    // Also set user in user store
+    userStore.setUser(userData)
+
+    router.push('/') // Redirecting to home page as /topics does not exist
+  } catch (err: any) {
+    console.error('Login error:', err)
+
+    // Handle different types of errors
+    if (err.message && err.message.includes('Invalid email or password')) {
+      error.value = 'Invalid email or password. Please check your credentials.'
+    } else if (err.message && err.message.includes('Invalid response')) {
+      error.value = 'Server error. Please try again later.'
+    } else if (err.message) {
+      error.value = err.message
+    } else {
+      error.value = 'Login failed. Please check your credentials and try again.'
+    }
   } finally {
     loading.value = false
   }
 }
+
+// Method to clear user selection
+const clearUserSelection = () => {
+  selectedUser.value = null
+  email.value = ''
+}
+
+// Method to handle form submission
+const handleFormSubmit = () => {
+  if (!validateForm()) {
+    return
+  }
+  handleLogin()
+}
+
+// Method to check if email field should be disabled
+const isEmailDisabled = computed(() => {
+  return !!selectedUser.value
+})
+
+// Method to get current email value for display
+const currentEmail = computed(() => {
+  return selectedUser.value?.email || email.value
+})
+
+// Method to validate form before submission
+const validateForm = () => {
+  const loginEmail = selectedUser.value?.email || email.value
+
+  if (!loginEmail) {
+    error.value = 'Please select a user or enter email.'
+    return false
+  }
+
+  if (!password.value) {
+    error.value = 'Password is required.'
+    return false
+  }
+
+  return true
+}
+
+// Watch for manual email input to clear selection
+watch(email, (newEmail) => {
+  if (selectedUser.value && selectedUser.value.email !== newEmail) {
+    selectedUser.value = null
+  }
+})
 
 // Gọi API khi component được mount
 onMounted(() => {

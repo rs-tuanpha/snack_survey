@@ -33,8 +33,24 @@
       ></v-text-field>
     </v-sheet>
 
+    <!-- Loading State -->
     <v-sheet
-      v-if="filteredTopics.length"
+      v-if="isLoadingTopics"
+      class="mx-auto pa-4"
+      border
+      rounded
+      min-width="350"
+      max-width="638"
+      width="100%"
+    >
+      <div class="d-flex justify-center">
+        <v-progress-circular indeterminate color="primary"></v-progress-circular>
+        <span class="ml-2">Đang tải topics...</span>
+      </div>
+    </v-sheet>
+
+    <v-sheet
+      v-else-if="filteredTopics.length"
       class="mx-auto pa-2"
       border
       rounded
@@ -60,8 +76,60 @@
         </v-hover>
       </v-col>
     </v-sheet>
+
+    <!-- Pagination Controls -->
     <v-sheet
-      v-if="activeTab === 'open' && !filteredTopics.length"
+      v-if="totalPages > 1"
+      class="mx-auto pa-4"
+      border
+      rounded
+      min-width="350"
+      max-width="638"
+      width="100%"
+    >
+      <div class="d-flex flex-column align-center">
+        <!-- Pagination Info -->
+        <div class="text-caption text-medium-emphasis mb-2">
+          Hiển thị {{ ((currentPage - 1) * pageSize) + 1 }}-{{ Math.min(currentPage * pageSize, totalTopics) }} 
+          trong tổng số {{ totalTopics }} topics
+        </div>
+        
+        <!-- Pagination Component -->
+        <v-pagination
+          v-model="currentPage"
+          :length="totalPages"
+          :total-visible="5"
+          @update:model-value="handlePageChange"
+          :disabled="isLoadingTopics"
+          color="primary"
+        ></v-pagination>
+        
+        <!-- Previous/Next Buttons -->
+        <div class="d-flex gap-2 mt-2">
+          <v-btn
+            :disabled="currentPage <= 1 || isLoadingTopics"
+            @click="goToPreviousPage"
+            variant="outlined"
+            size="small"
+          >
+            <v-icon left>mdi-chevron-left</v-icon>
+            Trước
+          </v-btn>
+          
+          <v-btn
+            :disabled="currentPage >= totalPages || isLoadingTopics"
+            @click="goToNextPage"
+            variant="outlined"
+            size="small"
+          >
+            Sau
+            <v-icon right>mdi-chevron-right</v-icon>
+          </v-btn>
+        </div>
+      </div>
+    </v-sheet>
+    <v-sheet
+      v-if="!isLoadingTopics && activeTab === 'open' && !filteredTopics.length"
       class="mx-auto pa-2"
       border
       rounded
@@ -96,7 +164,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onBeforeMount } from 'vue'
+import { ref, computed, onBeforeMount, watch } from 'vue'
 import { getTopicList } from '@/services/topic.service'
 import { getCurrentUserProfile } from '@/services/user.service'
 import type { ITopic } from '@/core/interfaces/model/topic'
@@ -123,6 +191,13 @@ const searchTerm = ref('')
 // const showVoteDialog = ref(false)
 // const voteList = ref<IUser[]>([])
 
+// Pagination state
+const currentPage = ref(1)
+const totalPages = ref(1)
+const totalTopics = ref(0)
+const pageSize = 20
+const isLoadingTopics = ref(false)
+
 // Computed
 const filteredTopics = computed(() => {
   const tabFiltered = topics.value.filter((topic) =>
@@ -136,9 +211,45 @@ const filteredTopics = computed(() => {
   )
 })
 
+// Watch for search term changes to reset pagination
+watch(searchTerm, () => {
+  if (searchTerm.value) {
+    currentPage.value = 1
+  }
+})
+
 // Methods
 const handleSearch = () => {
   // Search is handled by computed property
+  // Reset to page 1 when searching
+  currentPage.value = 1
+  fetchTopics(1)
+}
+
+// Pagination methods
+const goToPage = (page: number) => {
+  if (page >= 1 && page <= totalPages.value && page !== currentPage.value) {
+    currentPage.value = page
+    fetchTopics(page)
+    // Scroll to top when changing page
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+}
+
+const goToNextPage = () => {
+  if (currentPage.value < totalPages.value) {
+    goToPage(currentPage.value + 1)
+  }
+}
+
+const goToPreviousPage = () => {
+  if (currentPage.value > 1) {
+    goToPage(currentPage.value - 1)
+  }
+}
+
+const handlePageChange = (page: number) => {
+  goToPage(page)
 }
 
 const goTopicVote = (id: string) => {
@@ -183,13 +294,25 @@ const getUserData = async () => {
   }
 }
 
-const fetchTopics = async () => {
+const fetchTopics = async (page = 1) => {
   if (!userData.value?.team) return
 
+  isLoadingTopics.value = true
   try {
-    topics.value = await getTopicList({ team: userData.value.team, page: 1, limit: 99 })
+    const response = await getTopicList({ 
+      team: userData.value.team, 
+      page, 
+      limit: pageSize 
+    })
+    
+    topics.value = response.data as any as ITopic[]
+    currentPage.value = response.pagination.page
+    totalPages.value = response.pagination.totalPages
+    totalTopics.value = response.pagination.total
   } catch (error) {
     console.error('Error fetching topics:', error)
+  } finally {
+    isLoadingTopics.value = false
   }
 }
 

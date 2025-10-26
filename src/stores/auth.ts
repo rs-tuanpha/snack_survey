@@ -1,5 +1,4 @@
 import { defineStore } from 'pinia'
-import { logger } from '@/core/utils/logger'
 import { EUserRole } from '@/core/constants/enum'
 import { getCookieRaw, setCookieRaw, deleteCookieRaw, CookieKeys } from '@/core/utils/cookieUtils'
 import type { IUser } from '@/core/interfaces/model/user'
@@ -7,7 +6,8 @@ import type { IUser } from '@/core/interfaces/model/user'
 // Simple cookie utilities for store use - using type-safe CookieKeys
 const cookieUtils = {
   get: (key: keyof typeof CookieKeys): string | null => getCookieRaw(CookieKeys[key]),
-  set: (key: keyof typeof CookieKeys, value: string, days = 7): void => setCookieRaw(CookieKeys[key], value, days),
+  set: (key: keyof typeof CookieKeys, value: string, days = 7): void =>
+    setCookieRaw(CookieKeys[key], value, days),
   remove: (key: keyof typeof CookieKeys): void => deleteCookieRaw(CookieKeys[key]),
   getJSON: <T>(key: keyof typeof CookieKeys): T | null => {
     const value = getCookieRaw(CookieKeys[key])
@@ -40,14 +40,29 @@ const initState: IAuthState = {
 }
 
 export const useAuthStore = defineStore('auth', {
-  state: (): IAuthState => {
+  state: () => {
     return { ...initState }
   },
 
   getters: {
     // Enhanced authentication check
-    isAuthenticated: (state): boolean => {
+    checkAuthenticated: (state): boolean => {
       return state.isAuthenticated && !!state.accessToken
+    },
+
+    // Check if token is valid (not expired)
+    isTokenValid: (state): boolean => {
+      if (!state.accessToken) return false
+
+      try {
+        // Decode token to check expiration
+        const payload = JSON.parse(atob(state.accessToken.split('.')[1]))
+        const currentTime = Math.floor(Date.now() / 1000)
+        return payload.exp > currentTime
+      } catch (error) {
+        console.warn('Failed to validate token:', error)
+        return false
+      }
     },
 
     // Check if user has specific role
@@ -72,11 +87,7 @@ export const useAuthStore = defineStore('auth', {
     /**
      * Set authentication data and persist to cookies
      */
-    setAuthData(authData: {
-      accessToken: string
-      refreshToken?: string
-      user: IUser
-    }): void {
+    setAuthData(authData: { accessToken: string; refreshToken?: string; user: IUser }): void {
       this.accessToken = authData.accessToken
       this.refreshToken = authData.refreshToken || null
       this.user = authData.user
@@ -89,13 +100,6 @@ export const useAuthStore = defineStore('auth', {
         cookieUtils.set('REFRESH_TOKEN', authData.refreshToken)
       }
       cookieUtils.setJSON('USER_DATA', authData.user)
-
-      logger.auth.debug('Auth data set and persisted to cookies', {
-        hasAccessToken: !!this.accessToken,
-        hasRefreshToken: !!this.refreshToken,
-        userId: this.user?.id,
-        role: this.role
-      })
     },
 
     /**
@@ -107,8 +111,6 @@ export const useAuthStore = defineStore('auth', {
 
       // Update token in cookies
       cookieUtils.set('ACCESS_TOKEN', accessToken)
-
-      logger.auth.debug('Token updated and persisted to cookies', this.accessToken)
     },
 
     /**
@@ -119,8 +121,6 @@ export const useAuthStore = defineStore('auth', {
 
       // Update refresh token in cookies
       cookieUtils.set('REFRESH_TOKEN', refreshToken)
-
-      logger.auth.debug('Refresh token updated and persisted to cookies')
     },
 
     /**
@@ -134,8 +134,6 @@ export const useAuthStore = defineStore('auth', {
         this.user.role = role
         cookieUtils.setJSON('USER_DATA', this.user)
       }
-
-      logger.auth.debug('Role updated and persisted to cookies', this.role)
     },
 
     /**
@@ -147,8 +145,6 @@ export const useAuthStore = defineStore('auth', {
 
       // Update user data in cookies
       cookieUtils.setJSON('USER_DATA', user)
-
-      logger.auth.debug('User data updated and persisted to cookies', user)
     },
 
     /**
@@ -157,7 +153,6 @@ export const useAuthStore = defineStore('auth', {
     updateAccessToken(accessToken: string): void {
       this.accessToken = accessToken
       cookieUtils.set('ACCESS_TOKEN', accessToken)
-      logger.auth.debug('Access token refreshed and persisted')
     },
 
     /**
@@ -174,43 +169,47 @@ export const useAuthStore = defineStore('auth', {
       cookieUtils.remove('ACCESS_TOKEN')
       cookieUtils.remove('REFRESH_TOKEN')
       cookieUtils.remove('USER_DATA')
-
-      logger.auth.debug('All auth data cleared from store and cookies')
     },
 
     /**
-     * Initialize from storage
+     * Initialize from storage - simplified version
      */
     initializeFromStorage(): void {
       try {
+        
+        // Use the same cookie reading method as useCookie hook
         const accessToken = cookieUtils.get('ACCESS_TOKEN')
         const refreshToken = cookieUtils.get('REFRESH_TOKEN')
-        const user = cookieUtils.getJSON<IUser>('USER_DATA')
-
-        const authData = accessToken && user ? {
-          accessToken,
-          refreshToken: refreshToken || undefined,
-          user
-        } : null
-
-        if (authData && authData.accessToken && authData.user) {
-          this.accessToken = authData.accessToken
-          this.refreshToken = authData.refreshToken || null
-          this.user = authData.user
-          this.role = authData.user.role
-          this.isAuthenticated = true
-
-          logger.auth.debug('Auth store hydrated from cookies', {
-            hasAccessToken: !!this.accessToken,
-            hasRefreshToken: !!this.refreshToken,
-            userId: this.user?.id,
-            role: this.role
-          })
-        } else {
-          logger.auth.debug('No auth data found in cookies')
+        
+        // For user data, read raw and parse manually to match useCookie behavior
+        const userDataRaw = cookieUtils.get('USER_DATA')
+        let user: IUser | null = null
+        
+        if (userDataRaw) {
+          try {
+            user = JSON.parse(userDataRaw) as IUser
+          } catch (parseError) {
+            console.error('Failed to parse user data from cookie:', parseError)
+          }
         }
+
+
+        // Validate auth data
+        if (!accessToken || !user || !user.id || !user.email || !user.username) {
+          this.clearToken()
+          return
+        }
+
+        // Set auth data
+        this.accessToken = accessToken
+        this.refreshToken = refreshToken || null
+        this.user = user
+        this.role = user.role
+        this.isAuthenticated = true
+
       } catch (error) {
-        logger.auth.error('Failed to hydrate auth store:', error)
+        console.error('❌ Failed to hydrate auth store:', error)
+        this.clearToken()
       }
     },
 
@@ -235,16 +234,25 @@ export const useAuthStore = defineStore('auth', {
     async refreshAuth(): Promise<boolean> {
       try {
         if (!this.refreshToken) {
-          logger.auth.warn('No refresh token available')
           return false
         }
 
-        // This would typically call an API to refresh the token
-        // For now, we'll just return true if we have a refresh token
-        logger.auth.debug('Auth refresh attempted')
-        return true
+        // Import auth service dynamically to avoid circular dependency
+        const authService = await import('@/services/auth.service')
+        const response = await authService.default.refreshToken()
+
+        if (response.data && response.data.accessToken) {
+          this.updateAccessToken(response.data.accessToken)
+          if (response.data.refreshToken) {
+            this.setRefreshToken(response.data.refreshToken)
+          }
+          return true
+        } else {
+          this.clearToken()
+          return false
+        }
       } catch (error) {
-        logger.auth.error('Failed to refresh auth:', error)
+        console.error('Failed to refresh authentication:', error)
         this.clearToken()
         return false
       }
