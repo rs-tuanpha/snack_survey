@@ -8,9 +8,8 @@
       style="position: absolute; top: -8px; left: -8px; z-index: 10"
     />
     <v-card
+      class="glass-card-sm"
       style="
-        box-shadow: none;
-        border: 1px solid #ebebeb;
         height: 100%;
         display: flex;
         flex-direction: column;
@@ -27,20 +26,20 @@
       </div>
       <div style="position: relative; flex: 1; border-top: 1px solid #ebebeb; margin-bottom: 8px">
         <v-chip
+          class="glass-chip-vue"
           variant="flat"
           append-icon="mdi-star"
           style="position: absolute; top: -16px; left: 50%; transform: translateX(-50%)"
-          color="orange"
         >
-          <p style="font-size: 16px; font-weight: 700; color: #252525; margin: 0">
+          <p style="font-size: 16px; font-weight: 700; margin: 0">
             {{ props.option.voteCount || 0 }}
           </p>
         </v-chip>
         <p
+          class="glass-text"
           style="
             font-size: 14px;
             font-weight: 700;
-            color: #252525;
             white-space: nowrap;
             text-overflow: ellipsis;
             overflow: hidden;
@@ -53,6 +52,7 @@
         <a
           :href="option?.link"
           target="_blank"
+          class="glass-text-secondary"
           style="
             display: block;
             width: 100%;
@@ -61,6 +61,7 @@
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+            text-decoration: none;
           "
         >
           {{ props.option?.link }}

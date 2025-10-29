@@ -1,81 +1,98 @@
 <template>
-  <v-container class="fill-height" fluid>
-    <v-row align="center" justify="center">
-      <v-col cols="12" sm="8" md="4">
-        <v-card class="elevation-12">
-          <v-toolbar color="primary" dark flat>
-            <v-toolbar-title>Đăng nhập</v-toolbar-title>
-          </v-toolbar>
-          <v-card-text>
-            <v-form @submit.prevent="handleFormSubmit">
-              <v-autocomplete
-                v-model="selectedUser"
-                :items="userOptions"
-                label="Chọn tài khoản"
-                prepend-icon="mdi-account"
-                item-title="displayName"
-                item-value="email"
-                return-object
-                :loading="loadingUsers"
-                :rules="[rules.userOrEmail]"
-                @update:model-value="onUserSelect"
-                clearable
-                hide-selected
-                :filter="customFilter"
-                :disabled="loadingUsers"
-                :no-data-text="loadingUsers ? 'Đang tải danh sách...' : 'Không có tài khoản nào'"
+  <div class="login-container">
+    <v-container class="fill-height" fluid>
+      <v-row align="center" justify="center">
+        <v-col cols="12" sm="8" md="4">
+          <v-card class="glassmorphism-card elevation-0">
+            <v-card-title class="glassmorphism-title text-center pa-6">
+              <v-icon icon="mdi-login" class="mr-2"></v-icon>
+              Đăng nhập
+            </v-card-title>
+            <v-card-text class="glassmorphism-content">
+              <v-form @submit.prevent="handleFormSubmit">
+                <v-autocomplete
+                  v-model="selectedUser"
+                  :items="userOptions"
+                  label="Chọn tài khoản"
+                  prepend-icon="mdi-account"
+                  item-title="displayName"
+                  item-value="email"
+                  return-object
+                  :loading="loadingUsers"
+                  :rules="[rules.userOrEmail]"
+                  @update:model-value="onUserSelect"
+                  clearable
+                  hide-selected
+                  :filter="customFilter"
+                  :disabled="loadingUsers"
+                  :no-data-text="loadingUsers ? 'Đang tải danh sách...' : 'Không có tài khoản nào'"
+                  class="glassmorphism-input mb-4"
+                >
+                  <template v-slot:item="{ props, item }">
+                    <v-list-item v-bind="props">
+                      <template v-slot:title>
+                        <div class="d-flex flex-column">
+                          <span class="text-primary font-weight-medium">{{ item.raw.username }}</span>
+                          <span class="text-caption text-medium-emphasis">{{ item.raw.email }}</span>
+                        </div>
+                      </template>
+                    </v-list-item>
+                  </template>
+                  <template v-slot:selection="{ item }">
+                    <div class="d-flex flex-column">
+                      <span class="text-primary font-weight-medium">{{ item.raw.username }}</span>
+                      <span class="text-caption text-medium-emphasis">{{ item.raw.email }}</span>
+                    </div>
+                  </template>
+                </v-autocomplete>
+
+                <!-- Manual email input as fallback -->
+                <v-text-field
+                  v-model="email"
+                  label="Email (nếu không chọn từ danh sách)"
+                  prepend-icon="mdi-email"
+                  type="email"
+                  :rules="[rules.userOrEmail, rules.email]"
+                  :disabled="isEmailDisabled"
+                  hint="Chỉ cần điền nếu không chọn từ danh sách trên"
+                  persistent-hint
+                  class="glassmorphism-input mb-4"
+                ></v-text-field>
+
+                <v-text-field
+                  v-model="password"
+                  label="Password"
+                  name="password"
+                  prepend-icon="mdi-lock"
+                  type="password"
+                  :rules="[rules.required]"
+                  class="glassmorphism-input mb-4"
+                ></v-text-field>
+                
+                <v-alert v-if="error" type="error" dense class="glassmorphism-alert">
+                  <v-icon icon="mdi-alert-circle" class="mr-2"></v-icon>
+                  {{ error }}
+                </v-alert>
+              </v-form>
+            </v-card-text>
+            <v-card-actions class="glassmorphism-actions">
+              <v-spacer></v-spacer>
+              <v-btn 
+                color="primary" 
+                @click="handleFormSubmit" 
+                :loading="loading"
+                class="glassmorphism-button px-8"
+                size="large"
               >
-                <template v-slot:item="{ props, item }">
-                  <v-list-item v-bind="props">
-                    <template v-slot:title>
-                      <div class="d-flex flex-column">
-                        <span class="text-primary font-weight-medium">{{ item.raw.username }}</span>
-                        <span class="text-caption text-medium-emphasis">{{ item.raw.email }}</span>
-                      </div>
-                    </template>
-                  </v-list-item>
-                </template>
-                <template v-slot:selection="{ item }">
-                  <div class="d-flex flex-column">
-                    <span class="text-primary font-weight-medium">{{ item.raw.username }}</span>
-                    <span class="text-caption text-medium-emphasis">{{ item.raw.email }}</span>
-                  </div>
-                </template>
-              </v-autocomplete>
-
-              <!-- Manual email input as fallback -->
-              <v-text-field
-                v-model="email"
-                label="Email (nếu không chọn từ danh sách)"
-                prepend-icon="mdi-email"
-                type="email"
-                :rules="[rules.userOrEmail, rules.email]"
-                :disabled="isEmailDisabled"
-                hint="Chỉ cần điền nếu không chọn từ danh sách trên"
-                persistent-hint
-              ></v-text-field>
-
-              <v-text-field
-                v-model="password"
-                label="Password"
-                name="password"
-                prepend-icon="mdi-lock"
-                type="password"
-                :rules="[rules.required]"
-              ></v-text-field>
-              <v-alert v-if="error" type="error" dense>
-                {{ error }}
-              </v-alert>
-            </v-form>
-          </v-card-text>
-          <v-card-actions>
-            <v-spacer></v-spacer>
-            <v-btn color="primary" @click="handleFormSubmit" :loading="loading">Đăng nhập</v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-col>
-    </v-row>
-  </v-container>
+                <v-icon icon="mdi-login" class="mr-2"></v-icon>
+                Đăng nhập
+              </v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-col>
+      </v-row>
+    </v-container>
+  </div>
 </template>
 
 <script lang="ts" setup>
@@ -264,10 +281,6 @@ const isEmailDisabled = computed(() => {
   return !!selectedUser.value
 })
 
-// Method to get current email value for display
-const currentEmail = computed(() => {
-  return selectedUser.value?.email || email.value
-})
 
 // Method to validate form before submission
 const validateForm = () => {
@@ -298,3 +311,7 @@ onMounted(() => {
   initializeUsers()
 })
 </script>
+
+<style scoped lang="scss">
+@use './styles.scss';
+</style>

@@ -1,0 +1,436 @@
+// Global Glassmorphism Styles for SnackSurveyMaster
+// Vue Green Theme with Glass Effects
+
+// ===========================================
+// COLOR VARIABLES
+// ===========================================
+:root {
+  // Vue Green Color Palette
+  --vue-green: #4FC08D;
+  --vue-green-dark: #42A085;
+  --vue-green-light: #66D9A3;
+  --vue-green-accent: #E8F5E8;
+  
+  // Glass Effect Colors
+  --glass-bg: rgba(255, 255, 255, 0.1);
+  --glass-bg-light: rgba(255, 255, 255, 0.05);
+  --glass-bg-medium: rgba(255, 255, 255, 0.15);
+  --glass-bg-strong: rgba(255, 255, 255, 0.2);
+  
+  // Border Colors
+  --glass-border: rgba(255, 255, 255, 0.2);
+  --glass-border-light: rgba(255, 255, 255, 0.1);
+  --glass-border-strong: rgba(79, 192, 141, 0.3);
+  
+  // Text Colors
+  --glass-text: #ffffff;
+  --glass-text-secondary: rgba(255, 255, 255, 0.8);
+  --glass-text-muted: rgba(255, 255, 255, 0.6);
+  
+  // Shadow Colors
+  --glass-shadow: rgba(0, 0, 0, 0.1);
+  --glass-shadow-strong: rgba(0, 0, 0, 0.15);
+  --vue-shadow: rgba(79, 192, 141, 0.3);
+}
+
+// ===========================================
+// MIXINS
+// ===========================================
+@mixin glass-effect($blur: 20px, $bg: var(--glass-bg), $border: var(--glass-border)) {
+  background: $bg;
+  backdrop-filter: blur($blur);
+  -webkit-backdrop-filter: blur($blur);
+  border: 1px solid $border;
+  border-radius: 16px;
+  box-shadow: 
+    0 8px 32px var(--glass-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+@mixin glass-card($blur: 15px) {
+  @include glass-effect($blur);
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 
+      0 12px 40px var(--glass-shadow-strong),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  }
+}
+
+@mixin glass-button($primary: true) {
+  @if $primary {
+    background: linear-gradient(135deg, var(--vue-green) 0%, var(--vue-green-dark) 100%);
+    border: 1px solid var(--vue-green-dark);
+    color: var(--glass-text);
+  } @else {
+    @include glass-effect(10px, var(--glass-bg-light), var(--glass-border));
+    color: var(--glass-text);
+  }
+  
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 8px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  box-shadow: 
+    0 4px 16px var(--vue-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 
+      0 6px 20px var(--vue-shadow),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  }
+  
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+@mixin glass-input {
+  :deep(.v-field) {
+    @include glass-effect(5px, var(--glass-bg-light), var(--glass-border));
+    transition: all 0.3s ease;
+    
+    &:hover {
+      background: var(--glass-bg-medium);
+      border-color: var(--vue-green);
+    }
+    
+    &.v-field--focused {
+      background: var(--glass-bg-strong);
+      border-color: var(--vue-green);
+      box-shadow: 0 0 0 2px var(--vue-shadow);
+    }
+  }
+  
+  :deep(.v-field__input) {
+    color: var(--glass-text);
+    font-weight: 500;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    
+    &::placeholder {
+      color: var(--glass-text-muted);
+    }
+  }
+  
+  :deep(.v-label) {
+    color: var(--glass-text-secondary);
+    font-weight: 500;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  }
+  
+  :deep(.v-messages) {
+    color: var(--glass-text-secondary);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  }
+  
+  :deep(.v-icon) {
+    color: var(--glass-text-secondary);
+  }
+}
+
+@mixin glass-text {
+  color: var(--glass-text);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+// ===========================================
+// REUSABLE CLASSES
+// ===========================================
+
+// Glass Container
+.glass-container {
+  @include glass-card(20px);
+  padding: 24px;
+  margin: 16px 0;
+  background: var(--glass-bg) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-radius: 16px !important;
+  box-shadow: 
+    0 8px 32px var(--glass-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+}
+
+// Glass Card
+.glass-card {
+  @include glass-card(15px);
+  padding: 20px;
+}
+
+// Glass Card Small
+.glass-card-sm {
+  @include glass-card(10px);
+  padding: 16px;
+  border-radius: 12px;
+}
+
+// Glass Button Primary
+.glass-btn-primary {
+  @include glass-button(true);
+  padding: 12px 24px;
+  font-size: 14px;
+}
+
+// Glass Button Secondary
+.glass-btn-secondary {
+  @include glass-button(false);
+  padding: 12px 24px;
+  font-size: 14px;
+}
+
+// Glass Input
+.glass-input {
+  @include glass-input;
+}
+
+// Glass Text
+.glass-text {
+  @include glass-text;
+}
+
+// Glass Text Secondary
+.glass-text-secondary {
+  color: var(--glass-text-secondary);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+// Glass Text Muted
+.glass-text-muted {
+  color: var(--glass-text-muted);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+// Glass Chip
+.glass-chip {
+  @include glass-effect(10px, var(--glass-bg-medium), var(--glass-border));
+  color: var(--glass-text);
+  font-weight: 500;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+// Glass Chip Vue Green
+.glass-chip-vue {
+  background: var(--vue-green);
+  color: var(--glass-text);
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--vue-green-dark);
+}
+
+// Glass Alert
+.glass-alert {
+  @include glass-effect(10px, rgba(244, 67, 54, 0.2), rgba(244, 67, 54, 0.4));
+  color: var(--glass-text);
+  font-weight: 500;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  
+  :deep(.v-icon) {
+    color: #ffcdd2;
+  }
+}
+
+// Glass Alert Success
+.glass-alert-success {
+  @include glass-effect(10px, rgba(79, 192, 141, 0.2), rgba(79, 192, 141, 0.4));
+  color: var(--glass-text);
+  font-weight: 500;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  
+  :deep(.v-icon) {
+    color: var(--vue-green-light);
+  }
+}
+
+// Glass Overlay
+.glass-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 1000;
+}
+
+// Glass Dialog
+.glass-dialog {
+  @include glass-card(25px);
+  max-width: 90vw;
+  max-height: 90vh;
+  margin: 5vh auto;
+  overflow: hidden;
+}
+
+// Glass Tabs
+.glass-tabs {
+  :deep(.v-tabs) {
+    background: var(--glass-bg-light);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 12px;
+    border: 1px solid var(--glass-border);
+  }
+  
+  :deep(.v-tab) {
+    color: var(--glass-text-secondary);
+    font-weight: 500;
+    
+    &.v-tab--selected {
+      color: var(--vue-green);
+      background: var(--glass-bg-medium);
+    }
+  }
+  
+  :deep(.v-tab-indicator) {
+    background: var(--vue-green);
+  }
+}
+
+// Glass Pagination
+.glass-pagination {
+  :deep(.v-pagination) {
+    .v-pagination__item {
+      @include glass-effect(5px, var(--glass-bg-light), var(--glass-border));
+      color: var(--glass-text-secondary);
+      margin: 0 4px;
+      
+      &:hover {
+        background: var(--glass-bg-medium);
+        color: var(--glass-text);
+      }
+      
+      &.v-pagination__item--is-active {
+        background: var(--vue-green);
+        color: var(--glass-text);
+        border-color: var(--vue-green-dark);
+      }
+    }
+  }
+}
+
+// ===========================================
+// ANIMATIONS
+// ===========================================
+@keyframes glassmorphism-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes glassmorphism-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes glassmorphism-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.glass-animate-fade-in {
+  animation: glassmorphism-fade-in 0.6s ease-out;
+}
+
+.glass-animate-slide-up {
+  animation: glassmorphism-slide-up 0.8s ease-out;
+}
+
+.glass-animate-pulse {
+  animation: glassmorphism-pulse 2s infinite;
+}
+
+// ===========================================
+// RESPONSIVE BREAKPOINTS
+// ===========================================
+@media (max-width: 600px) {
+  .glass-container,
+  .glass-card {
+    margin: 8px;
+    padding: 16px;
+    border-radius: 12px;
+  }
+  
+  .glass-card-sm {
+    padding: 12px;
+    border-radius: 8px;
+  }
+  
+  .glass-btn-primary,
+  .glass-btn-secondary {
+    padding: 10px 20px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 400px) {
+  .glass-container,
+  .glass-card {
+    margin: 4px;
+    padding: 12px;
+  }
+}
+
+// ===========================================
+// BROWSER FALLBACKS
+// ===========================================
+@supports not (backdrop-filter: blur(20px)) {
+  .glass-container,
+  .glass-card,
+  .glass-card-sm {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid var(--vue-green);
+  }
+  
+  .glass-btn-primary {
+    background: linear-gradient(135deg, var(--vue-green) 0%, var(--vue-green-dark) 100%);
+  }
+  
+  .glass-btn-secondary {
+    background: rgba(255, 255, 255, 0.8);
+  }
+  
+  .glass-input :deep(.v-field) {
+    background: rgba(255, 255, 255, 0.8);
+  }
+}
+
+// ===========================================
+// UTILITY CLASSES
+// ===========================================
+.glass-rounded-sm { border-radius: 8px; }
+.glass-rounded { border-radius: 12px; }
+.glass-rounded-lg { border-radius: 16px; }
+.glass-rounded-xl { border-radius: 20px; }
+
+.glass-shadow-sm { box-shadow: 0 2px 8px var(--glass-shadow); }
+.glass-shadow { box-shadow: 0 4px 16px var(--glass-shadow); }
+.glass-shadow-lg { box-shadow: 0 8px 32px var(--glass-shadow); }
+
+.glass-blur-sm { backdrop-filter: blur(5px); }
+.glass-blur { backdrop-filter: blur(10px); }
+.glass-blur-lg { backdrop-filter: blur(20px); }

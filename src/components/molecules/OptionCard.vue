@@ -1,9 +1,8 @@
 <template>
   <div :style="cardStyle">
     <v-card
+      class="glass-card-sm"
       style="
-        box-shadow: none;
-        border: 1px solid #ebebeb;
         height: 100%;
         display: flex;
         flex-direction: column;
@@ -20,10 +19,10 @@
       </div>
       <div style="position: relative; flex: 1; border-top: 1px solid #ebebeb; margin-bottom: 8px">
         <p
+          class="glass-text"
           style="
             font-size: 14px;
             font-weight: 700;
-            color: #252525;
             white-space: nowrap;
             text-overflow: ellipsis;
             overflow: hidden;
@@ -36,6 +35,7 @@
         <a
           :href="option?.link"
           target="_blank"
+          class="glass-text-secondary"
           style="
             display: block;
             width: 100%;
@@ -44,6 +44,7 @@
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+            text-decoration: none;
           "
         >
           {{ props.option?.link }}
@@ -55,9 +56,8 @@
             <!-- Lazy loading voters - data only loads when dialog opens -->
             <div class="mr-1">
               <v-avatar
-                :color="votersButtonColor"
                 :class="[
-                  'm-1',
+                  'm-1 glass-chip-vue',
                   isVotersButtonDisabled ? 'cursor-not-allowed' : 'cursor-pointer'
                 ]"
                 size="30"
@@ -84,9 +84,11 @@
             <!-- Vote button -->
             <v-btn
               :disabled="isVoteButtonDisabled"
-              :color="voteButtonColor"
+              :class="[
+                'glass-btn-primary',
+                isVoting ? 'glass-btn-secondary' : ''
+              ]"
               :loading="isVoting"
-              variant="text"
               size="large"
               @click.prevent="handleChangeVote(option._id)"
             >

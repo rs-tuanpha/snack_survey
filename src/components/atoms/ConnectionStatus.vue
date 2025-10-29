@@ -2,10 +2,11 @@
   <div class="connection-status">
     <!-- Connection Status Indicator -->
     <v-chip
-      :color="statusColor"
-      :variant="statusVariant"
+      :class="[
+        'connection-chip',
+        statusColor === 'success' ? 'glass-chip-vue' : 'glass-chip'
+      ]"
       size="small"
-      class="connection-chip"
     >
       <v-icon
         :icon="statusIcon"
@@ -18,10 +19,8 @@
     <!-- Queued Votes Indicator -->
     <v-chip
       v-if="hasQueuedVotes"
-      color="warning"
-      variant="outlined"
+      class="queued-votes-chip ml-2 glass-chip"
       size="small"
-      class="queued-votes-chip ml-2"
     >
       <v-icon
         icon="mdi-clock-outline"

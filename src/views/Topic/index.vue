@@ -16,9 +16,9 @@
     </div>
 
     <!-- Main Content -->
-    <div v-else class="w-100 h-100 d-flex">
+    <div v-else class="w-100 h-100 d-flex flex-column flex-md-row">
       <!-- Left Area: Topic Details and Top 3 Options -->
-    <v-sheet max-width="638" rounded width="100%" class="mx-auto left-area">
+    <v-sheet max-width="638" rounded width="100%" class="mx-auto left-area" elevation="0">
       <!-- Topic Information Section -->
       <div
         v-if="currentTopic"
@@ -32,12 +32,10 @@
           {{ currentTopic?.endDate && formatDateUTC(currentTopic.endDate) }}
         </p>
         <!-- Countdown Timer Display -->
-        <p v-if="Boolean(countdown)" class="text-white font-weight-medium mb-4">
-          <v-chip color="primary" label class="chip-with-icon">
-            <v-icon icon="mdi-clock-time-eight-outline"></v-icon>
-          </v-chip>
-          <span class="text-red ml-1">{{ countdown }}</span>
-        </p>
+        <div v-if="Boolean(countdown)" class="countdown-timer">
+          <v-icon icon="mdi-clock-time-eight-outline"></v-icon>
+          <span>{{ countdown }}</span>
+        </div>
 
         <!-- Connection Status - Only in development -->
         <connection-status 
@@ -95,7 +93,7 @@
     </v-sheet>
 
     <!-- Right Area: Options List and Voting -->
-    <v-sheet max-width="638" rounded="lg" width="100%" heigth="100%" class="mx-auto right-area">
+    <v-sheet max-width="638" rounded="lg" width="100%" heigth="100%" class="mx-auto right-area" elevation="0">
       <!-- Option Creation Form -->
       <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px">
         <div style="flex: 1"></div>
@@ -126,7 +124,6 @@
                min-height: 232px;
                max-height: 232px;
              "
-             @on-click-see-more="onClickSeeMore"
              @on-change-vote="handleChangeVote"
              @show-voters="showVoters"
            ></option-card>
@@ -150,33 +147,7 @@
         v-model="showVotersDialog"
         :option-id="selectedOptionId"
       />
-    </div> <!-- End Main Content -->
-
-    <!-- Vote List Dialog -->
-    <v-dialog v-model="dialog" width="auto">
-      <v-card>
-        <v-card-title>Danh sách vote</v-card-title>
-        <v-divider></v-divider>
-        <v-card-text max-height="300px" class="pa-3">
-          <div v-for="userId in listVoteBy" :key="userId" class="mr-1">
-            <div v-if="userMap[userId]" class="mt-1">
-              <v-avatar color="secondary" class="m-1" size="30">
-                <v-img
-                  v-if="userMap[userId].avatar"
-                  :src="userMap[userId].avatar"
-                  :alt="userMap[userId].username"
-                ></v-img>
-                <span v-else>{{ userMap[userId].email.charAt(0).toLocaleUpperCase() }}</span>
-                <v-tooltip activator="parent" location="top">{{
-                  userMap[userId].username
-                }}</v-tooltip>
-              </v-avatar>
-              <span class="ml-1">{{ userMap[userId].username }}</span>
-            </div>
-          </div>
-        </v-card-text>
-      </v-card>
-    </v-dialog>
+    </div>
   </v-container>
 </template>
 
@@ -264,9 +235,6 @@ watch(voteData, (newVoteData) => {
     voteStatusData.value = new Set()
   }
 }, { immediate: true })
-// Removed unused API vote handlers - using socket vote service instead
-
-// Removed unused hooks - these don't exist
 
 // Query client for cache management
 const queryClient = useQueryClient()
@@ -278,7 +246,6 @@ const { mutateAsync: handleUnvote } = useUnvote()
 // Component state
 const currentTime = ref(Date.now()) // Use UTC timestamp for consistent comparison
 const listVoteBy = ref<string[]>([])
-const dialog = ref<boolean>(false)
 
 // Voters dialog state
 const selectedOptionId = ref<string | null>(null)
@@ -457,8 +424,6 @@ const handleChangeVote = debounce(async (optionId: string) => {
 
   const topicId = id.toString()
 
-  // Check if vote is pending (removed socket vote check)
-
   // Set voting state
   votingOptions.value.add(optionId)
   isVotingDisabled.value = true
@@ -491,13 +456,6 @@ const handleChangeVote = debounce(async (optionId: string) => {
     isVotingDisabled.value = false
   }
 }, 100)
-
-
-// Show vote list dialog
-const onClickSeeMore = () => {
-  listVoteBy.value = []
-  dialog.value = true
-}
 
 const showVoters = (optionId: string) => {
   selectedOptionId.value = optionId

@@ -5,7 +5,7 @@
     :timeout="currentMessage?.duration || 3000"
     location="bottom right"
     variant="elevated"
-    class="global-snackbar"
+    class="global-snackbar glass-card-sm"
     @update:model-value="onSnackbarClose"
   >
     <div class="d-flex align-center">
@@ -14,7 +14,7 @@
         class="mr-2"
         size="small"
       />
-      <span class="text-body-2">{{ currentMessage?.message }}</span>
+      <span class="text-body-2 glass-text">{{ currentMessage?.message }}</span>
     </div>
     
     <template #actions>

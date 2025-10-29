@@ -1,147 +1,144 @@
 <template>
-  <v-container>
-    <v-sheet max-width="638" width="100%" class="mx-auto d-flex justify-space-between align-center">
-      <div class="d-flex align-center">
-        <v-avatar
-          size="36px"
-          :icon="userData?.avatar ? '' : 'mdi-account-circle'"
-          class="mr-2"
-        >
-          <v-img alt="Avatar" :src="userData?.avatar"></v-img>
-        </v-avatar>
-        <i> Tài khoản: </i><strong>{{ userData?.username }}</strong>
-      </div>
-      <v-btn class="ma-2 logout-btn" color="red" @click="handleLogout">
-        <v-icon icon="mdi-logout-variant"></v-icon>
-      </v-btn>
-    </v-sheet>
-
-    <v-sheet max-width="638" width="100%" class="mx-auto mb-2 pa-2" elevation="1" rounded>
-      <v-tabs v-model="activeTab" bg-color="primary" class="mb-1 rounded">
-        <v-tab value="open" width="50%">Topics đang mở</v-tab>
-        <v-tab value="close" width="50%">Topics đã đóng</v-tab>
-      </v-tabs>
-      <v-text-field
-        v-model="searchTerm"
-        class="w-full mx-auto"
-        density="compact"
-        label="Tìm topic"
-        append-inner-icon="mdi-magnify"
-        single-line
-        hide-details
-        @click:append-inner="handleSearch"
-      ></v-text-field>
-    </v-sheet>
-
-    <!-- Loading State -->
-    <v-sheet
-      v-if="isLoadingTopics"
-      class="mx-auto pa-4"
-      border
-      rounded
-      min-width="350"
-      max-width="638"
-      width="100%"
-    >
-      <div class="d-flex justify-center">
-        <v-progress-circular indeterminate color="primary"></v-progress-circular>
-        <span class="ml-2">Đang tải topics...</span>
-      </div>
-    </v-sheet>
-
-    <v-sheet
-      v-else-if="filteredTopics.length"
-      class="mx-auto pa-2"
-      border
-      rounded
-      min-width="350"
-      max-width="638"
-      width="100%"
-    >
-      <v-col v-for="topic in filteredTopics" :key="topic._id" cols="12" sm="12">
-        <v-hover v-slot="{ isHovering, props }">
-          <v-card
-            color="indigo-lighten-5"
-            :elevation="isHovering ? 12 : 2"
-            v-bind="props"
-            :class="isHovering ? 'bg-indigo-lighten-2' : ''"
-            @click="goTopicVote(topic._id)"
+  <div class="home-container">
+    <v-container>
+      <v-sheet max-width="638" width="100%" class="mx-auto user-info-section d-flex justify-space-between align-center" elevation="0">
+        <div class="d-flex align-center">
+          <v-avatar
+            size="36px"
+            :icon="userData?.avatar ? '' : 'mdi-account-circle'"
+            class="mr-2 user-avatar"
           >
-            <template v-slot:title>
-              <div class="d-flex justify-space-between">
-                <div>{{ topic.title }}</div>
-              </div>
-            </template>
-          </v-card>
-        </v-hover>
-      </v-col>
-    </v-sheet>
-
-    <!-- Pagination Controls -->
-    <v-sheet
-      v-if="totalPages > 1"
-      class="mx-auto pa-4"
-      border
-      rounded
-      min-width="350"
-      max-width="638"
-      width="100%"
-    >
-      <div class="d-flex flex-column align-center">
-        <!-- Pagination Info -->
-        <div class="text-caption text-medium-emphasis mb-2">
-          Hiển thị {{ ((currentPage - 1) * pageSize) + 1 }}-{{ Math.min(currentPage * pageSize, totalTopics) }} 
-          trong tổng số {{ totalTopics }} topics
+            <v-img alt="Avatar" :src="userData?.avatar"></v-img>
+          </v-avatar>
+          <span class="glass-text-secondary">Tài khoản: </span><strong class="glass-text">{{ userData?.username }}</strong>
         </div>
-        
-        <!-- Pagination Component -->
-        <v-pagination
-          v-model="currentPage"
-          :length="totalPages"
-          :total-visible="5"
-          @update:model-value="handlePageChange"
-          :disabled="isLoadingTopics"
-          color="primary"
-        ></v-pagination>
-        
-        <!-- Previous/Next Buttons -->
-        <div class="d-flex gap-2 mt-2">
-          <v-btn
-            :disabled="currentPage <= 1 || isLoadingTopics"
-            @click="goToPreviousPage"
-            variant="outlined"
-            size="small"
-          >
-            <v-icon left>mdi-chevron-left</v-icon>
-            Trước
-          </v-btn>
+        <v-btn class="logout-btn" @click="handleLogout">
+          <v-icon icon="mdi-logout-variant"></v-icon>
+        </v-btn>
+      </v-sheet>
+
+      <v-sheet max-width="638" width="100%" class="mx-auto search-tabs-section" elevation="0">
+        <v-tabs v-model="activeTab" class="tabs-container mb-1">
+          <v-tab value="open" width="50%">Topics đang mở</v-tab>
+          <v-tab value="close" width="50%">Topics đã đóng</v-tab>
+        </v-tabs>
+        <v-text-field
+          v-model="searchTerm"
+          class="w-full mx-auto search-field"
+          density="compact"
+          label="Tìm topic"
+          append-inner-icon="mdi-magnify"
+          single-line
+          hide-details
+          @click:append-inner="handleSearch"
+        ></v-text-field>
+      </v-sheet>
+
+      <!-- Loading State -->
+      <v-sheet
+        v-if="isLoadingTopics"
+        class="mx-auto loading-section"
+        min-width="350"
+        max-width="638"
+        width="100%"
+        elevation="0"
+      >
+        <div class="loading-content">
+          <v-progress-circular indeterminate color="primary"></v-progress-circular>
+          <span class="loading-text">Đang tải topics...</span>
+        </div>
+      </v-sheet>
+
+      <v-sheet
+        v-else-if="filteredTopics.length"
+        class="mx-auto topics-list-section"
+        min-width="350"
+        max-width="638"
+        width="100%"
+        elevation="0"
+      >
+        <v-col v-for="topic in filteredTopics" :key="topic._id" cols="12" sm="12">
+          <v-hover v-slot="{ isHovering, props }">
+            <v-card
+              class="topic-card"
+              v-bind="props"
+              @click="goTopicVote(topic._id)"
+            >
+              <template v-slot:title>
+                <div class="d-flex justify-space-between">
+                  <div>{{ topic.title }}</div>
+                </div>
+              </template>
+            </v-card>
+          </v-hover>
+        </v-col>
+      </v-sheet>
+
+      <!-- Pagination Controls -->
+      <v-sheet
+        v-if="totalPages > 1"
+        class="mx-auto pagination-section"
+        min-width="350"
+        max-width="638"
+        width="100%"
+        elevation="0"
+      >
+        <div class="d-flex flex-column align-center">
+          <!-- Pagination Info -->
+          <div class="pagination-info">
+            Hiển thị {{ ((currentPage - 1) * pageSize) + 1 }}-{{ Math.min(currentPage * pageSize, totalTopics) }} 
+            trong tổng số {{ totalTopics }} topics
+          </div>
           
-          <v-btn
-            :disabled="currentPage >= totalPages || isLoadingTopics"
-            @click="goToNextPage"
-            variant="outlined"
-            size="small"
-          >
-            Sau
-            <v-icon right>mdi-chevron-right</v-icon>
-          </v-btn>
+          <!-- Pagination Component -->
+          <v-pagination
+            v-model="currentPage"
+            :length="totalPages"
+            :total-visible="5"
+            @update:model-value="handlePageChange"
+            :disabled="isLoadingTopics"
+            color="primary"
+            class="pagination-controls"
+          ></v-pagination>
+          
+          <!-- Previous/Next Buttons -->
+          <div class="pagination-buttons">
+            <v-btn
+              :disabled="currentPage <= 1 || isLoadingTopics"
+              @click="goToPreviousPage"
+              class="pagination-btn"
+            >
+              <v-icon left>mdi-chevron-left</v-icon>
+              Trước
+            </v-btn>
+            
+            <v-btn
+              :disabled="currentPage >= totalPages || isLoadingTopics"
+              @click="goToNextPage"
+              class="pagination-btn"
+            >
+              Sau
+              <v-icon right>mdi-chevron-right</v-icon>
+            </v-btn>
+          </div>
         </div>
-      </div>
-    </v-sheet>
-    <v-sheet
-      v-if="!isLoadingTopics && activeTab === 'open' && !filteredTopics.length"
-      class="mx-auto pa-2"
-      border
-      rounded
-      min-width="350"
-      max-width="638"
-      width="100%"
-    >
-      <v-alert variant="outlined" type="warning" prominent border="top">
-        Hiện tại không có topic nào đang mở
-      </v-alert>
-    </v-sheet>
-  </v-container>
+      </v-sheet>
+      
+      <v-sheet
+        v-if="!isLoadingTopics && activeTab === 'open' && !filteredTopics.length"
+        class="mx-auto empty-state-section"
+        min-width="350"
+        max-width="638"
+        width="100%"
+        elevation="0"
+      >
+        <v-alert class="empty-alert" prominent>
+          <v-icon icon="mdi-alert" class="mr-2"></v-icon>
+          Hiện tại không có topic nào đang mở
+        </v-alert>
+      </v-sheet>
+    </v-container>
+  </div>
 
   <!-- <v-dialog v-model="showVoteDialog" width="auto">
     <v-card>

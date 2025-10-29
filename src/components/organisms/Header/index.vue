@@ -11,16 +11,24 @@ const logout = () => {
 </script>
 
 <template>
-  <header>
-    <img alt="Vue logo" class="logo" src="@/assets/logo.svg" width="125" height="125" />
+  <header class="glass-container">
+    <div class="d-flex align-center justify-space-between">
+      <div class="d-flex align-center">
+        <img alt="Vue logo" class="logo mr-4" src="@/assets/logo.svg" width="40" height="40" />
+        <h1 class="glass-text text-h5">SnackSurveyMaster</h1>
+      </div>
 
-    <div class="wrapper">
-      <div>Basic layout</div>
-
-      <nav>
-        <RouterLink to="/">Home</RouterLink>
-        <RouterLink to="/about">About</RouterLink>
-        <a href="#" @click.prevent="logout">Logout</a>
+      <nav class="d-flex align-center gap-4">
+        <RouterLink to="/" class="glass-text-secondary text-decoration-none">Home</RouterLink>
+        <RouterLink to="/about" class="glass-text-secondary text-decoration-none">About</RouterLink>
+        <v-btn 
+          @click="logout" 
+          class="glass-btn-secondary"
+          size="small"
+        >
+          <v-icon icon="mdi-logout" class="mr-1"></v-icon>
+          Logout
+        </v-btn>
       </nav>
     </div>
   </header>

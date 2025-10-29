@@ -12,30 +12,27 @@ defineProps({
 </script>
 
 <template>
-  <div v-if="isLoading" class="base-loading">
-    <div class="loading-inner">Loading...</div>
+  <div v-if="isLoading" class="glass-overlay">
+    <div class="glass-card loading-content">
+      <v-progress-circular 
+        indeterminate 
+        color="primary" 
+        size="64"
+        class="mb-4"
+      ></v-progress-circular>
+      <div class="glass-text text-h6">Loading...</div>
+    </div>
   </div>
 </template>
 
 <style scoped lang="scss">
-/* Just demo. Custom your style loading */
-.base-loading {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100vh;
-  background-color: rgb(0 0 0 / 50%);
+.loading-content {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  .loading-inner {
-    font-weight: bold;
-    font-size: 30px;
-    letter-spacing: 2px;
-    opacity: 1;
-    z-index: 1;
-    color: #fff;
-  }
+  padding: 32px;
+  text-align: center;
+  min-width: 200px;
 }
 </style>
