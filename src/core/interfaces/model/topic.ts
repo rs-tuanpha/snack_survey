@@ -35,6 +35,7 @@ export function adaptApiTopicToITopic(apiTopic: Topic): ITopic {
     title: apiTopic.title,
     description: apiTopic.description,
     votingType: apiTopic.voteType as ETopicVoteType, // Map voteType to votingType
+    optionRequiredField: apiTopic.optionRequiredField as ETopicRequireField,
     isMutable: apiTopic.isMutable,
     isActive: apiTopic.isActive,
     team: apiTopic.team as ETopicTeam,

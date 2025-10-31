@@ -304,9 +304,17 @@ export const postNewOption = async (
   image?: File | null
 ) => {
   try {
+    let imageUrl: string | null = null
+
+    // Upload image to Firebase if provided
     if (image) {
-      await uploadImageToFirebase(image)
-      // Handle thumbnail if needed
+      console.log('📤 Uploading image to Firebase...', image.name, image.size)
+      imageUrl = await uploadImageToFirebase(image)
+      console.log('✅ Image uploaded, URL:', imageUrl)
+      
+      if (!imageUrl) {
+        throw new Error('Failed to upload image to Firebase')
+      }
     } else if (link) {
       await fetchOpenGraphMetadata(link) || await fetchDOMMetadata(link)
       // Handle metadata if needed
@@ -314,8 +322,12 @@ export const postNewOption = async (
 
     const createData: CreateOptionRequest = {
       title,
-      topicId
+      topicId,
+      ...(link && { link }),
+      ...(imageUrl && { image: imageUrl })
     }
+
+    console.log('📦 Sending create option request with payload:', createData)
 
     const response = await api.post<OptionCreationResponse>('/api/options', createData)
     return response.data.data

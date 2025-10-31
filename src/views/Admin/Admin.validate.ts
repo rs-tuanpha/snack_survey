@@ -31,20 +31,27 @@ export const linkRules = [
   }
 ]
 // handle validate add option
+// Note: requireField has been removed from backend, so we always allow both title and link to be optional
+// But at least one of them should be provided
 export const handleValidateAddOption = (option: {link: string, title: string}, topic: ITopic) => {
-  if ((topic as any).requireField === ETopicRequireField.LINK) {
+  // At least one field must be provided
+  if (!option.title && !option.link) {
+    return 'Vui lòng nhập ít nhất một trong hai: tiêu đề hoặc link'
+  }
+  
+  // If link is provided, it must be valid
+  if (option.link && !REG_URL_FORMAT.test(option.link)) {
     return linkRules[0](option.link)
   }
-  if ((topic as any).requireField === ETopicRequireField.TITLE) {
-    return titleRules[0](option.title)
-  }
-  return linkRules[0](option.link) === true && titleRules[0](option.title) === true
+  
+  return true
 }
 
+// Since requireField was removed from backend, always show both fields
 export const checkTitleRequired = (topic: ITopic) => {
-  return (topic as any).requireField === ETopicRequireField.ALL || (topic as any).requireField === ETopicRequireField.TITLE
+  return true // Always show title field
 }
 
 export const checkLinkRequired = (topic: ITopic) => {
-  return (topic as any).requireField === ETopicRequireField.ALL || (topic as any).requireField === ETopicRequireField.LINK
+  return true // Always show link field
 }

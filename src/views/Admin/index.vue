@@ -1,5 +1,3 @@
-<!-- Commented out due to interface mismatch errors -->
-<!--
 <template>
   <v-container>
     <v-row justify="center">
@@ -30,18 +28,24 @@
       </v-dialog>
 
       <!-- Modal create option for topic -->
-      <modal-create-option
-        v-if="isShowModalCreateOption"
-        @on-close="isShowModalCreateOption = false"
+      <form-create-option
+        v-if="topicState.data"
+        v-model="isShowModalCreateOption"
+        :id="topicId"
         :topicState="topicState"
+        :options="options"
+        hide-activator
+        @close="isShowModalCreateOption = false"
       />
       <!-- Modal edit option -->
-      <modal-edit-option
-        v-if="isShowModalEditOption"
-        @on-close="handleCloseEditOptionDialog"
+      <form-edit-option
+        v-if="optionState._id && topicState.data"
+        v-model="isShowModalEditOption"
         :option="optionState"
-        :optionList="options"
+        :options="options"
         :topicState="topicState"
+        hide-activator
+        @close="handleCloseEditOptionDialog"
       />
 
       <!-- Modal show list option of topic -->
@@ -55,21 +59,17 @@
                   icon="mdi-circle-edit-outline"
                   color="green"
                   class="pl-0 ml-0"
-                  @click="handleEditOption({ ...item, id: item.id })"
+                  @click="handleEditOption(item)"
                 ></v-icon>
                 <v-icon
                   icon="mdi-close"
                   color="red"
                   class="pl-0 ml-2"
-                  @click="deleteOption(item.id)"
+                  @click="deleteOption(item._id)"
                 ></v-icon>
               </template>
-              <v-list-item-title :v-text="item.title">{{
-                item.link || item.title
-              }}</v-list-item-title>
-              <v-list-item-subtitle :v-text="item.vote_count"
-                >Số vote: {{ item.vote_count }}</v-list-item-subtitle
-              >
+              <v-list-item-title>{{ item.link || item.title }}</v-list-item-title>
+              <v-list-item-subtitle>Số vote: {{ item.voteCount || 0 }}</v-list-item-subtitle>
             </v-list-item>
           </v-list>
           <v-alert type="warning" v-else title="" text="Không có option nào được thêm!"></v-alert>
@@ -90,52 +90,64 @@
               label="Mô tả"
               :rules="descriptionRules"
             ></v-text-field>
-            <div class="d-flex">
+            
+            <!-- Start Date -->
+            <div class="d-flex mb-2">
               <p class="font-weight-medium pr-2 pt-1">
                 <v-chip color="primary" label>
-                  <v-icon start icon="mdi-clock-time-eight-outline"></v-icon>Deadline</v-chip
+                  <v-icon start icon="mdi-calendar-start"></v-icon>Ngày bắt đầu</v-chip
                 >
               </p>
-              <vue-date-picker v-model="topicFormData.date"></vue-date-picker>
+              <vue-date-picker
+                v-model="topicFormData.startDate"
+                :min-date="minDate"
+                :enable-time-picker="true"
+                :is-24="true"
+                placeholder="Chọn ngày bắt đầu"
+              ></vue-date-picker>
+            </div>
+
+            <!-- End Date -->
+            <div class="d-flex mb-4">
+              <p class="font-weight-medium pr-2 pt-1">
+                <v-chip color="primary" label>
+                  <v-icon start icon="mdi-calendar-end"></v-icon>Ngày kết thúc</v-chip
+                >
+              </p>
+              <vue-date-picker
+                v-model="topicFormData.endDate"
+                :min-date="topicFormData.startDate || minDate"
+                :enable-time-picker="true"
+                :is-24="true"
+                placeholder="Chọn ngày kết thúc"
+              ></vue-date-picker>
             </div>
 
             <v-switch
-              v-model="topicFormData.is_active"
+              v-model="topicFormData.isActive"
               hide-details
               color="green-darken-1"
               inset
-              :label="`Trạng thái: ${topicFormData.is_active ? 'Mở' : 'Đóng'}`"
+              :label="`Trạng thái: ${topicFormData.isActive ? 'Mở' : 'Đóng'}`"
             ></v-switch>
-            <v-switch
-              v-model="topicFormData.link"
-              hide-details
-              color="green-darken-1"
-              inset
-              :label="`Cho phép đóng góp link: ${topicFormData.link ? 'Có' : 'Không'}`"
-            ></v-switch>
-            <v-radio-group inline v-if="topicFormData.link" v-model="topicFormData.requireField">
+            
+            <v-radio-group inline v-model="topicFormData.voteType" class="mt-2">
               <v-chip color="primary" label
-                ><v-icon start icon="mdi-account-circle-outline"></v-icon>Require</v-chip
+                ><v-icon start icon="mdi-vote"></v-icon>Loại vote</v-chip
               >
-              <v-radio label="title" value="title"></v-radio>
-              <v-radio label="link" value="link"></v-radio>
-              <v-radio label="all" value="all"></v-radio>
+              <v-radio label="Đơn" value="single"></v-radio>
+              <v-radio label="Nhiều" value="multiple"></v-radio>
             </v-radio-group>
-            <v-switch
-              v-model="topicFormData.voting_type"
-              hide-details
-              color="green-darken-1"
-              inset
-              :label="`Cho phép vote nhiều option: ${topicFormData.voting_type === 'multiple' ? 'Có' : 'Không'}`"
-            ></v-switch>
-            <v-radio-group inline v-model="topicFormData.team">
+            
+            <v-radio-group inline v-model="topicFormData.team" class="mt-2">
               <v-chip color="primary" label
                 ><v-icon start icon="mdi-account-circle-outline"></v-icon>Team</v-chip
               >
               <v-radio label="PHP" value="PHP"></v-radio>
               <v-radio label="FE" value="FE"></v-radio>
-              <v-radio label="All" value="All"></v-radio>
+              <v-radio label="ALL" value="ALL"></v-radio>
             </v-radio-group>
+            
             <div class="btn-wrapper">
               <v-btn
                 type="submit"
@@ -181,7 +193,7 @@
                 <th class="text-left" scope="col">Tên topic</th>
                 <th class="text-left" scope="col">Team</th>
                 <th class="text-left" scope="col" style="width: 90px">Trạng thái</th>
-                <th class="text-left" scope="col" style="width: 90px">Deadline</th>
+                <th class="text-left" scope="col" style="width: 90px">Ngày kết thúc</th>
                 <th class="text-left" scope="col" style="width: 408px">Tác vụ</th>
               </tr>
             </thead>
@@ -201,39 +213,39 @@
                   Không có topic nào
                 </td>
               </tr>
-              <tr v-else v-for="(item, index) in topics" :key="item.id">
+              <tr v-else v-for="(item, index) in topics" :key="item._id">
                 <td>{{ index + 1 }}</td>
                 <td>{{ item.title }}</td>
                 <td>{{ item.team }}</td>
                 <td>
-                  {{ item.is_active ? 'Mở' : 'Đóng' }}
+                  {{ item.isActive ? 'Mở' : 'Đóng' }}
                 </td>
                 <td>
-                  {{ item.time_limit ? dayjs(new Date(Date.now() + item.time_limit * 60 * 1000)).format('DD/MM/YYYY HH:mm') : 'Không giới hạn' }}
+                  {{ item.endDate ? dayjs(item.endDate).format('DD/MM/YYYY HH:mm') : 'Không giới hạn' }}
                 </td>
                 <td>
                   <v-btn
                     class="text-none w-auto ma-1"
                     color="blue-darken-2"
-                    @click="handleEditTopic(item.id)"
+                    @click="handleEditTopic(item._id)"
                     >Sửa</v-btn
                   >
                   <v-btn
                     class="text-none w-auto ma-1"
                     color="red-darken-1"
-                    @click="handleDeleteTopic(item.id)"
+                    @click="handleDeleteTopic(item._id)"
                     >Xóa</v-btn
                   >
                   <v-btn
                     class="text-none w-auto ma-1"
                     color="green-darken-2"
-                    @click="handleAddOption(item.id)"
+                    @click="handleAddOption(item._id)"
                     >+Option</v-btn
                   >
                   <v-btn
                     class="text-none w-auto ma-1"
                     color="purple-darken-2"
-                    @click="showOptionList(item.id)"
+                    @click="showOptionList(item._id)"
                     >List Option</v-btn
                   >
                 </td>
@@ -246,33 +258,39 @@
   </v-container>
 </template>
 
--->
-<!--
 <script setup lang="ts">
-import { ref, watch, reactive, defineAsyncComponent } from 'vue'
+import { ref, reactive, defineAsyncComponent, computed } from 'vue'
 import VueDatePicker from '@vuepic/vue-datepicker'
 import { useTopicsList, useCreateTopic, useUpdateTopic, useDeleteTopic } from '@/services/topic.service'
 import { useOptionsByTopic, useDeleteOption } from '@/services/option.service'
 import { nameRules, descriptionRules } from './Admin.validate'
-// import { initOption, initTopic, initTopicState } from './Admin.state' // Commented out due to errors
+import { initOption, initTopic, initTopicState } from './Admin.state'
 import type { ITopic } from '@/core/interfaces/model/topic'
 import type { IOption } from '@/core/interfaces/model/option'
 import type { IState } from '@/core/interfaces/model/state'
 import { mappingObject } from '@/core/utils/mappingObject'
 import dayjs from 'dayjs'
+import { ETopicTeam, ETopicVoteType } from '@/core/constants/enum'
+import type { CreateTopicRequest, UpdateTopicRequest } from '@/types/api'
 
-const ModalCreateOption = defineAsyncComponent(() => import('./ModalCreateOption.vue'))
-const ModalEditOption = defineAsyncComponent(() => import('./ModalEditOption.vue'))
+const FormCreateOption = defineAsyncComponent(() => import('@/components/organisms/FormCreateOption.vue'))
+const FormEditOption = defineAsyncComponent(() => import('@/components/organisms/FormEditOption.vue'))
 
 // Composables
-const { data: topics, isLoading: isLoadingTopics, error: topicsError } = useTopicsList()
+const { data: topicsData, isLoading: isLoadingTopics, error: topicsError } = useTopicsList()
 const createTopicMutation = useCreateTopic()
 const updateTopicMutation = useUpdateTopic()
 const deleteTopicMutation = useDeleteTopic()
 const deleteOptionMutation = useDeleteOption()
 
+// Computed - Map topics from API response (already converted to ITopic by adaptApiTopicToITopic)
+const topics = computed<ITopic[]>(() => {
+  if (!topicsData.value?.data) return []
+  // Data is already converted to ITopic[] by adaptApiTopicToITopic in getTopicList
+  return topicsData.value.data as unknown as ITopic[]
+})
+
 // State
-const format = ref<string>('')
 const text = ref<string>('')
 const textBtn = ref<string>('Tạo mới')
 const topicId = ref<string>('')
@@ -290,34 +308,73 @@ const isShowModalCreateOption = ref<boolean>(false)
 const isShowModalEditOption = ref<boolean>(false)
 
 const topicState = ref<IState<ITopic>>({ ...initTopicState })
-const optionState = ref<IOption>(initOption)
-const topicFormData = reactive<ITopic>({ ...initTopic })
+const optionState = ref<IOption>({ ...initOption } as IOption)
+const topicFormData = reactive<{
+  _id?: string
+  title: string
+  description?: string
+  team: ETopicTeam
+  voteType: ETopicVoteType
+  isActive: boolean
+  startDate?: Date | null
+  endDate?: Date | null
+}>({
+  _id: '',
+  title: '',
+  description: '',
+  team: ETopicTeam.ALL,
+  voteType: ETopicVoteType.SINGLE,
+  isActive: true,
+  startDate: null,
+  endDate: null,
+})
 
-// Composition API
-watch(
-  () => topicFormData.date,
-  () => {
-    format.value = `${(topicFormData.date as Date).getDate()}/${
-      (topicFormData.date as Date).getMonth() + 1
-    }/${(topicFormData.date as Date).getFullYear()}`
-  }
-)
+const minDate = computed(() => new Date())
 
 // Methods
-const confirm = (type: string) => {
+const confirm = (typeVal: string) => {
   if (!topicFormData.title) {
-    return false
-  }
-  if (topicFormData.date && topicFormData.date < new Date() && type === 'create') {
     colorAlert.value = 'red-lighten-1'
-    alert.value = 'Thời gian phải lớn hơn hiện tại'
+    alert.value = 'Vui lòng nhập tên topic'
     setTimeout(() => {
       alert.value = ''
       colorAlert.value = 'green-darken-1'
     }, 2000)
     return false
   }
-  switch (type) {
+  
+  // Validate dates
+  if (!topicFormData.startDate || !topicFormData.endDate) {
+    colorAlert.value = 'red-lighten-1'
+    alert.value = 'Vui lòng chọn ngày bắt đầu và ngày kết thúc'
+    setTimeout(() => {
+      alert.value = ''
+      colorAlert.value = 'green-darken-1'
+    }, 2000)
+    return false
+  }
+
+  if (topicFormData.endDate <= topicFormData.startDate) {
+    colorAlert.value = 'red-lighten-1'
+    alert.value = 'Ngày kết thúc phải sau ngày bắt đầu'
+    setTimeout(() => {
+      alert.value = ''
+      colorAlert.value = 'green-darken-1'
+    }, 2000)
+    return false
+  }
+
+  if (topicFormData.endDate <= new Date() && typeVal === 'create') {
+    colorAlert.value = 'red-lighten-1'
+    alert.value = 'Ngày kết thúc phải sau thời điểm hiện tại'
+    setTimeout(() => {
+      alert.value = ''
+      colorAlert.value = 'green-darken-1'
+    }, 2000)
+    return false
+  }
+
+  switch (typeVal) {
     case 'create':
       text.value = 'Bạn có muốn thêm topic không?'
       break
@@ -333,9 +390,13 @@ const confirm = (type: string) => {
  * @param {string} id
  */
 const handleAddOption = async (id: string) => {
-  const topicData = topics.value?.find(topic => topic.id === id)
+  const topicData = topics.value?.find(topic => topic._id === id)
   if (topicData) {
+    // topicData is already ITopic from adaptApiTopicToITopic
     topicState.value.data = topicData
+    topicId.value = id
+    // Load options for the topic
+    await getOptions(id, true)
     isShowModalCreateOption.value = true
   }
 }
@@ -355,56 +416,81 @@ const cancelUpdate = () => {
   type.value = 'create'
   showAddBtn.value = false
   dialog.value = false
-  topicId.value = initTopic.id
+  topicId.value = ''
   mappingObject(topicFormData, {
-    ...initTopic
+    ...initTopic,
+    team: ETopicTeam.ALL,
+    voteType: ETopicVoteType.SINGLE,
+    isActive: true,
+    startDate: null,
+    endDate: null,
   })
 }
 
 const handleEditTopic = async (id: string) => {
   // Find the topic by topic id
-  const topicData = topics.value?.find(topic => topic.id === id)
-  if (topicData?.title) {
-    topicId.value = topicData.id
+  const topicData = topics.value?.find(topic => topic._id === id)
+  if (topicData) {
+    topicId.value = topicData._id
     mappingObject(topicFormData, {
-      ...topicData,
-      updatedAt: new Date()
+      _id: topicData._id,
+      title: topicData.title,
+      description: topicData.description || '',
+      team: topicData.team as ETopicTeam,
+      voteType: (topicData.votingType ?? ETopicVoteType.SINGLE) as ETopicVoteType,
+      isActive: topicData.isActive !== false,
+      startDate: topicData.startDate ? new Date(topicData.startDate) : null,
+      endDate: topicData.endDate ? new Date(topicData.endDate) : null,
     })
 
     textBtn.value = 'Cập nhật'
     type.value = 'update'
     showAddBtn.value = true
-  } else {
-    }
+  }
 }
 
-const getOptions = async (topicId: string, isSetOption: boolean = false) => {
-  const { data: optionsResponse } = useOptionsByTopic(topicId)
+const getOptions = async (topicIdParam: string, isSetOption: boolean = false) => {
+  const { data: optionsResponse, isLoading: isLoadingOptions } = useOptionsByTopic(topicIdParam)
   let optionArr = [] as IOption[]
-  setTimeout(() => {
-    if (isSetOption && optionsResponse.value) {
-      options.value = optionsResponse.value.data.options as IOption[]
-    } else if (optionsResponse.value) {
-      optionArr = optionsResponse.value.data.options as IOption[]
+  
+  // Wait for data to be available (poll until loaded or timeout)
+  let attempts = 0
+  while (isLoadingOptions.value && attempts < 10) {
+    await new Promise(resolve => setTimeout(resolve, 100))
+    attempts++
+  }
+  
+  if (optionsResponse.value?.data) {
+    // Data is already IOption[] from the service (no adapter needed for options)
+    const optionData = optionsResponse.value.data as unknown as IOption[]
+    if (isSetOption) {
+      options.value = optionData
+    } else {
+      optionArr = optionData
     }
-  }, 200)
+  }
   return optionArr
 }
 
 // Reducer for confirm dialog
-const handleTopic = async (type: string) => {
-  switch (type) {
+const handleTopic = async (typeVal: string) => {
+  switch (typeVal) {
     case 'create':
       try {
-        await createTopicMutation.mutateAsync({
+        const createData: CreateTopicRequest = {
           title: topicFormData.title,
-          description: topicFormData.description || '',
-          voting_type: topicFormData.voting_type === 'multiple' ? 'multiple' : 'single',
-          team: topicFormData.team as 'FE' | 'PHP' | 'ALL',
-          time_limit: topicFormData.date ? Math.ceil((topicFormData.date.getTime() - Date.now()) / (1000 * 60)) : undefined
-        })
+          description: topicFormData.description || undefined,
+          voteType: topicFormData.voteType as 'single' | 'multiple',
+          team: topicFormData.team,
+          startDate: topicFormData.startDate!.toISOString(),
+          endDate: topicFormData.endDate!.toISOString(),
+          isActive: topicFormData.isActive,
+        }
+        
+        await createTopicMutation.mutateAsync(createData)
         dialog.value = false
         alert.value = 'Thêm mới thành công'
+        cancelUpdate()
         setTimeout(() => {
           alert.value = ''
         }, 2000)
@@ -416,7 +502,7 @@ const handleTopic = async (type: string) => {
       }
       break
     case 'update':
-      update({ ...topicFormData, updatedAt: new Date() })
+      update()
       break
     case 'delete':
       deleteTopic()
@@ -424,17 +510,21 @@ const handleTopic = async (type: string) => {
   }
 }
 
-const update = async (topic: any) => {
+const update = async () => {
   try {
+    const updateData: UpdateTopicRequest = {
+      title: topicFormData.title,
+      description: topicFormData.description || undefined,
+      voteType: topicFormData.voteType as 'single' | 'multiple',
+      team: topicFormData.team,
+      startDate: topicFormData.startDate!.toISOString(),
+      endDate: topicFormData.endDate!.toISOString(),
+      isActive: topicFormData.isActive,
+    }
+    
     await updateTopicMutation.mutateAsync({
       topicId: topicId.value,
-      topicData: {
-        title: topic.title,
-        description: topic.description || '',
-        voting_type: topic.voting_type === 'multiple' ? 'multiple' : 'single',
-        team: topic.team as 'FE' | 'PHP' | 'ALL',
-        time_limit: topic.date ? Math.ceil((topic.date.getTime() - Date.now()) / (1000 * 60)) : undefined
-      }
+      topicData: updateData,
     })
     dialog.value = false
     alert.value = 'Cập nhật thành công'
@@ -469,8 +559,9 @@ const showOptionList = async (id: string) => {
   await getOptions(id, true)
   topicId.value = id
   listOptionDlg.value = true
-  const topicData = topics.value?.find(topic => topic.id === id)
+  const topicData = topics.value?.find(topic => topic._id === id)
   if (topicData) {
+    // topicData is already ITopic from adaptApiTopicToITopic
     topicState.value.data = topicData
   }
 }
@@ -487,17 +578,27 @@ const deleteOption = async (optionId: string) => {
 // open edit option modal
 const handleEditOption = async (option: IOption) => {
   optionState.value = option
+  topicId.value = option.topicId
+  
+  // Find and set topic state
+  const topicData = topics.value?.find(topic => topic._id === option.topicId)
+  if (topicData) {
+    topicState.value.data = topicData
+  }
+  
+  // Load options for the topic
+  await getOptions(option.topicId, true)
+  
   isShowModalEditOption.value = true
 }
+
 // close edit option modal
 const handleCloseEditOptionDialog = async () => {
   await getOptions(topicId.value, true)
   isShowModalEditOption.value = false
 }
 </script>
--->
--->
-<!--
+
 <style lang="scss" scoped>
 .topic-tbl {
   max-height: 300px;
@@ -513,4 +614,3 @@ const handleCloseEditOptionDialog = async () => {
   }
 }
 </style>
--->

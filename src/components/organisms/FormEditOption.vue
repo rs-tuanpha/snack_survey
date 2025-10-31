@@ -3,19 +3,19 @@
     <template v-if="!hideActivator" v-slot:activator="{ props: activatorProps }">
       <v-btn
         v-bind="activatorProps"
-        prepend-icon="mdi-plus"
+        prepend-icon="mdi-pencil"
         width="fit-content"
         color="primary"
         height="46"
         @click="handleResetForm"
       >
-        Thêm option
+        Sửa option
       </v-btn>
     </template>
     <template v-slot:default>
       <v-card style="background-color: white; padding: 16px">
         <template v-slot:title>
-          <p class="font-weight-black text-center">Thêm Option</p>
+          <p class="font-weight-black text-center">Sửa Option</p>
         </template>
         <v-form @submit.prevent :fast-fail="false">
           <v-text-field
@@ -64,6 +64,18 @@
             :error-messages="uploadMessage"
             clearable
           ></v-file-input>
+          <v-alert
+            v-if="existingImageUrl"
+            type="info"
+            variant="tonal"
+            class="mb-2"
+            density="compact"
+          >
+            <template v-slot:prepend>
+              <v-icon icon="mdi-information"></v-icon>
+            </template>
+            Hình hiện tại: <a :href="existingImageUrl" target="_blank">{{ existingImageUrl }}</a>
+          </v-alert>
 
           <v-btn
             text="Huỷ"
@@ -74,14 +86,14 @@
           ></v-btn>
           <v-btn
             type="submit"
-            @click="handleAddOption"
+            @click="handleUpdateOption"
             class="mb-2 float-right"
             color="blue-darken-2"
             variant="flat"
             min-width="100"
             :loading="isLoading"
             :disabled="isLoading"
-            >Thêm mới option</v-btn
+            >Cập nhật option</v-btn
           >
         </v-form>
       </v-card>
@@ -90,7 +102,8 @@
 </template>
 
 <script setup lang="ts">
-import { postNewOption } from '@/services/option.service'
+import { updateOption } from '@/services/option.service'
+import { uploadImageToFirebase } from '@/services/upload.service'
 import { reactive, ref, computed, watch } from 'vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import {
@@ -106,9 +119,10 @@ import type { IState } from '@/core/interfaces/model/state'
 import { THUMBNAIL_MAX_SIZE } from '@/core/constants/app'
 import { queryKeys } from '@/types/api'
 import { useSnackbar } from '@/core/hooks/useSnackbar'
+import type { UpdateOptionRequest } from '@/types/api'
 
 const props = withDefaults(defineProps<{
-  id: string
+  option: IOption
   topicState: ITopic | IState<ITopic>
   options: IOption[]
   modelValue?: boolean
@@ -130,6 +144,9 @@ const form = reactive({
   link: '',
   title: ''
 })
+
+// Store existing image URL
+const existingImageUrl = ref<string | undefined>(undefined)
 
 // Internal state for uncontrolled mode (when modelValue is not provided)
 const internalIsOpen = ref(false)
@@ -166,12 +183,33 @@ const { showSuccess, showError } = useSnackbar()
 
 // Watch modelValue to sync internal state when controlled
 watch(() => props.modelValue, (newValue) => {
-  if (isControlled.value && newValue === false) {
+  if (isControlled.value && newValue === true && props.option) {
+    // Load option data when dialog opens
+    loadOptionData()
+  } else if (isControlled.value && newValue === false) {
     handleResetForm()
   }
 })
 
-/** handle user upload and change thubmnail file event */
+// Watch option prop to reload data when it changes
+watch(() => props.option, () => {
+  if (dialogValue.value && props.option) {
+    loadOptionData()
+  }
+})
+
+// Load option data into form
+const loadOptionData = () => {
+  if (props.option) {
+    form.title = props.option.title || ''
+    form.link = props.option.link || ''
+    existingImageUrl.value = props.option.image
+    image.value = undefined // Reset file input
+    uploadMessage.value = ''
+  }
+}
+
+/** handle user upload and change thumbnail file event */
 const handleFileChange = (files: File[] | undefined) => {
   if (files && files.length > 0) {
     const file = files[0]
@@ -191,11 +229,11 @@ const handleFileChange = (files: File[] | undefined) => {
 }
 
 /**
- * handle add option
- * check if option exited, noti error
- * else add option to firebase
+ * handle update option
+ * check if option existed (excluding current option), noti error
+ * else update option
  */
-const handleAddOption = async () => {
+const handleUpdateOption = async () => {
   // Prevent spam clicking
   if (isLoading.value) {
     return
@@ -203,8 +241,14 @@ const handleAddOption = async () => {
 
   try {
     if (normalizedTopic.value && handleValidateAddOption(form, normalizedTopic.value) === true) {
+      // Check for duplicate options (excluding current option)
       let optionExited = false
       props.options.forEach((option) => {
+        // Skip the current option being edited
+        if (option._id === props.option._id) {
+          return
+        }
+        
         if (
           (option.title && option.title === form?.title) ||
           (option.link && option.link === form?.link)
@@ -221,18 +265,38 @@ const handleAddOption = async () => {
       // Set loading state
       isLoading.value = true
 
-      // Get first file from array if exists
-      const imageFile = image.value && image.value.length > 0 ? image.value[0] : null
-      
-      await postNewOption(form.title, form.link, props.id, imageFile)
+      // Prepare update data
+      const updateData: UpdateOptionRequest = {
+        title: form.title || undefined,
+        link: form.link || undefined,
+      }
+
+      // Upload new image if provided
+      if (image.value && image.value.length > 0) {
+        const imageFile = image.value[0]
+        console.log('📤 Uploading image to Firebase...', imageFile.name, imageFile.size)
+        const imageUrl = await uploadImageToFirebase(imageFile)
+        console.log('✅ Image uploaded, URL:', imageUrl)
+        
+        if (imageUrl) {
+          updateData.image = imageUrl
+        } else {
+          throw new Error('Failed to upload image to Firebase')
+        }
+      }
+
+      // Update option
+      await updateOption(props.option._id, updateData)
       
       // Show success message
-      showSuccess('Tạo mới option thành công!')
+      showSuccess('Cập nhật option thành công!')
       
       // Invalidate cache to reload options list
-      queryClient.invalidateQueries({ queryKey: queryKeys.options.byTopic(props.id) })
-      queryClient.invalidateQueries({ queryKey: queryKeys.options.rank(props.id) })
-      queryClient.invalidateQueries({ queryKey: queryKeys.votes.status(props.id) })
+      const topicId = props.option.topicId
+      queryClient.invalidateQueries({ queryKey: queryKeys.options.byTopic(topicId) })
+      queryClient.invalidateQueries({ queryKey: queryKeys.options.rank(topicId) })
+      queryClient.invalidateQueries({ queryKey: queryKeys.votes.status(topicId) })
+      queryClient.invalidateQueries({ queryKey: queryKeys.options.detail(props.option._id) })
       
       // Reset form and close dialog
       handleResetForm()
@@ -240,8 +304,8 @@ const handleAddOption = async () => {
       emit('close')
     }
   } catch (error) {
-    console.error('Failed to create option:', error)
-    const errorMessage = error instanceof Error ? error.message : 'Tạo mới không thành công!'
+    console.error('Failed to update option:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Cập nhật không thành công!'
     showError(errorMessage)
   } finally {
     isLoading.value = false
@@ -269,6 +333,8 @@ const handleResetForm = () => {
   form.title = ''
   image.value = undefined
   uploadMessage.value = ''
+  existingImageUrl.value = undefined
   isLoading.value = false
 }
 </script>
+

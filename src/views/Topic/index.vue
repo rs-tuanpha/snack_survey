@@ -100,7 +100,7 @@
       <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px">
         <div style="flex: 1"></div>
         <form-create-option
-          v-if="currentTopic?.optionRequiredField && currentTopic?.isActive"
+          v-if="currentTopic?.isMutable && currentTopic?.isActive"
           :id="id.toString()"
           :options="currentOptions"
           :topic-state="currentTopic"

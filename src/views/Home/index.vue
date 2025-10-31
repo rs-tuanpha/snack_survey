@@ -1,21 +1,5 @@
 <template>
   <v-container>
-    <v-sheet max-width="638" width="100%" class="mx-auto d-flex justify-space-between align-center">
-      <div class="d-flex align-center">
-        <v-avatar
-          size="36px"
-          :icon="userData?.avatar ? '' : 'mdi-account-circle'"
-          class="mr-2"
-        >
-          <v-img alt="Avatar" :src="userData?.avatar"></v-img>
-        </v-avatar>
-        <i> Tài khoản: </i><strong>{{ userData?.username }}</strong>
-      </div>
-      <v-btn class="ma-2 logout-btn" color="red" @click="handleLogout">
-        <v-icon icon="mdi-logout-variant"></v-icon>
-      </v-btn>
-    </v-sheet>
-
     <v-sheet max-width="638" width="100%" class="mx-auto mb-2 pa-2" elevation="1" rounded>
       <v-tabs v-model="activeTab" bg-color="primary" class="mb-1 rounded">
         <v-tab value="open" width="50%">Topics đang mở</v-tab>
@@ -172,16 +156,16 @@ import type { IUser } from '@/core/interfaces/model/user'
 import { EUserRole, ETopicTeam } from '@/core/constants/enum'
 import useCommon from '@/core/hooks/useCommon'
 import { useUserStore } from '@/stores/user'
+import { useAuthStore } from '@/stores/auth'
 import { useCookie } from '@/core/hooks/useCookie'
 import { CookieKeys } from '@/core/utils/cookieUtils'
 
-const { handleRouter, storage } = useCommon('useCommonStore')
+const { handleRouter } = useCommon('useCommonStore')
 const userStore = useUserStore()
+const authStore = useAuthStore()
 
-// Use cookie hook for user data
+// Use cookie hook for user data fallback
 const userDataCookie = useCookie(CookieKeys.USER_DATA, '')
-const tokenCookie = useCookie(CookieKeys.ACCESS_TOKEN, '')
-const refreshTokenCookie = useCookie(CookieKeys.REFRESH_TOKEN, '')
 const userData = ref<IUser | null>(null)
 
 // State
@@ -256,17 +240,20 @@ const goTopicVote = (id: string) => {
   handleRouter.pushName('topicVote', { params: { id } })
 }
 
-const handleLogout = () => {
-  tokenCookie.remove()
-  refreshTokenCookie.remove()
-  userDataCookie.remove()
-  storage.removeLocalStorage('user')
-  storage.removeLocalStorage('topics')
-  storage.removeLocalStorage('app_preferences')
-  handleRouter.pushPath('/login')
-}
-
 const getUserData = async () => {
+  // Try to get from stores first
+  if (userStore.user) {
+    userData.value = userStore.user
+    return
+  }
+  
+  if (authStore.user) {
+    userData.value = authStore.user
+    userStore.setUser(authStore.user)
+    return
+  }
+
+  // Fallback to API or cookie
   try {
     const userProfile = await getCurrentUserProfile()
 

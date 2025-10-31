@@ -1,8 +1,8 @@
 <template>
   <v-container class="fill-height" fluid>
-    <v-row align="center" justify="center">
-      <v-col cols="12" sm="8" md="4">
-        <v-card class="elevation-12">
+    <v-row align="center" justify="center" class="ma-0">
+      <v-col cols="auto" class="pa-0">
+        <v-card class="elevation-12" style="width: 375px;">
           <v-toolbar color="primary" dark flat>
             <v-toolbar-title>Đăng nhập</v-toolbar-title>
           </v-toolbar>
@@ -17,51 +17,45 @@
                 item-value="email"
                 return-object
                 :loading="loadingUsers"
-                :rules="[rules.userOrEmail]"
+                :rules="[rules.required]"
                 @update:model-value="onUserSelect"
                 clearable
                 hide-selected
+                variant="outlined"
                 :filter="customFilter"
                 :disabled="loadingUsers"
                 :no-data-text="loadingUsers ? 'Đang tải danh sách...' : 'Không có tài khoản nào'"
+                @keydown.enter.prevent="handleFormSubmit"
               >
                 <template v-slot:item="{ props, item }">
                   <v-list-item v-bind="props">
                     <template v-slot:title>
                       <div class="d-flex flex-column">
-                        <span class="text-primary font-weight-medium">{{ item.raw.username }}</span>
-                        <span class="text-caption text-medium-emphasis">{{ item.raw.email }}</span>
+                        <span class="text-primary font-weight-medium">{{ item.raw.email }}</span>
+                        <span class="text-caption text-medium-emphasis">{{ item.raw.username }}</span>
                       </div>
                     </template>
                   </v-list-item>
                 </template>
                 <template v-slot:selection="{ item }">
                   <div class="d-flex flex-column">
-                    <span class="text-primary font-weight-medium">{{ item.raw.username }}</span>
-                    <span class="text-caption text-medium-emphasis">{{ item.raw.email }}</span>
+                    <span class="text-primary font-weight-medium">{{ item.raw.email }}</span>
+                    <span class="text-caption text-medium-emphasis">{{ item.raw.username }}</span>
                   </div>
                 </template>
               </v-autocomplete>
-
-              <!-- Manual email input as fallback -->
-              <v-text-field
-                v-model="email"
-                label="Email (nếu không chọn từ danh sách)"
-                prepend-icon="mdi-email"
-                type="email"
-                :rules="[rules.userOrEmail, rules.email]"
-                :disabled="isEmailDisabled"
-                hint="Chỉ cần điền nếu không chọn từ danh sách trên"
-                persistent-hint
-              ></v-text-field>
 
               <v-text-field
                 v-model="password"
                 label="Password"
                 name="password"
+                variant="outlined"
                 prepend-icon="mdi-lock"
-                type="password"
+                :type="showPassword ? 'text' : 'password'"
                 :rules="[rules.required]"
+                :append-inner-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
+                @click:append-inner="showPassword = !showPassword"
+                @keydown.enter.prevent="handleFormSubmit"
               ></v-text-field>
               <v-alert v-if="error" type="error" dense>
                 {{ error }}
@@ -79,7 +73,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import authService from '@/services/auth.service'
 import { getUsersList } from '@/services/user.service'
@@ -88,13 +82,13 @@ import { useAuthStore } from '@/stores/auth'
 import { useCookie } from '@/core/hooks/useCookie'
 import { CookieKeys } from '@/core/utils/cookieUtils'
 
-const email = ref('')
 const password = ref('')
 const loading = ref(false)
 const error = ref<string | null>(null)
 const selectedUser = ref<any>(null)
 const users = ref<any[]>([])
 const loadingUsers = ref(false)
+const showPassword = ref(false)
 
 const authStore = useAuthStore()
 const userStore = useUserStore()
@@ -106,14 +100,7 @@ const refreshTokenCookie = useCookie(CookieKeys.REFRESH_TOKEN, '')
 const userDataCookie = useCookie(CookieKeys.USER_DATA, '')
 
 const rules = {
-  required: (value: string) => !!value || 'Required.',
-  email: (value: string) => {
-    const pattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
-    return pattern.test(value) || 'Invalid e-mail.'
-  },
-  userOrEmail: () => {
-    return selectedUser.value || email.value || 'Please select a user or enter email.'
-  }
+  required: (value: any) => !!value || 'Vui lòng chọn tài khoản.'
 }
 
 // Computed property để tạo options cho dropdown
@@ -139,7 +126,6 @@ const customFilter = (value: any, query: string) => {
 const onUserSelect = (user: any) => {
   if (user) {
     selectedUser.value = user
-    email.value = user.email
   } else {
     // Clear selection
     clearUserSelection()
@@ -175,12 +161,12 @@ const initializeUsers = async () => {
 }
 
 const handleLogin = async () => {
-  // Get email from selected user or manual input
-  const loginEmail = selectedUser.value?.email || email.value
+  // Get email from selected user
+  const loginEmail = selectedUser.value?.email
 
   // Double-check validation (should already be validated by handleFormSubmit)
   if (!loginEmail || !password.value) {
-    error.value = 'Email and password are required.'
+    error.value = 'Vui lòng chọn tài khoản và nhập mật khẩu.'
     return
   }
 
@@ -248,7 +234,6 @@ const handleLogin = async () => {
 // Method to clear user selection
 const clearUserSelection = () => {
   selectedUser.value = null
-  email.value = ''
 }
 
 // Method to handle form submission
@@ -259,39 +244,20 @@ const handleFormSubmit = () => {
   handleLogin()
 }
 
-// Method to check if email field should be disabled
-const isEmailDisabled = computed(() => {
-  return !!selectedUser.value
-})
-
-// Method to get current email value for display
-const currentEmail = computed(() => {
-  return selectedUser.value?.email || email.value
-})
-
 // Method to validate form before submission
 const validateForm = () => {
-  const loginEmail = selectedUser.value?.email || email.value
-
-  if (!loginEmail) {
-    error.value = 'Please select a user or enter email.'
+  if (!selectedUser.value) {
+    error.value = 'Vui lòng chọn tài khoản.'
     return false
   }
 
   if (!password.value) {
-    error.value = 'Password is required.'
+    error.value = 'Vui lòng nhập mật khẩu.'
     return false
   }
 
   return true
 }
-
-// Watch for manual email input to clear selection
-watch(email, (newEmail) => {
-  if (selectedUser.value && selectedUser.value.email !== newEmail) {
-    selectedUser.value = null
-  }
-})
 
 // Gọi API khi component được mount
 onMounted(() => {

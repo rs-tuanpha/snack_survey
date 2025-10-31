@@ -3,7 +3,7 @@
  * Generated from swagger.json documentation
  */
 
-import type { ETopicTeam, EUserRole } from '@/core/constants/enum'
+import type { ETopicRequireField, ETopicTeam, EUserRole } from '@/core/constants/enum'
 
 // Types are now inline to match Swagger schema exactly
 
@@ -25,6 +25,7 @@ export interface Topic {
   isActive: boolean
   isMutable: boolean
   team: ETopicTeam
+  optionRequiredField: ETopicRequireField
   createdBy: string
   totalVotes?: number
   totalParticipants?: number
