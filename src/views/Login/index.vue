@@ -146,7 +146,6 @@ const initializeUsers = async () => {
       email: user.email,
       username: user.username,
       avatar: user.avatar,
-      team: user.team,
       role: user.role
     }))
 
@@ -191,8 +190,7 @@ const handleLogin = async () => {
       email: response.data.user.email,
       username: response.data.user.username,
       avatar: response.data.user.avatar,
-      role: response.data.user.role,
-      team: response.data.user.team
+      role: response.data.user.role
     }
 
     // Set tokens and user data using useCookie hooks

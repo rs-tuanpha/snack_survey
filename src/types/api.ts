@@ -3,7 +3,7 @@
  * Generated from swagger.json documentation
  */
 
-import type { ETopicRequireField, ETopicTeam, EUserRole } from '@/core/constants/enum'
+import type { ETopicRequireField, EUserRole } from '@/core/constants/enum'
 
 // Types are now inline to match Swagger schema exactly
 
@@ -24,7 +24,6 @@ export interface Topic {
   voteType: 'single' | 'multiple'
   isActive: boolean
   isMutable: boolean
-  team: ETopicTeam
   optionRequiredField: ETopicRequireField
   createdBy: string
   totalVotes?: number
@@ -39,8 +38,8 @@ export interface CreateTopicRequest {
   startDate: string
   endDate: string
   voteType: 'single' | 'multiple'
-  team: ETopicTeam
   isActive?: boolean
+  isMutable?: boolean
 }
 
 export interface UpdateTopicRequest {
@@ -49,8 +48,8 @@ export interface UpdateTopicRequest {
   startDate?: string
   endDate?: string
   voteType?: 'single' | 'multiple'
-  team?: ETopicTeam
   isActive?: boolean
+  isMutable?: boolean
 }
 
 export interface TopicResponse extends BaseResponse {
@@ -138,7 +137,6 @@ export interface User {
   email: string
   avatar?: string
   role: EUserRole
-  team: ETopicTeam
   isFirstLogin?: boolean
   createdAt: string
   updatedAt: string
@@ -168,10 +166,6 @@ export interface UpdateUserRoleRequest {
   role: 'user' | 'admin'
 }
 
-export interface UpdateUserTeamRequest {
-  team: ETopicTeam
-}
-
 // Authentication types - Updated to match Swagger schema
 export interface LoginRequest {
   email: string
@@ -183,7 +177,6 @@ export interface RegisterRequest {
   email: string
   password: string
   avatar?: string
-  team?: ETopicTeam
   role?: EUserRole
 }
 
@@ -250,7 +243,6 @@ export interface ValidationError extends BaseResponse {
 export interface TopicListQuery {
   page?: number
   limit?: number
-  team?: ETopicTeam
   isActive?: boolean
   search?: string
   startDateFrom?: string
@@ -275,8 +267,8 @@ export const queryKeys = {
     list: (params: TopicListQuery) => [...queryKeys.topics.lists(), params] as const,
     details: () => [...queryKeys.topics.all, 'detail'] as const,
     detail: (id: string) => [...queryKeys.topics.details(), id] as const,
-    open: (team?: string) => [...queryKeys.topics.all, 'open', team] as const,
-    closed: (team?: string) => [...queryKeys.topics.all, 'closed', team] as const,
+    open: () => [...queryKeys.topics.all, 'open'] as const,
+    closed: () => [...queryKeys.topics.all, 'closed'] as const,
   },
   options: {
     all: ['options'] as const,

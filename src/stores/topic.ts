@@ -58,11 +58,6 @@ export const useTopicStore = defineStore('topic', {
     // Get current topic
     getCurrentTopic: (state): ITopic | null => state.currentTopic,
 
-    // Get topics by team
-    getTopicsByTeam: (state) => (team: string): ITopic[] => {
-      return state.topics.filter(topic => topic.team === team)
-    },
-
     // Get open topics
     getOpenTopics: (state): ITopic[] => {
       return state.topics.filter(topic => topic.isActive)

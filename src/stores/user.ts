@@ -1,4 +1,3 @@
-import type { ETopicTeam } from '@/core/constants/enum'
 import type { IUser } from '@/core/interfaces/model/user'
 import { logger } from '@/core/utils/logger'
 import { defineStore } from 'pinia'
@@ -60,11 +59,6 @@ export const useUserStore = defineStore('user', {
 
     // Get available users
     getAvailableUsers: (state): IUser[] => state.availableUsers,
-
-    // Get users by team
-    getUsersByTeam: (state) => (team: ETopicTeam): IUser[] => {
-      return state.availableUsers.filter(user => user.team === team)
-    },
 
     // Check if loading
     isLoading: (state): boolean => state.loading,

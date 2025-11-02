@@ -12,12 +12,6 @@ export enum EStatusCode {
   INTERNAL_SERVER_ERROR = 500
 }
 
-export enum ETopicTeam {
-  FE = 'FE',
-  PHP = 'PHP',
-  ALL = 'ALL'
-}
-
 export enum EUserRole {
   USER = 'user',
   ADMIN = 'admin'

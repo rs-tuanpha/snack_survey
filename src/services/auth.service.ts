@@ -17,7 +17,7 @@ const cookieUtils = {
   }
 }
 import type { IUser } from '@/core/interfaces/model/user'
-import type { ETopicTeam, EUserRole } from '@/core/constants/enum'
+import type { EUserRole } from '@/core/constants/enum'
 import { useCookie } from '@/core/hooks/useCookie'
 
 export interface IRegisterPayload {
@@ -43,7 +43,6 @@ interface ILoginResponse {
       email: string
       avatar: string
       role: EUserRole
-      team: ETopicTeam
       isFirstLogin: boolean
     }
   },

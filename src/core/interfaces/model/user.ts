@@ -1,4 +1,4 @@
-import type { ETopicTeam, EUserRole } from '@/core/constants/enum'
+import type { EUserRole } from '@/core/constants/enum'
 
 export interface IUser {
   id: string
@@ -6,5 +6,4 @@ export interface IUser {
   email: string
   avatar?: string
   role: EUserRole
-  team: ETopicTeam
 }

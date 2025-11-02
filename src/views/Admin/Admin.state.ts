@@ -1,25 +1,25 @@
 import type { ITopic } from '@/core/interfaces/model/topic'
 import type { IOption } from '@/core/interfaces/model/option'
 import type { IState } from '@/core/interfaces/model/state'
-import { ETopicTeam, ETopicVoteType } from '@/core/constants/enum'
+import { ETopicVoteType } from '@/core/constants/enum'
 
 // Initial topic state for form
 export const initTopic: Partial<ITopic> = {
   _id: '',
   title: '',
   description: '',
-  team: ETopicTeam.ALL,
-  voteType: ETopicVoteType.SINGLE,
+  votingType: ETopicVoteType.SINGLE,
   isActive: true,
+  isMutable: true,
   startDate: undefined,
-  endDate: undefined,
+  endDate: undefined
 }
 
 // Initial topic state wrapper
 export const initTopicState: IState<ITopic> = {
   hasError: false,
   data: undefined,
-  message: '',
+  message: ''
 }
 
 // Initial option state
@@ -28,5 +28,5 @@ export const initOption: Partial<IOption> = {
   title: '',
   link: '',
   topicId: '',
-  voteCount: 0,
+  voteCount: 0
 }

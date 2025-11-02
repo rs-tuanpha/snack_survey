@@ -30,10 +30,17 @@
         </v-list-item-subtitle>
       </v-list-item>
       <v-divider></v-divider>
-      
-      <v-list-item @click="handleSettings" prepend-icon="mdi-cog" title="Cài đặt">
+
+      <v-list-item
+        v-if="isAdmin"
+        @click="handleAdminNavigation"
+        prepend-icon="mdi-shield-crown"
+        title="Quản trị"
+      >
       </v-list-item>
-      
+
+      <v-list-item @click="handleSettings" prepend-icon="mdi-cog" title="Cài đặt"> </v-list-item>
+
       <v-list-item @click="handleLogout" title="Đăng xuất">
         <template v-slot:prepend>
           <v-icon color="error">mdi-logout-variant</v-icon>
@@ -50,6 +57,10 @@ import { useAuthStore } from '@/stores/auth'
 import { useCookie } from '@/core/hooks/useCookie'
 import { CookieKeys } from '@/core/utils/cookieUtils'
 import useCommon from '@/core/hooks/useCommon'
+
+// Get admin path from environment variable
+// eslint-disable-next-line no-undef
+const ADMIN_PATH = process.env.VUE_APP_ADMIN_PATH
 
 const { handleRouter, storage } = useCommon('useCommonStore')
 const userStore = useUserStore()
@@ -71,22 +82,27 @@ const avatarInitial = computed(() => {
   return userData.value.username.charAt(0).toUpperCase()
 })
 
+// Check if user is admin
+const isAdmin = computed(() => {
+  return authStore.isAdmin
+})
+
 // Handle logout
 const handleLogout = () => {
   // Remove cookies
   accessTokenCookie.remove()
   refreshTokenCookie.remove()
   userDataCookie.remove()
-  
+
   // Remove localStorage
   storage.removeLocalStorage('user')
   storage.removeLocalStorage('topics')
   storage.removeLocalStorage('app_preferences')
-  
+
   // Clear stores
   authStore.clearToken()
-  userStore.clearUser()
-  
+  userStore.setUser(null)
+
   // Redirect to login
   handleRouter.pushPath('/login')
 }
@@ -95,6 +111,15 @@ const handleLogout = () => {
 const handleSettings = () => {
   // TODO: Navigate to settings page or open settings dialog
   console.log('Settings clicked')
+}
+
+// Handle admin navigation
+const handleAdminNavigation = () => {
+  if (ADMIN_PATH) {
+    handleRouter.replacePath(ADMIN_PATH)
+  } else {
+    console.warn('VUE_APP_ADMIN_PATH is not defined')
+  }
 }
 </script>
 
@@ -121,4 +146,3 @@ const handleSettings = () => {
   }
 }
 </style>
-

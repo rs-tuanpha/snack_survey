@@ -13,7 +13,6 @@ import type {
   TopicListQuery
 } from '@/types/api'
 import { queryKeys } from '@/types/api'
-import { ETopicTeam } from '@/core/constants/enum'
 
 // ============================================================================
 // TANSTACK QUERY HOOKS
@@ -34,10 +33,10 @@ export function useTopicsList(params: TopicListQuery = {}) {
 /**
  * Get open topics
  */
-export function useOpenTopics(team?: string | null) {
+export function useOpenTopics() {
   return useQuery({
-    queryKey: queryKeys.topics.open(team || undefined),
-    queryFn: () => getOpenTopicList(team || null),
+    queryKey: queryKeys.topics.open(),
+    queryFn: () => getOpenTopicList(),
     staleTime: 1000 * 60 * 2, // 2 minutes
     gcTime: 1000 * 60 * 5, // 5 minutes
   })
@@ -46,10 +45,10 @@ export function useOpenTopics(team?: string | null) {
 /**
  * Get closed topics
  */
-export function useClosedTopics(team?: string | null) {
+export function useClosedTopics() {
   return useQuery({
-    queryKey: queryKeys.topics.closed(team || undefined),
-    queryFn: () => getCloseTopicList(team || null),
+    queryKey: queryKeys.topics.closed(),
+    queryFn: () => getCloseTopicList(),
     staleTime: 1000 * 60 * 2, // 2 minutes
     gcTime: 1000 * 60 * 5, // 5 minutes
   })
@@ -176,11 +175,10 @@ export const getTopicList = async (params: TopicListQuery): Promise<TopicListRes
 /**
  * Get list topic data status open
  */
-export const getOpenTopicList = async (team: string | null): Promise<ITopic[]> => {
+export const getOpenTopicList = async (): Promise<ITopic[]> => {
   try {
     const query: TopicListQuery = {
-      isActive: true,
-      team: team as ETopicTeam | undefined
+      isActive: true
     }
     const response = await api.get<TopicListResponse>('/api/topics', { params: query })
     return response.data.data.map((item) => adaptApiTopicToITopic(item))
@@ -192,11 +190,10 @@ export const getOpenTopicList = async (team: string | null): Promise<ITopic[]> =
 /**
  * Get list topic data status close
  */
-export const getCloseTopicList = async (team: string | null): Promise<ITopic[]> => {
+export const getCloseTopicList = async (): Promise<ITopic[]> => {
   try {
     const query: TopicListQuery = {
-      isActive: false,
-      team: team as ETopicTeam | undefined
+      isActive: false
     }
     const response = await api.get<TopicListResponse>('/api/topics', { params: query })
     return response.data.data.map((item) => adaptApiTopicToITopic(item))

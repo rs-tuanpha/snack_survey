@@ -38,8 +38,7 @@ export function useEnsureUser() {
         username: user.username,
         email: user.email,
         avatar: user.avatar,
-        role: user.role,
-        team: user.team
+        role: user.role
       }
       
       // Update both stores

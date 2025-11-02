@@ -46,14 +46,12 @@ export {
   useUserProfile,
   useUpdateUser,
   useUpdateUserRole,
-  useUpdateUserTeam,
   useDeleteUser,
   getUsersList,
   getUserById,
   getCurrentUserProfile,
   updateUser,
   updateUserRole,
-  updateUserTeam,
   deleteUser,
 } from './user.service'
 
@@ -104,7 +102,6 @@ export type {
   UserListResponse,
   UpdateUserRequest,
   UpdateUserRoleRequest,
-  UpdateUserTeamRequest,
   VotingStatusResponse,
   VotingStatsResponse,
   queryKeys

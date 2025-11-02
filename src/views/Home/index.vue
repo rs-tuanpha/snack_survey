@@ -153,7 +153,7 @@ import { getTopicList } from '@/services/topic.service'
 import { getCurrentUserProfile } from '@/services/user.service'
 import type { ITopic } from '@/core/interfaces/model/topic'
 import type { IUser } from '@/core/interfaces/model/user'
-import { EUserRole, ETopicTeam } from '@/core/constants/enum'
+import { EUserRole } from '@/core/constants/enum'
 import useCommon from '@/core/hooks/useCommon'
 import { useUserStore } from '@/stores/user'
 import { useAuthStore } from '@/stores/auth'
@@ -263,8 +263,7 @@ const getUserData = async () => {
       email: userProfile.email,
       username: userProfile.username,
       avatar: userProfile.avatar,
-      role: userProfile.role as EUserRole,
-      team: userProfile.team as ETopicTeam
+      role: userProfile.role as EUserRole
     }
     userStore.setUser(userData.value)
   } catch (error) {
@@ -282,12 +281,9 @@ const getUserData = async () => {
 }
 
 const fetchTopics = async (page = 1) => {
-  if (!userData.value?.team) return
-
   isLoadingTopics.value = true
   try {
     const response = await getTopicList({ 
-      team: userData.value.team, 
       page, 
       limit: pageSize 
     })

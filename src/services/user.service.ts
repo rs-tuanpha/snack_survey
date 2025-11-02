@@ -5,8 +5,7 @@ import type {
   UserResponse,
   UserListResponse,
   UpdateUserRequest,
-  UpdateUserRoleRequest,
-  UpdateUserTeamRequest
+  UpdateUserRoleRequest
 } from '@/types/api'
 import { queryKeys } from '@/types/api'
 
@@ -88,26 +87,6 @@ export function useUpdateUserRole() {
     },
     onError: (error) => {
       console.error('Failed to update user role:', error)
-    },
-  })
-}
-
-/**
- * Update user team
- */
-export function useUpdateUserTeam() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: ({ userId, teamData }: { userId: string; teamData: UpdateUserTeamRequest }) =>
-      updateUserTeam(userId, teamData),
-    onSuccess: (_, { userId }) => {
-      // Invalidate user queries
-      queryClient.invalidateQueries({ queryKey: queryKeys.users.detail(userId) })
-      queryClient.invalidateQueries({ queryKey: queryKeys.users.lists() })
-    },
-    onError: (error) => {
-      console.error('Failed to update user team:', error)
     },
   })
 }
@@ -201,19 +180,6 @@ export async function updateUserRole(userId: string, roleData: UpdateUserRoleReq
 }
 
 /**
- * Update user team
- */
-export async function updateUserTeam(userId: string, teamData: UpdateUserTeamRequest): Promise<User> {
-  try {
-    const response = await api.patch<UserResponse>(`/api/users/${userId}/team`, teamData)
-    return response.data.data
-  } catch (error) {
-    console.error(`Error updating user team ${userId}:`, error)
-    throw error
-  }
-}
-
-/**
  * Delete user
  */
 export async function deleteUser(userId: string): Promise<void> {
@@ -236,7 +202,6 @@ export default {
   useUserProfile,
   useUpdateUser,
   useUpdateUserRole,
-  useUpdateUserTeam,
   useDeleteUser,
 
   // API service functions
@@ -245,6 +210,5 @@ export default {
   getCurrentUserProfile,
   updateUser,
   updateUserRole,
-  updateUserTeam,
   deleteUser,
 }
