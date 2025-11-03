@@ -16,12 +16,17 @@ const routes = [
       {
         path: '/change_password',
         name: 'changePassword',
-        component: () => import('@/views/User/ChangePasswordPage.vue')
+        component: () => import('@/views/User/ProfilePage.vue')
       },
       {
         path: process.env.VUE_APP_ADMIN_PATH!,
         name: 'topicAmin',
-        component: () => import('@/views/Admin/index.vue')
+        component: () => import('@/views/Admin/TopicManagePage.vue')
+      },
+      {
+        path: '/management/users',
+        name: 'userManagment',
+        component: () => import('@/views/Admin/UserManagePage.vue')
       },
       {
         path: '/vote-topic/:id',
@@ -33,7 +38,7 @@ const routes = [
   {
     path: '/login',
     name: 'Login',
-    component: () => import('@/views/Login/index.vue')
+    component: () => import('@/views/Auth/LoginPage.vue')
   }
 ]
 

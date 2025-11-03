@@ -76,7 +76,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import authService from '@/services/auth.service'
-import { getUsersList } from '@/services/user.service'
+import { getActiveUsersForLogin } from '@/services/user.service'
 import { useUserStore } from '@/stores'
 import { useAuthStore } from '@/stores/auth'
 import { useCookie } from '@/core/hooks/useCookie'
@@ -137,7 +137,7 @@ const initializeUsers = async () => {
   try {
     loadingUsers.value = true
 
-    const usersList = await getUsersList({ page: 1, limit: 100 })
+    const usersList = await getActiveUsersForLogin({ page: 1, limit: 100 })
 
     // Map users to match expected format
     users.value = usersList.map((user) => ({

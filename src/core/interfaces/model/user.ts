@@ -6,4 +6,5 @@ export interface IUser {
   email: string
   avatar?: string
   role: EUserRole
+  isActive?: boolean
 }

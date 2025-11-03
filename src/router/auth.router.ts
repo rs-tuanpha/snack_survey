@@ -1,20 +1,5 @@
 import type { Router } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
-import { getCookieRaw, CookieKeys } from '@/core/utils/cookieUtils'
-
-// Simple cookie utilities for router use - using type-safe CookieKeys
-const cookieUtils = {
-  get: (key: keyof typeof CookieKeys): string | null => getCookieRaw(CookieKeys[key]),
-  getJSON: <T>(key: keyof typeof CookieKeys): T | null => {
-    const value = getCookieRaw(CookieKeys[key])
-    if (!value) return null
-    try {
-      return JSON.parse(value) as T
-    } catch {
-      return null
-    }
-  }
-}
 
 /**
  * Enhanced authentication router guard using auth store

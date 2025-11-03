@@ -137,6 +137,7 @@ export interface User {
   email: string
   avatar?: string
   role: EUserRole
+  isActive?: boolean
   isFirstLogin?: boolean
   createdAt: string
   updatedAt: string
@@ -164,6 +165,23 @@ export interface UpdateUserRequest {
 
 export interface UpdateUserRoleRequest {
   role: 'user' | 'admin'
+}
+
+export interface CreateUserRequest {
+  username: string
+  email: string
+  password: string
+  avatar?: string
+  role?: EUserRole
+  isActive?: boolean
+}
+
+export interface UpdateUserStatusRequest {
+  isActive: boolean
+}
+
+export interface AdminResetPasswordRequest {
+  newPassword?: string
 }
 
 // Authentication types - Updated to match Swagger schema

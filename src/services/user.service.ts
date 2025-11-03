@@ -1,11 +1,15 @@
 import api from '@/core/api'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
+import { computed } from 'vue'
 import type {
   User,
   UserResponse,
   UserListResponse,
   UpdateUserRequest,
-  UpdateUserRoleRequest
+  UpdateUserRoleRequest,
+  CreateUserRequest,
+  UpdateUserStatusRequest,
+  AdminResetPasswordRequest
 } from '@/types/api'
 import { queryKeys } from '@/types/api'
 
@@ -14,12 +18,15 @@ import { queryKeys } from '@/types/api'
 // ============================================================================
 
 /**
- * Get list of users with pagination
+ * Get list of users with pagination, search and filter (Admin only)
  */
-export function useUsersList(params: { page?: number; limit?: number } = {}) {
+export function useUsersList(params: { page?: number; limit?: number; search?: string; isActive?: boolean } | (() => { page?: number; limit?: number; search?: string; isActive?: boolean }) = {}) {
+  // Handle both direct object and getter function (for computed refs)
+  const getParams = typeof params === 'function' ? params : () => params
+  
   return useQuery({
-    queryKey: queryKeys.users.list(params),
-    queryFn: () => getUsersList(params),
+    queryKey: computed(() => queryKeys.users.list(getParams())),
+    queryFn: () => getUsersList(getParams()),
     staleTime: 1000 * 60 * 5, // 5 minutes
     gcTime: 1000 * 60 * 10, // 10 minutes
   })
@@ -110,19 +117,101 @@ export function useDeleteUser() {
   })
 }
 
+/**
+ * Create a new user (Admin only)
+ */
+export function useCreateUser() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (userData: CreateUserRequest) => createUser(userData),
+    onSuccess: () => {
+      // Invalidate user lists
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.lists() })
+    },
+    onError: (error) => {
+      console.error('Failed to create user:', error)
+    },
+  })
+}
+
+/**
+ * Toggle user status (enable/disable) (Admin only)
+ */
+export function useToggleUserStatus() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ userId, statusData }: { userId: string; statusData: UpdateUserStatusRequest }) =>
+      toggleUserStatus(userId, statusData),
+    onSuccess: (_, { userId }) => {
+      // Invalidate user queries
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.detail(userId) })
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.lists() })
+    },
+    onError: (error) => {
+      console.error('Failed to toggle user status:', error)
+    },
+  })
+}
+
+/**
+ * Admin reset user password (Admin only)
+ */
+export function useAdminResetPassword() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ userId, resetData }: { userId: string; resetData: AdminResetPasswordRequest }) =>
+      adminResetPassword(userId, resetData),
+    onSuccess: (_, { userId }) => {
+      // Invalidate user queries
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.detail(userId) })
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.lists() })
+    },
+    onError: (error) => {
+      console.error('Failed to reset password:', error)
+    },
+  })
+}
+
 // ============================================================================
 // API SERVICE FUNCTIONS
 // ============================================================================
 
 /**
- * Get list of users with pagination
+ * Get list of users with pagination, search and filter (Admin only)
  */
-export async function getUsersList(params: { page?: number; limit?: number } = {}): Promise<User[]> {
+export async function getUsersList(params: { page?: number; limit?: number; search?: string; isActive?: boolean } = {}): Promise<UserListResponse> {
   try {
     const response = await api.get<UserListResponse>('/api/users', { params })
-    return response.data.data || []
+    return response.data
   } catch (error) {
     console.error('Error fetching users:', error)
+    return {
+      success: false,
+      message: 'Failed to fetch users',
+      timestamp: new Date().toISOString(),
+      data: [],
+      pagination: {
+        page: 1,
+        limit: 10,
+        total: 0,
+        totalPages: 1
+      }
+    }
+  }
+}
+
+/**
+ * Get list of active users for login page (Public endpoint, no auth required)
+ */
+export async function getActiveUsersForLogin(params: { page?: number; limit?: number } = {}): Promise<User[]> {
+  try {
+    const response = await api.get<UserListResponse>('/api/auth/users', { params })
+    return response.data.data || []
+  } catch (error) {
+    console.error('Error fetching active users for login:', error)
     return []
   }
 }
@@ -191,6 +280,45 @@ export async function deleteUser(userId: string): Promise<void> {
   }
 }
 
+/**
+ * Create a new user (Admin only)
+ */
+export async function createUser(userData: CreateUserRequest): Promise<User> {
+  try {
+    const response = await api.post<UserResponse>('/api/users', userData)
+    return response.data.data
+  } catch (error) {
+    console.error('Error creating user:', error)
+    throw error
+  }
+}
+
+/**
+ * Toggle user status (enable/disable) (Admin only)
+ */
+export async function toggleUserStatus(userId: string, statusData: UpdateUserStatusRequest): Promise<User> {
+  try {
+    const response = await api.put<UserResponse>(`/api/users/${userId}/status`, statusData)
+    return response.data.data
+  } catch (error) {
+    console.error(`Error toggling user status ${userId}:`, error)
+    throw error
+  }
+}
+
+/**
+ * Admin reset user password (Admin only)
+ */
+export async function adminResetPassword(userId: string, resetData: AdminResetPasswordRequest): Promise<User> {
+  try {
+    const response = await api.post<UserResponse>(`/api/users/${userId}/reset-password`, resetData)
+    return response.data.data
+  } catch (error) {
+    console.error(`Error resetting password for user ${userId}:`, error)
+    throw error
+  }
+}
+
 // ============================================================================
 // DEFAULT EXPORT
 // ============================================================================
@@ -203,6 +331,9 @@ export default {
   useUpdateUser,
   useUpdateUserRole,
   useDeleteUser,
+  useCreateUser,
+  useToggleUserStatus,
+  useAdminResetPassword,
 
   // API service functions
   getUsersList,
@@ -211,4 +342,7 @@ export default {
   updateUser,
   updateUserRole,
   deleteUser,
+  createUser,
+  toggleUserStatus,
+  adminResetPassword,
 }

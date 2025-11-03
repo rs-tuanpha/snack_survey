@@ -116,7 +116,7 @@
              :option="option"
              :current-account="currentAccount"
              :is-voting="votingOptions.has(option._id)"
-             :disabled="isVotingDisabled || voteStatusLoading"
+             :disabled="isVoting || isVotingDisabled || voteStatusLoading"
              card-style="
                position: relative;
                padding: 4px;
@@ -135,6 +135,11 @@
           <p style="font-size: large">No option yet!</p>
         </section>
       </div>
+
+      <!-- Voting Loading Overlay for Right Area -->
+      <v-overlay :model-value="isVoting" class="align-center justify-center" contained>
+        <v-progress-circular color="primary" indeterminate size="64"></v-progress-circular>
+      </v-overlay>
     </v-sheet>
 
     <!-- Loading Overlay -->
@@ -232,6 +237,7 @@ const { isLoading: userLoading, error: userError } = useEnsureUser()
 // Voting state management
 const votingOptions = ref<Set<string>>(new Set())
 const isVotingDisabled = ref(false)
+const isVoting = ref(false)
 
 
 // Development mode check
@@ -240,7 +246,13 @@ const isDevelopment = computed(() => import.meta.env.DEV)
 // Socket vote store for real-time state management
 const socketVoteStore = useSocketVoteStore()
 const userMap = computed(() => {
-  const users = userList.value || []
+  // userList.value may be an object (UserListResponse) or array (never[])
+  const users =
+    Array.isArray(userList.value)
+      ? userList.value
+      : Array.isArray(userList.value?.data)
+        ? userList.value.data
+        : []
   return users.reduce((acc: Record<string, User>, user: User) => {
     acc[user._id] = user
     return acc
@@ -390,11 +402,13 @@ const transformOptionData = (option: any): IOption => ({
 })
 
 // Helper function to update vote status cache with vote data
+// When isLocalUser is false (socket event from other user), only update voteCount, not hasUserVoted
 const updateVoteStatusCacheWithVote = (
   topicId: string,
   optionId: string,
   voteCount: number,
-  hasUserVoted: boolean
+  hasUserVoted: boolean,
+  isLocalUser: boolean = true
 ) => {
   // Update vote status cache
   queryClient.setQueryData(queryKeys.votes.status(topicId), (oldData: any) => {
@@ -404,9 +418,17 @@ const updateVoteStatusCacheWithVote = (
       ...oldData,
       data: {
         ...oldData.data,
-        options: oldData.data.options.map((option: any) =>
-          option._id === optionId ? { ...option, voteCount, hasUserVoted } : option
-        )
+        options: oldData.data.options.map((option: any) => {
+          if (option._id === optionId) {
+            // If not local user, keep existing hasUserVoted
+            return {
+              ...option,
+              voteCount,
+              hasUserVoted: isLocalUser ? hasUserVoted : option.hasUserVoted
+            }
+          }
+          return option
+        })
       }
     }
   })
@@ -420,6 +442,40 @@ const updateVoteStatusCacheWithVote = (
       data: oldData.data.map((option: any) =>
         option._id === optionId ? { ...option, voteCount } : option
       )
+    }
+  })
+}
+
+// Helper function to update only voteCount (for optimistic updates or socket events from other users)
+const updateVoteCountOnly = (
+  topicId: string,
+  optionId: string,
+  voteCount: number
+) => {
+  // Update options cache (this is what the UI actually uses)
+  queryClient.setQueryData(queryKeys.options.byTopic(topicId), (oldData: any) => {
+    if (!oldData?.data) return oldData
+
+    return {
+      ...oldData,
+      data: oldData.data.map((option: any) =>
+        option._id === optionId ? { ...option, voteCount } : option
+      )
+    }
+  })
+
+  // Update vote status cache (only voteCount, keep hasUserVoted)
+  queryClient.setQueryData(queryKeys.votes.status(topicId), (oldData: any) => {
+    if (!oldData?.data?.options) return oldData
+
+    return {
+      ...oldData,
+      data: {
+        ...oldData.data,
+        options: oldData.data.options.map((option: any) =>
+          option._id === optionId ? { ...option, voteCount } : option
+        )
+      }
     }
   })
 }
@@ -451,44 +507,69 @@ const handleChangeVote = debounce(async (optionId: string) => {
   }
 
   // Prevent spam clicking
-  if (votingOptions.value.has(optionId) || isVotingDisabled.value) {
+  if (votingOptions.value.has(optionId) || isVotingDisabled.value || isVoting.value) {
     return
   }
 
   const topicId = id.toString()
-
-  // Check if vote is pending (removed socket vote check)
+  const isUnvote = voteStatusData.value.has(optionId)
+  
+  // Get current option to store for rollback
+  const currentOption = optionsData.value?.data?.find((opt: any) => opt._id === optionId)
+  const oldVoteCount = currentOption?.voteCount || 0
+  const newVoteCount = isUnvote ? Math.max(0, oldVoteCount - 1) : oldVoteCount + 1
 
   // Set voting state
   votingOptions.value.add(optionId)
   isVotingDisabled.value = true
+  isVoting.value = true
+
+  // Optimistic update: update cache immediately for better UX
+  updateVoteCountOnly(topicId, optionId, newVoteCount)
 
   try {
     if (currentTopic.value?.isMutable) {
-      if (voteStatusData.value.has(optionId)) {
-        // Use API for unvote
-        await handleUnvote({ optionId, topicId })
-        voteStatusData.value.delete(optionId)
-        showSuccess('Bỏ vote thành công!')
-        return
-      }
+      let response: any
       
-      // Use API for vote
-      await handleVote({ optionId, topicId })
-      voteStatusData.value.add(optionId)
-      showSuccess('Vote thành công!')
+      if (isUnvote) {
+        // Use API for unvote
+        response = await handleUnvote({ optionId, topicId })
+        voteStatusData.value.delete(optionId)
+      } else {
+        // Use API for vote
+        response = await handleVote({ optionId, topicId })
+        voteStatusData.value.add(optionId)
+      }
+
+      // Update cache with API response data (more accurate than optimistic update)
+      if (response?.data?.voteCount !== undefined) {
+        updateVoteStatusCacheWithVote(
+          topicId,
+          optionId,
+          response.data.voteCount,
+          response.data.userHasVoted || !isUnvote,
+          true // isLocalUser = true since this is our own vote
+        )
+      }
+
+      showSuccess(isUnvote ? 'Bỏ vote thành công!' : 'Vote thành công!')
       return
     }
 
     showError('Topic đang đóng, vui lòng trở lại sau')
+    // Rollback optimistic update
+    updateVoteCountOnly(topicId, optionId, oldVoteCount)
     return
   } catch (error) {
     console.error('Vote error:', error)
     showError('Có lỗi xảy ra khi vote')
+    // Rollback optimistic update on error
+    updateVoteCountOnly(topicId, optionId, oldVoteCount)
   } finally {
     // Clear voting state
     votingOptions.value.delete(optionId)
     isVotingDisabled.value = false
+    isVoting.value = false
   }
 }, 100)
 
@@ -535,16 +616,26 @@ const setupSocketConnection = async () => {
       }
     })
 
-    // Handle real-time vote updates
+    // Handle real-time vote updates from socket
     webSocketService.on('vote:update', (data: VoteUpdateResponse) => {
       if (data.topicId === id.toString()) {
-        // Update vote status cache with new vote count
-        updateVoteStatusCacheWithVote(
+        const isLocalUser = currentAccount?.id === data.userId
+        
+        // Update vote count from socket event
+        updateVoteCountOnly(
           data.topicId,
           data.optionId,
-          data.voteCount,
-          data.action === 'vote'
+          data.voteCount
         )
+
+        // Only update voteStatusData if this is our own vote
+        if (isLocalUser) {
+          if (data.action === 'vote') {
+            voteStatusData.value.add(data.optionId)
+          } else {
+            voteStatusData.value.delete(data.optionId)
+          }
+        }
       }
     })
 
