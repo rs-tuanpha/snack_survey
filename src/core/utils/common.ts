@@ -11,17 +11,17 @@ import * as store from '@/stores'
 export const $router = {
   push(props: Record<string, any>, newTab = false) {
     if (!newTab) {
-      app.config.globalProperties.$router.push({ ...props })
+      (app as any).config.globalProperties.$router.push({ ...props })
     } else {
-      const newRoute = app.config.globalProperties.$router.resolve(props)
+      const newRoute = (app as any).config.globalProperties.$router.resolve(props)
       window.open(newRoute.href)
     }
   },
   replace(props: Record<string, any>) {
-    app.config.globalProperties.$router.replace({ ...props })
+    (app as any).config.globalProperties.$router.replace({ ...props })
   },
   allConfig() {
-    return app.config.globalProperties.$router
+    return (app as any).config.globalProperties.$router
   }
 }
 

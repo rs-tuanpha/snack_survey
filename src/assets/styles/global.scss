@@ -1,6 +1,6 @@
-@import '_variables.scss';
-@import '_reset.scss';
-@import '_fonts.scss';
+@use '_variables.scss';
+@use '_reset.scss';
+@use '_fonts.scss';
 
 body {
   min-height: 100vh;

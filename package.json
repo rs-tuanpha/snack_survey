@@ -9,12 +9,15 @@
     "build-only": "vite build --base=/snack_survey/",
     "type-check": "vue-tsc --noEmit",
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
-    "format": "prettier --write src/"
+    "format": "prettier --write src/",
+    "api:manual-test": "bash ./scripts/manual_api_test.sh"
   },
   "dependencies": {
     "@mdi/font": "^7.2.96",
+    "@tanstack/query-devtools": "^5.84.0",
+    "@tanstack/vue-query": "^5.83.1",
     "@vuepic/vue-datepicker": "^5.2.1",
-    "axios": "^1.3.6",
+    "axios": "^1.11.0",
     "crypto-js": "^4.1.1",
     "dayjs": "^1.11.7",
     "firebase": "^9.22.2",
@@ -22,11 +25,11 @@
     "lodash": "^4.17.21",
     "pinia": "^2.0.32",
     "sass": "^1.62.0",
+    "socket.io-client": "^4.8.1",
     "vue": "^3.2.47",
     "vue-debounce": "^4.0.0",
     "vue-router": "^4.1.6",
-    "vuefire": "^3.1.0",
-    "vuetify": "3.3.2"
+    "vuetify": "^3.4.0"
   },
   "engines": {
     "npm": ">=8.0.0",
@@ -34,6 +37,8 @@
   },
   "devDependencies": {
     "@rushstack/eslint-patch": "^1.2.0",
+    "@types/crypto-js": "^4.2.2",
+    "@types/js-cookie": "^3.0.6",
     "@types/lodash": "^4.17.17",
     "@types/node": "^18.14.2",
     "@vitejs/plugin-basic-ssl": "^1.0.1",
@@ -46,6 +51,7 @@
     "eslint": "^8.34.0",
     "eslint-plugin-vue": "^9.9.0",
     "npm-run-all": "^4.1.5",
+    "openapi-types": "^12.1.3",
     "prettier": "^2.8.4",
     "typescript": "~4.8.4",
     "vite": "^4.1.4",

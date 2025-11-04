@@ -1,24 +1,22 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
 import Loading from '@/components/molecules/Loading/index.vue'
+import GlobalSnackbar from '@/components/atoms/GlobalSnackbar.vue'
 import { computed } from 'vue'
-import useCommon from './core/hooks/useCommon'
+import { useCommonStore } from '@/stores/_common'
 
 /**
  * Page: Root page
  */
-const { storeGetters } = useCommon('useCommonStore')
-const isLoading = computed(() => {
-  const { loading } = storeGetters()
-
-  return loading.value
-})
+const commonStore = useCommonStore()
+const isLoading = computed(() => commonStore.loading)
 </script>
 
 <template>
   <RouterView />
   <Loading :is-loading="isLoading" />
+  <GlobalSnackbar />
 </template>
 <style lang="scss">
-@import '@/assets/styles/global.scss';
+@use '@/assets/styles/global.scss';
 </style>

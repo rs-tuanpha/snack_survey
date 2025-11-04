@@ -1,7 +1,13 @@
 <script lang="ts" setup>
+import authService from '@/services/auth.service';
+
 /**
  * Organism: Header
  */
+
+const logout = () => {
+  authService.logout();
+}
 </script>
 
 <template>
@@ -14,6 +20,7 @@
       <nav>
         <RouterLink to="/">Home</RouterLink>
         <RouterLink to="/about">About</RouterLink>
+        <a href="#" @click.prevent="logout">Logout</a>
       </nav>
     </div>
   </header>

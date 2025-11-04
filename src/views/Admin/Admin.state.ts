@@ -1,31 +1,32 @@
-import { ETopicRequireField, ETopicTeam } from "@/core/constants/enum";
-import type { IOption } from "@/core/interfaces/model/option";
-import type { IState } from "@/core/interfaces/model/state";
-import type { ITopic } from "@/core/interfaces/model/topic";
+import type { ITopic } from '@/core/interfaces/model/topic'
+import type { IOption } from '@/core/interfaces/model/option'
+import type { IState } from '@/core/interfaces/model/state'
+import { ETopicVoteType } from '@/core/constants/enum'
 
-export const initTopic: ITopic = {
-    id: '',
-    name: '',
-    description: '',
-    date: new Date(),
-    status: true,
-    link: true,
-    option: true,
-    team: ETopicTeam.ALL,
-    requireField: ETopicRequireField.TITLE
+// Initial topic state for form
+export const initTopic: Partial<ITopic> = {
+  _id: '',
+  title: '',
+  description: '',
+  votingType: ETopicVoteType.SINGLE,
+  isActive: true,
+  isMutable: true,
+  startDate: undefined,
+  endDate: undefined
 }
 
+// Initial topic state wrapper
 export const initTopicState: IState<ITopic> = {
-    hasError: false,
-    data: undefined,
-    message: ""
+  hasError: false,
+  data: undefined,
+  message: ''
 }
 
-export const initOption: IOption = {
-    id: '',
-    title: '',
-    link: '',
-    voteBy: [],
-    topicId: '',
-    voteCount: 0,
+// Initial option state
+export const initOption: Partial<IOption> = {
+  _id: '',
+  title: '',
+  link: '',
+  topicId: '',
+  voteCount: 0
 }

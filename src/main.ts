@@ -1,21 +1,54 @@
 import { createApp } from 'vue'
-import { VueFire } from 'vuefire'
 import { createPinia } from 'pinia'
 
 import App from './App.vue'
 import router from './router'
 import vuetify from './plugins/vuetify'
-import { firebaseApp } from './plugins/firebase'
+import vueQueryPlugin from './plugins/vue-query'
+import { useAuthStore } from '@/stores/auth'
+import { useUserStore } from '@/stores/user'
 import '@vuepic/vue-datepicker/dist/main.css'
 import '@mdi/font/css/materialdesignicons.css'
 
-const app = createApp(App)
-app.use(createPinia())
-app.use(router)
-app.use(vuetify)
-app.use(VueFire, {
-  firebaseApp
-})
-app.mount('#app')
+/**
+ * Initialize the Vue application with synchronous hydration
+ */
+function initializeApp() {
+  try {
+    // Create Vue app
+    const app = createApp(App)
 
-export default app
+    // Create Pinia store
+    const pinia = createPinia()
+    app.use(pinia)
+
+    // Hydrate auth store from cookies BEFORE router initialization
+    const authStore = useAuthStore()
+    authStore.initializeFromStorage()
+
+    // Hydrate user store from authStore
+    const userStore = useUserStore()
+    userStore.initializeFromStorage()
+
+    // Install plugins
+    app.use(router)
+    app.use(vuetify)
+    app.use(vueQueryPlugin)
+
+    // Mount the app
+    app.mount('#app')
+
+    // Welcome message
+    console.log('👋 Welcome to SnackSurvey!')
+
+    return app
+  } catch (error) {
+    console.error('Failed to initialize Vue application:', error)
+    throw error
+  }
+}
+
+// Initialize the app
+initializeApp()
+
+export default initializeApp

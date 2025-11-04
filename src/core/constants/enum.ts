@@ -12,10 +12,9 @@ export enum EStatusCode {
   INTERNAL_SERVER_ERROR = 500
 }
 
-export enum ETopicTeam {
-  FE = 'FE',
-  BE = 'BE',
-  ALL = 'ALL'
+export enum EUserRole {
+  USER = 'user',
+  ADMIN = 'admin'
 }
 
 export enum ETopicRequireField {
@@ -24,9 +23,17 @@ export enum ETopicRequireField {
   ALL = 'all'
 }
 
+export enum ETopicVoteType {
+  SINGLE = 'single',
+  MULTIPLE = 'multiple'
+}
+
+export enum EVoteActionType {
+  VOTE = 'vote',
+  UNVOTE = 'unvote'
+}
+
 export enum ENotificationColor {
   ERROR = 'red-lighten-1',
   SUCCESS = 'green-darken-1'
 }
-
-

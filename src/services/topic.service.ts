@@ -1,75 +1,280 @@
-import { useFirestore, useCollection } from 'vuefire'
-import { collection, getDocs, query, orderBy, getDoc, doc, updateDoc } from 'firebase/firestore'
-import type { ITopic } from '@/core/interfaces/model/topic'
-import { ETopicTeam } from '@/core/constants/enum'
-const db = useFirestore()
+import api from '@/core/api'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
+import {
+  adaptApiTopicToITopic,
+  type ITopic
+} from '@/core/interfaces/model/topic'
+import type {
+  Topic,
+  CreateTopicRequest,
+  UpdateTopicRequest,
+  TopicResponse,
+  TopicListResponse,
+  TopicListQuery
+} from '@/types/api'
+import { queryKeys } from '@/types/api'
+
+// ============================================================================
+// TANSTACK QUERY HOOKS
+// ============================================================================
+
+/**
+ * Get list of topics with optional filters
+ */
+export function useTopicsList(params: TopicListQuery = {}) {
+  return useQuery({
+    queryKey: queryKeys.topics.list(params),
+    queryFn: () => getTopicList(params),
+    staleTime: 1000 * 60 * 2, // 2 minutes
+    gcTime: 1000 * 60 * 5, // 5 minutes
+  })
+}
+
+/**
+ * Get open topics
+ */
+export function useOpenTopics() {
+  return useQuery({
+    queryKey: queryKeys.topics.open(),
+    queryFn: () => getOpenTopicList(),
+    staleTime: 1000 * 60 * 2, // 2 minutes
+    gcTime: 1000 * 60 * 5, // 5 minutes
+  })
+}
+
+/**
+ * Get closed topics
+ */
+export function useClosedTopics() {
+  return useQuery({
+    queryKey: queryKeys.topics.closed(),
+    queryFn: () => getCloseTopicList(),
+    staleTime: 1000 * 60 * 2, // 2 minutes
+    gcTime: 1000 * 60 * 5, // 5 minutes
+  })
+}
+
+/**
+ * Get all topics (legacy)
+ */
+export function useTopics() {
+  return useQuery({
+    queryKey: queryKeys.topics.all,
+    queryFn: getTopics,
+    staleTime: 1000 * 60 * 2, // 2 minutes
+    gcTime: 1000 * 60 * 5, // 5 minutes
+  })
+}
+
+/**
+ * Get topic by ID
+ */
+export function useTopic(topicId: string) {
+  return useQuery({
+    queryKey: queryKeys.topics.detail(topicId),
+    queryFn: () => getTopicById(topicId),
+    enabled: !!topicId,
+    staleTime: 1000 * 60 * 2, // 2 minutes
+    gcTime: 1000 * 60 * 5, // 5 minutes
+  })
+}
+
+/**
+ * Create a new topic
+ */
+export function useCreateTopic() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (topicData: CreateTopicRequest) => createTopic(topicData),
+    onSuccess: () => {
+      // Invalidate and refetch topic lists
+      queryClient.invalidateQueries({ queryKey: queryKeys.topics.all })
+      queryClient.invalidateQueries({ queryKey: queryKeys.topics.lists() })
+    },
+    onError: (error) => {
+      console.error('Failed to create topic:', error)
+    },
+  })
+}
+
+/**
+ * Update an existing topic
+ */
+export function useUpdateTopic() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ topicId, topicData }: { topicId: string; topicData: UpdateTopicRequest }) =>
+      updateTopic(topicId, topicData),
+    onSuccess: (_, { topicId }) => {
+      // Invalidate specific topic and lists
+      queryClient.invalidateQueries({ queryKey: queryKeys.topics.detail(topicId) })
+      queryClient.invalidateQueries({ queryKey: queryKeys.topics.all })
+      queryClient.invalidateQueries({ queryKey: queryKeys.topics.lists() })
+    },
+    onError: (error) => {
+      console.error('Failed to update topic:', error)
+    },
+  })
+}
+
+/**
+ * Delete a topic
+ */
+export function useDeleteTopic() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (topicId: string) => deleteTopic(topicId),
+    onSuccess: (_, topicId) => {
+      // Remove the topic from cache and invalidate lists
+      queryClient.removeQueries({ queryKey: queryKeys.topics.detail(topicId) })
+      queryClient.invalidateQueries({ queryKey: queryKeys.topics.all })
+      queryClient.invalidateQueries({ queryKey: queryKeys.topics.lists() })
+    },
+    onError: (error) => {
+      console.error('Failed to delete topic:', error)
+    },
+  })
+}
+
+// ============================================================================
+// API SERVICE FUNCTIONS
+// ============================================================================
+
+/**
+ * Fetches a list of topics based on the provided parameters.
+ */
+export const getTopicList = async (params: TopicListQuery): Promise<TopicListResponse> => {
+  try {
+    const response = await api.get<TopicListResponse>('/api/topics', {
+      params
+    })
+    return {
+      ...response.data,
+      data: response.data.data.map((item) => adaptApiTopicToITopic(item)) as any
+    }
+  } catch (err) {
+    console.error('Error fetching topics:', err)
+    return {
+      success: false,
+      message: 'Failed to fetch topics',
+      timestamp: new Date().toISOString(),
+      data: [],
+      pagination: {
+        page: 1,
+        limit: 20,
+        total: 0,
+        totalPages: 1
+      }
+    }
+  }
+}
 
 /**
  * Get list topic data status open
- * @return {Promise<ITopic[]>}
  */
-export const getOpenTopicList = async (team: string | null): Promise<ITopic[]> => {
-  const querySnapshot = await getDocs(collection(db, 'topics'))
-  const openTopicList: ITopic[] = []
-  querySnapshot.forEach((doc) => {
-    const info = doc.data()
-    if (
-      info.status &&
-      (info.team == team || String(info.team).toUpperCase() === ETopicTeam.ALL) &&
-      info.date.toDate() >= new Date()
-    ) {
-      const topic = { ...info, id: doc.id } as ITopic
-      openTopicList.push(topic)
+export const getOpenTopicList = async (): Promise<ITopic[]> => {
+  try {
+    const query: TopicListQuery = {
+      isActive: true
     }
-  })
-  return openTopicList
+    const response = await api.get<TopicListResponse>('/api/topics', { params: query })
+    return response.data.data.map((item) => adaptApiTopicToITopic(item))
+  } catch (err) {
+    return []
+  }
 }
 
 /**
  * Get list topic data status close
- * @return {Promise<ITopic[]>}
  */
-export const getCloseTopicList = async (team: string | null): Promise<ITopic[]> => {
-  const querySnapshot = await getDocs(collection(db, 'topics'))
-  const openTopicList: ITopic[] = []
-  querySnapshot.forEach((doc) => {
-    const info = doc.data()
-    if (!info.status && (info.team == team || String(info.team).toUpperCase() === ETopicTeam.ALL)) {
-      const topic = { ...info, id: doc.id } as ITopic
-      openTopicList.push(topic)
-    }
-  })
-  return openTopicList
-}
-
-export const getTopics = useCollection(
-  query(collection(db, 'topics'), orderBy('updatedAt', 'desc'))
-)
-
-export const getTopicRef = (topicId: string) => {
-  return doc(db, 'topics', topicId);
-}
-/** Update topic firebase data by id */
-export const updateTopic = async (topicId: string, topicInfo: ITopic) => {
+export const getCloseTopicList = async (): Promise<ITopic[]> => {
   try {
-    const topicRef = doc(db, 'topics', topicId)
-    await updateDoc(topicRef, topicInfo as object)
-  } catch (e) {
-    if (e instanceof Error) {
-      console.error(e.message)
+    const query: TopicListQuery = {
+      isActive: false
     }
+    const response = await api.get<TopicListResponse>('/api/topics', { params: query })
+    return response.data.data.map((item) => adaptApiTopicToITopic(item))
+  } catch (err) {
+    return []
   }
 }
 
 /**
- * service get topic from firebase
- * @param {string} topicId
- * @return {Promise<ITopic | undefined>}
+ * Real-time topics collection - replaced with REST API call
  */
-export const getTopicById = async (topicId: string): Promise<ITopic | undefined> => {
-  const docSnap = await getDoc(doc(db, 'topics', topicId))
-  if (docSnap.exists()) {
-    return { ...docSnap.data(), id: docSnap.id, date: docSnap.data().date.toDate() } as ITopic
+export const getTopics = async (): Promise<ITopic[]> => {
+  try {
+    const response = await api.get<TopicListResponse>('/api/topics', {
+      params: { sort_by: 'updatedAt', sort_order: 'desc' }
+    })
+    return response.data.data.map((item) => adaptApiTopicToITopic(item))
+  } catch (err) {
+    return []
   }
-  return undefined
+}
+
+/**
+ * Update topic data by id
+ */
+export const updateTopic = async (topicId: string, topicInfo: UpdateTopicRequest) => {
+  try {
+    await api.put<TopicResponse>(`/api/topics/${topicId}`, topicInfo)
+  } catch (e) {
+    if (e instanceof Error) {
+      console.error(e.message)
+    }
+    throw e
+  }
+}
+
+/**
+ * Service get topic by id api
+ */
+export const getTopicById = async (topicId: string): Promise<ITopic> => {
+  const response = await api.get<TopicResponse>(`/api/topics/${topicId}`)
+  return adaptApiTopicToITopic(response.data.data)
+}
+
+/**
+ * Create a new topic
+ */
+export const createTopic = async (topicData: CreateTopicRequest): Promise<Topic> => {
+  const response = await api.post<TopicResponse>('/api/topics', topicData)
+  return response.data.data
+}
+
+/**
+ * Delete a topic
+ */
+export const deleteTopic = async (topicId: string): Promise<void> => {
+  await api.delete(`/api/topics/${topicId}`)
+}
+
+// ============================================================================
+// DEFAULT EXPORT
+// ============================================================================
+
+export default {
+  // TanStack Query hooks
+  useTopicsList,
+  useOpenTopics,
+  useClosedTopics,
+  useTopics,
+  useTopic,
+  useCreateTopic,
+  useUpdateTopic,
+  useDeleteTopic,
+
+  // API service functions
+  getTopicList,
+  getOpenTopicList,
+  getCloseTopicList,
+  getTopics,
+  getTopicById,
+  createTopic,
+  updateTopic,
+  deleteTopic,
 }

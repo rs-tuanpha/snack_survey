@@ -1,8 +1,12 @@
+/**
+ * Firebase Storage configuration and utilities
+ * This file contains only Firebase Storage logic for file uploads
+ */
 import { initializeApp } from 'firebase/app'
-import { getFirestore } from 'firebase/firestore'
 import { getStorage } from 'firebase/storage'
 
-export const firebaseApp = initializeApp({
+// Firebase app configuration
+const firebaseApp = initializeApp({
   apiKey: process.env.VUE_APP_API_KEY,
   authDomain: process.env.VUE_APP_AUTH_DOMAIN,
   projectId: process.env.VUE_APP_PROJECT_ID,
@@ -11,6 +15,7 @@ export const firebaseApp = initializeApp({
   appId: process.env.VUE_APP_APP_ID,
   measurementId: process.env.VUE_APP_MEASURE_MEMBER_ID
 })
-// used for the firestore refs
-export const db = getFirestore(firebaseApp)
+
+// Export only Firebase Storage instance
 export const storage = getStorage(firebaseApp)
+export { firebaseApp }

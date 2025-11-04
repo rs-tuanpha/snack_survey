@@ -6,6 +6,7 @@ const routes = [
     path: '/',
     name: 'app',
     component: () => import('@/layouts/BasicLayout/index.vue'),
+    meta: { requiresAuth: true },
     children: [
       {
         path: '',
@@ -13,9 +14,19 @@ const routes = [
         component: () => import('@/views/Home/index.vue')
       },
       {
+        path: '/profile',
+        name: 'profile',
+        component: () => import('@/views/User/ProfilePage.vue')
+      },
+      {
         path: process.env.VUE_APP_ADMIN_PATH!,
         name: 'topicAmin',
-        component: () => import('@/views/Admin/index.vue')
+        component: () => import('@/views/Admin/TopicManagePage.vue')
+      },
+      {
+        path: '/management/users',
+        name: 'userManagment',
+        component: () => import('@/views/Admin/UserManagePage.vue')
       },
       {
         path: '/vote-topic/:id',
@@ -23,6 +34,11 @@ const routes = [
         component: () => import('@/views/Topic/index.vue')
       }
     ]
+  },
+  {
+    path: '/login',
+    name: 'Login',
+    component: () => import('@/views/Auth/LoginPage.vue')
   }
 ]
 

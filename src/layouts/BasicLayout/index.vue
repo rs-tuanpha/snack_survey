@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { defineAsyncComponent } from 'vue'
-const Header = defineAsyncComponent(() => import('@/components/organisms/Header/index.vue'))
+import ProfileFAB from '@/components/organisms/ProfileFAB/index.vue'
 
 /**
  * Layout: use for pages're logged
@@ -12,5 +11,6 @@ const Header = defineAsyncComponent(() => import('@/components/organisms/Header/
     <div class="layout-root">
       <router-view></router-view>
     </div>
+    <ProfileFAB />
   </div>
 </template>

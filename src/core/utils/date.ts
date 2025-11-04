@@ -17,7 +17,8 @@ dayjs.extend(timezone)
 export const DATE_FORMAT = Object.freeze({
   YYYYMMDD: 'YYYY/MM/DD',
   YYYY_MM_DD: 'YYYY-MM-DD',
-  YYYY_MM_DDJP: 'YYYY年MM月DD日'
+  YYYY_MM_DDJP: 'YYYY年MM月DD日',
+  DD_MM_YYYY_HH_MM_SS: 'DD/MM/YYYY, HH:mm:ss'
 })
 
 export type TDateType = 'year' | 'month' | 'week' | 'day' | 'hour'
@@ -49,4 +50,38 @@ export const getDateTimeAgo = (
   }
 
   return null
+}
+
+export const formatDateUTC = (
+  date?: ConfigType,
+  format: string = DATE_FORMAT.DD_MM_YYYY_HH_MM_SS,
+  empty: boolean = false
+) => {
+  try {
+    if (!date) {
+      return empty ? DEFAULT_EMPTY : null
+    }
+
+    // Handle string input with timezone offset
+    let inputString: string
+    if (typeof date === 'string') {
+      inputString = date
+    } else if (date instanceof Date) {
+      inputString = date.toISOString()
+    } else {
+      inputString = String(date)
+    }
+
+    // Replace timezone offset with Z to ensure UTC parsing
+    const isoString = inputString.replace(/[+-]\d{2}:\d{2}$/, 'Z')
+    const utcDate = dayjs.utc(isoString)
+
+    if (utcDate.isValid()) {
+      return utcDate.format(format)
+    }
+
+    return empty ? DEFAULT_EMPTY : null
+  } catch (error) {
+    return empty ? DEFAULT_EMPTY : null
+  }
 }
