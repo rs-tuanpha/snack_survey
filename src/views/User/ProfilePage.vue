@@ -8,51 +8,122 @@
       elevation="1"
       rounded
     >
-      <h2 class="text-center mb-4">Đổi mật khẩu</h2>
+      <h2 class="text-center mb-4">Hồ sơ của tôi</h2>
 
-      <v-text-field
-        label="Mật khẩu cũ"
-        v-model="oldPassword"
-        :type="showOldPassword ? 'text' : 'password'"
-        :error="!!oldPasswordError"
-        :error-messages="oldPasswordError"
-        :rules="validateRules.oldPassword"
-        :append-inner-icon="showOldPassword ? 'mdi-eye-off' : 'mdi-eye'"
-        @click:append-inner="showOldPassword = !showOldPassword"
-      ></v-text-field>
+      <!-- Avatar Section -->
+      <div class="d-flex flex-column align-center mb-6">
+        <v-avatar size="120" color="primary" class="mb-4">
+          <v-img v-if="userProfile?.avatar" :src="userProfile.avatar" :alt="userProfile.username" />
+          <span v-else class="text-h3">{{ avatarInitial }}</span>
+        </v-avatar>
+        
+        <v-file-input
+          v-model="avatarFile"
+          label="Chọn hình đại diện"
+          accept="image/*"
+          prepend-icon="mdi-camera"
+          :disabled="uploadingAvatar"
+          :error-messages="avatarUploadError"
+          clearable
+          variant="outlined"
+          density="compact"
+          hide-details="auto"
+          class="mb-2"
+          style="max-width: 300px"
+        ></v-file-input>
 
-      <v-text-field
-        label="Mật khẩu mới"
-        v-model="newPassword"
-        :type="showNewPassword ? 'text' : 'password'"
-        :error="!!newPasswordError"
-        :error-messages="newPasswordError"
-        :rules="validateRules.passwordRules"
-        :append-inner-icon="showNewPassword ? 'mdi-eye-off' : 'mdi-eye'"
-        @click:append-inner="showNewPassword = !showNewPassword"
-      ></v-text-field>
+        <v-btn
+          color="primary"
+          :loading="uploadingAvatar"
+          :disabled="!avatarFile || uploadingAvatar"
+          @click="handleUpdateAvatar"
+          class="mb-4"
+        >
+          Cập nhật avatar
+        </v-btn>
+      </div>
 
-      <v-text-field
-        label="Xác nhận mật khẩu mới"
-        v-model="confirmPassword"
-        :type="showConfirmPassword ? 'text' : 'password'"
-        :error="!!confirmPasswordError"
-        :error-messages="confirmPasswordError"
-        :rules="validateRules.confirmPassword"
-        :append-inner-icon="showConfirmPassword ? 'mdi-eye-off' : 'mdi-eye'"
-        @click:append-inner="showConfirmPassword = !showConfirmPassword"
-      ></v-text-field>
+      <!-- User Info -->
+      <div class="mb-4">
+        <v-text-field
+          label="Tên đăng nhập"
+          :model-value="userProfile?.username || ''"
+          disabled
+          variant="outlined"
+          density="compact"
+        ></v-text-field>
+        <v-text-field
+          label="Email"
+          :model-value="userProfile?.email || ''"
+          disabled
+          variant="outlined"
+          density="compact"
+        ></v-text-field>
+      </div>
 
-      <v-btn
-        color="primary"
-        block
-        class="mt-4"
-        :loading="loading"
-        :disabled="!isFormValid"
-        @click="handleChangePassword"
-      >
-        Đổi mật khẩu
-      </v-btn>
+      <!-- Change Password Section (Expansion Panel) -->
+      <v-expansion-panels v-model="passwordPanel" class="mb-4">
+        <v-expansion-panel>
+          <v-expansion-panel-title>
+            <span class="text-body-2">Đổi mật khẩu</span>
+          </v-expansion-panel-title>
+          <v-expansion-panel-text>
+            <v-form @submit.prevent>
+              <v-text-field
+                label="Mật khẩu cũ"
+                v-model="oldPassword"
+                :type="showOldPassword ? 'text' : 'password'"
+                :error="!!oldPasswordError"
+                :error-messages="oldPasswordError"
+                :rules="validateRules.oldPassword"
+                :append-inner-icon="showOldPassword ? 'mdi-eye-off' : 'mdi-eye'"
+                @click:append-inner="showOldPassword = !showOldPassword"
+                variant="outlined"
+                density="compact"
+                class="mb-2"
+              ></v-text-field>
+
+              <v-text-field
+                label="Mật khẩu mới"
+                v-model="newPassword"
+                :type="showNewPassword ? 'text' : 'password'"
+                :error="!!newPasswordError"
+                :error-messages="newPasswordError"
+                :rules="validateRules.passwordRules"
+                :append-inner-icon="showNewPassword ? 'mdi-eye-off' : 'mdi-eye'"
+                @click:append-inner="showNewPassword = !showNewPassword"
+                variant="outlined"
+                density="compact"
+                class="mb-2"
+              ></v-text-field>
+
+              <v-text-field
+                label="Xác nhận mật khẩu mới"
+                v-model="confirmPassword"
+                :type="showConfirmPassword ? 'text' : 'password'"
+                :error="!!confirmPasswordError"
+                :error-messages="confirmPasswordError"
+                :rules="validateRules.confirmPassword"
+                :append-inner-icon="showConfirmPassword ? 'mdi-eye-off' : 'mdi-eye'"
+                @click:append-inner="showConfirmPassword = !showConfirmPassword"
+                variant="outlined"
+                density="compact"
+                class="mb-4"
+              ></v-text-field>
+
+              <v-btn
+                color="primary"
+                block
+                :loading="changingPassword"
+                :disabled="!isPasswordFormValid"
+                @click="handleChangePassword"
+              >
+                Đổi mật khẩu
+              </v-btn>
+            </v-form>
+          </v-expansion-panel-text>
+        </v-expansion-panel>
+      </v-expansion-panels>
 
       <v-snackbar v-model="showSnackbar" :color="snackbarColor" :timeout="3000">
         {{ snackbarMessage }}
@@ -64,17 +135,45 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import api from '@/core/api'
-import Cookies from 'js-cookie'
+import { useUserStore } from '@/stores/user'
+import { useAuthStore } from '@/stores/auth'
+import { useUserProfile, updateCurrentUserProfile } from '@/services/user.service'
+import authService from '@/services/auth.service'
+import { uploadImageToFirebase } from '@/services/upload.service'
+import { useSnackbar } from '@/core/hooks/useSnackbar'
+import { THUMBNAIL_MAX_SIZE } from '@/core/constants/app'
+import { useQueryClient } from '@tanstack/vue-query'
+import { queryKeys } from '@/types/api'
 
 const router = useRouter()
+const userStore = useUserStore()
+const authStore = useAuthStore()
+const { showSuccess, showError } = useSnackbar()
+const queryClient = useQueryClient()
+
+// Get user profile
+const { data: userProfile, refetch: refetchProfile } = useUserProfile()
+
+// Avatar initial
+const avatarInitial = computed(() => {
+  if (!userProfile.value?.username) return 'U'
+  return userProfile.value.username.charAt(0).toUpperCase()
+})
+
+// Avatar upload
+const avatarFile = ref<File[] | File | undefined>(undefined)
+const uploadingAvatar = ref(false)
+const avatarUploadError = ref('')
+
+// Password change
+const passwordPanel = ref<number[]>([])
 const oldPassword = ref('')
 const newPassword = ref('')
 const confirmPassword = ref('')
 const showOldPassword = ref(false)
 const showNewPassword = ref(false)
 const showConfirmPassword = ref(false)
-const loading = ref(false)
+const changingPassword = ref(false)
 const oldPasswordError = ref('')
 const newPasswordError = ref('')
 const confirmPasswordError = ref('')
@@ -102,7 +201,7 @@ const showSnackbar = ref(false)
 const snackbarMessage = ref('')
 const snackbarColor = ref('success')
 
-const isFormValid = computed(() => {
+const isPasswordFormValid = computed(() => {
   return (
     oldPassword.value &&
     newPassword.value &&
@@ -114,44 +213,120 @@ const isFormValid = computed(() => {
   )
 })
 
-const showMessage = (message: string, isError: boolean = false) => {
-  snackbarMessage.value = message
-  snackbarColor.value = isError ? 'error' : 'success'
-  showSnackbar.value = true
-}
 
 // Watch oldPassword changes to clear error
 watch(oldPassword, () => {
   oldPasswordError.value = ''
 })
 
-const handleChangePassword = async () => {
-  if (!isFormValid.value) return
+// Handle avatar upload
+const handleUpdateAvatar = async () => {
+  if (!avatarFile.value || avatarFile.value.length === 0) {
+    showError('Vui lòng chọn hình ảnh')
+    return
+  }
 
-  loading.value = true
+  let file: File | undefined;
+
+  if (avatarFile.value instanceof File) {
+    file = avatarFile.value;
+  } else if (Array.isArray(avatarFile.value) && avatarFile.value.length > 0) {
+    file = avatarFile.value[0];
+  }
+
+  if (!file) {
+    showError('Vui lòng chọn hình ảnh hợp lệ');
+    return;
+  }
+
+  console.log("TEST", file);
+
+  // Check file size
+  if (file.size > THUMBNAIL_MAX_SIZE) {
+    avatarUploadError.value = 'File vượt quá 5MB'
+    showError('File vượt quá 5MB')
+    return
+  }
+
+  uploadingAvatar.value = true
+  avatarUploadError.value = ''
+
   try {
-    const response: any = await api.post('/api/auth/change_password', {
-      oldPassword: oldPassword.value,
-      newPassword: newPassword.value
-    })
+    // Upload to Firebase
+    const imageUrl = await uploadImageToFirebase(file)
+      console.log("TEST imageUrl", imageUrl);
+    if (!imageUrl) {
+      throw new Error('Upload ảnh thất bại')
+    }
 
-    showMessage(response.message)
+    // Update profile
+    const updatedUser = await updateCurrentUserProfile({ avatar: imageUrl })
+    
+    // Convert User to IUser format
+    const iUser = {
+      id: updatedUser._id,
+      username: updatedUser.username,
+      email: updatedUser.email,
+      avatar: updatedUser.avatar,
+      role: updatedUser.role,
+      isActive: updatedUser.isActive
+    }
+    
+    // Update stores
+    userStore.updateUser(iUser)
+    authStore.setUser(iUser)
+    
+    // Invalidate queries
+    queryClient.invalidateQueries({ queryKey: queryKeys.users.profile() })
+    
+    // Refetch profile
+    await refetchProfile()
+    
+    showSuccess('Cập nhật avatar thành công!')
+    avatarFile.value = undefined
+  } catch (error: any) {
+    console.error('Failed to update avatar:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Cập nhật avatar thất bại!'
+    avatarUploadError.value = errorMessage
+    showError(errorMessage)
+  } finally {
+    uploadingAvatar.value = false
+  }
+}
 
-    // Clear isFirstLogin cookie if change password successful
-    Cookies.remove('is_first_login', { path: '/' })
+// Handle password change
+const handleChangePassword = async () => {
+  if (!isPasswordFormValid.value) return
 
-    // Redirect to home after 3 seconds
+  changingPassword.value = true
+  try {
+    await authService.changePassword(oldPassword.value, newPassword.value)
+    
+    showSuccess('Đổi mật khẩu thành công! Vui lòng đăng nhập lại.')
+    
+    // Clear form
+    oldPassword.value = ''
+    newPassword.value = ''
+    confirmPassword.value = ''
+    passwordPanel.value = []
+    
+    // Logout after 2 seconds
     setTimeout(() => {
-      router.push({ path: '/' })
-    }, 3000)
+      // Clear stores
+      authStore.clearToken()
+      userStore.setUser(null)
+      
+      // Redirect to login
+      router.push({ path: '/login' })
+    }, 2000)
   } catch (error: any) {
     // Show generic error in snackbar
-    showMessage('Có lỗi xảy ra', true)
-
+    showError('Có lỗi xảy ra')
+    
     // Show specific error in oldPassword field
-    oldPasswordError.value = error.response?.data?.error || 'Mật khẩu không đúng'
+    oldPasswordError.value = error.response?.data?.message || error.response?.data?.error || 'Mật khẩu không đúng'
   } finally {
-    loading.value = false
+    changingPassword.value = false
   }
 }
 </script>

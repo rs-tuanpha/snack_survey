@@ -70,7 +70,7 @@
               </v-tooltip>
             </div>
           </div>
-          <div v-if="currentAccount?.id" class="d-flex align-center">
+          <div v-if="currentAccount?.id && (canVote !== false)" class="d-flex align-center">
             <!-- Loading spinner when voting -->
             <v-progress-circular
               v-if="isVoting"
@@ -118,6 +118,7 @@ const props = defineProps<{
   cardStyle?: StyleValue
   isVoting?: boolean
   disabled?: boolean
+  canVote?: boolean
 }>()
 const emits = defineEmits<{
   (e: 'onChangeVote', optionId: string): void
@@ -146,6 +147,8 @@ const showVoters = () => {
 
 // Computed for button state
 const isVoteButtonDisabled = computed(() => {
+  // If canVote is explicitly false, disable button
+  if (props.canVote === false) return true
   return props.isVoting || props.disabled || !props.currentAccount?.id
 })
 

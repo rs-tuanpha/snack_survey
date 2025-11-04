@@ -14,8 +14,8 @@ const routes = [
         component: () => import('@/views/Home/index.vue')
       },
       {
-        path: '/change_password',
-        name: 'changePassword',
+        path: '/profile',
+        name: 'profile',
         component: () => import('@/views/User/ProfilePage.vue')
       },
       {

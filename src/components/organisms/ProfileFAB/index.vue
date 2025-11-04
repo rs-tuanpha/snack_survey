@@ -107,10 +107,9 @@ const handleLogout = () => {
   handleRouter.pushPath('/login')
 }
 
-// Handle settings (placeholder for future implementation)
+// Handle settings (navigate to profile page)
 const handleSettings = () => {
-  // TODO: Navigate to settings page or open settings dialog
-  console.log('Settings clicked')
+  handleRouter.pushPath('/profile')
 }
 
 // Handle admin navigation

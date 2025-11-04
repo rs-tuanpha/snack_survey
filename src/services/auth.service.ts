@@ -190,6 +190,17 @@ const getCurrentUser = (): IUser | null => {
   return cookieUtils.getJSON('USER_DATA')
 }
 
+/**
+ * Change user password
+ */
+const changePassword = async (oldPassword: string, newPassword: string): Promise<void> => {
+  const response = await api.post('/api/auth/change_password', {
+    oldPassword,
+    newPassword
+  })
+  return response.data
+}
+
 export default {
   register,
   login,
@@ -198,5 +209,6 @@ export default {
   getCurrentToken,
   isAuthenticated,
   getCurrentUser,
-  validateToken
+  validateToken,
+  changePassword
 }

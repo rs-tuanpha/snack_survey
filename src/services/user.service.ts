@@ -319,6 +319,19 @@ export async function adminResetPassword(userId: string, resetData: AdminResetPa
   }
 }
 
+/**
+ * Update current user profile (username, email, avatar)
+ */
+export async function updateCurrentUserProfile(userData: UpdateUserRequest): Promise<User> {
+  try {
+    const response = await api.put<UserResponse>('/api/users/profile', userData)
+    return response.data.data
+  } catch (error) {
+    console.error('Error updating current user profile:', error)
+    throw error
+  }
+}
+
 // ============================================================================
 // DEFAULT EXPORT
 // ============================================================================

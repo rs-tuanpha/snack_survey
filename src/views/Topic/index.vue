@@ -100,7 +100,7 @@
       <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px">
         <div style="flex: 1"></div>
         <form-create-option
-          v-if="currentTopic?.isMutable && currentTopic?.isActive"
+          v-if="currentTopic?.isMutable && canVoteOrCreateOption"
           :id="id.toString()"
           :options="currentOptions"
           :topic-state="currentTopic"
@@ -117,6 +117,7 @@
              :current-account="currentAccount"
              :is-voting="votingOptions.has(option._id)"
              :disabled="isVoting || isVotingDisabled || voteStatusLoading"
+             :can-vote="canVoteOrCreateOption"
              card-style="
                position: relative;
                padding: 4px;
@@ -338,6 +339,21 @@ const TIME_CONSTANTS = {
   DAY: 1000 * 60 * 60 * 24
 } as const
 
+// Cache start date timestamp to avoid repeated parsing
+// Parse as UTC to prevent timezone conversion issues
+const startDateTimestamp = computed(() => {
+  if (!currentTopic.value?.startDate) return null
+
+  // Parse the ISO string as UTC without timezone conversion
+  const startDate = currentTopic.value.startDate
+  const isoString = typeof startDate === 'string' ? startDate : startDate.toISOString()
+
+  // Create UTC date using Date constructor with UTC values
+  const utcDate = new Date(isoString.replace(/[+-]\d{2}:\d{2}$/, 'Z'))
+
+  return utcDate.getTime()
+})
+
 // Cache end date timestamp to avoid repeated parsing
 // Parse as UTC to prevent timezone conversion issues
 const endDateTimestamp = computed(() => {
@@ -351,6 +367,35 @@ const endDateTimestamp = computed(() => {
   const utcDate = new Date(isoString.replace(/[+-]\d{2}:\d{2}$/, 'Z'))
 
   return utcDate.getTime()
+})
+
+// Get reason why topic cannot vote/create option (for better UX messaging)
+const voteRestrictionReason = computed(() => {
+  // Must be active
+  if (!currentTopic.value?.isActive) {
+    return 'inactive'
+  }
+
+  // Check if current time is within startDate and endDate range
+  const now = currentTime.value
+  
+  // Check startDate: if exists, current time must be >= startDate
+  if (startDateTimestamp.value !== null && now < startDateTimestamp.value) {
+    return 'not_started'
+  }
+
+  // Check endDate: if exists, current time must be <= endDate
+  if (endDateTimestamp.value !== null && now > endDateTimestamp.value) {
+    return 'expired'
+  }
+
+  return null // No restriction
+})
+
+// Check if topic allows voting or creating options
+// Topic must be active AND within time range (startDate <= currentTime <= endDate)
+const canVoteOrCreateOption = computed(() => {
+  return voteRestrictionReason.value === null
 })
 
 // Calculate remaining time until topic deadline
@@ -496,8 +541,18 @@ const update = async () => {
 
 // Handle vote changes with Socket.IO and optimistic updates
 const handleChangeVote = debounce(async (optionId: string) => {
-  if (!currentTopic.value?.isActive) {
-    showError('Topic này đã đóng!')
+  if (!canVoteOrCreateOption.value) {
+    // Show specific error message based on restriction reason
+    const reason = voteRestrictionReason.value
+    if (reason === 'expired') {
+      showError('Topic này đã hết thời gian vote!')
+    } else if (reason === 'not_started') {
+      showError('Topic này chưa đến thời gian vote!')
+    } else if (reason === 'inactive') {
+      showError('Topic này đã bị đóng!')
+    } else {
+      showError('Topic này không cho phép vote!')
+    }
     return
   }
 
@@ -592,71 +647,139 @@ watch(isExpired, (expired) => {
   }
 })
 
-// Socket connection and real-time updates setup
-const setupSocketConnection = async () => {
-  try {
-    // Initialize socket vote store for this topic
-    const topicId = id.toString()
-    socketVoteStore.initializeTopic(topicId)
+// Helper function to setup websocket listeners and join topic
+const setupWebSocketListeners = async () => {
+  const topicId = id.toString()
+  
+  // Setup event listeners BEFORE joining topic
+  webSocketService.on('new_option', (data: IOption) => {
+    if (data.topicId === topicId) {
+      // Invalidate options cache to refetch with new option
+      invalidateOptionsCache(topicId)
+    }
+  })
 
-    // Start listening for vote updates
-    socketVoteStore.startListening()
+  // Handle real-time vote updates from socket
+  webSocketService.on('vote:update', (data: VoteUpdateResponse) => {
+    if (data.topicId === topicId) {
+      const isLocalUser = currentAccount?.id === data.userId
+      
+      // Update vote count from socket event
+      updateVoteCountOnly(
+        data.topicId,
+        data.optionId,
+        data.voteCount
+      )
 
-    // Initialize real-time sync
-    // Removed realtime sync service
-
-    // Connect to socket FIRST
-    await webSocketService.connect()
-
-    // Setup event listeners BEFORE joining topic
-    webSocketService.on('new_option', (data: IOption) => {
-      if (data.topicId === id.toString()) {
-        // Invalidate options cache to refetch with new option
-        invalidateOptionsCache(id.toString())
-      }
-    })
-
-    // Handle real-time vote updates from socket
-    webSocketService.on('vote:update', (data: VoteUpdateResponse) => {
-      if (data.topicId === id.toString()) {
-        const isLocalUser = currentAccount?.id === data.userId
-        
-        // Update vote count from socket event
-        updateVoteCountOnly(
-          data.topicId,
-          data.optionId,
-          data.voteCount
-        )
-
-        // Only update voteStatusData if this is our own vote
-        if (isLocalUser) {
-          if (data.action === 'vote') {
-            voteStatusData.value.add(data.optionId)
-          } else {
-            voteStatusData.value.delete(data.optionId)
-          }
+      // Only update voteStatusData if this is our own vote
+      if (isLocalUser) {
+        if (data.action === 'vote') {
+          voteStatusData.value.add(data.optionId)
+        } else {
+          voteStatusData.value.delete(data.optionId)
         }
       }
-    })
+    }
+  })
 
-    // Handle vote status updates (for comprehensive status changes)
-    webSocketService.on('vote:status_response', (data: VoteStatusResponse) => {
-      if (data.topic_id === id.toString()) {
-        // Update vote status cache
-        queryClient.setQueryData(queryKeys.votes.status(data.topic_id), data)
-      }
-    })
+  // Handle vote status updates (for comprehensive status changes)
+  webSocketService.on('vote:status_response', (data: VoteStatusResponse) => {
+    if (data.topic_id === topicId) {
+      // Update vote status cache
+      queryClient.setQueryData(queryKeys.votes.status(data.topic_id), data)
+    }
+  })
 
-    // NOW join topic after listeners are ready
-    await webSocketService.joinTopic(topicId)
+  // NOW join topic after listeners are ready
+  await webSocketService.joinTopic(topicId)
+}
+
+// Helper function to cleanup websocket connection
+const cleanupWebSocket = () => {
+  try {
+    // Stop listening to socket events
+    socketVoteStore.stopListening()
+    
+    // Clear socket vote store for this topic
+    socketVoteStore.clearTopic(id.toString())
+
+    // Remove socket event listeners
+    webSocketService.off('new_option')
+    webSocketService.off('vote:update')
+    webSocketService.off('vote:status_response')
+    
+    // Leave topic and disconnect
+    webSocketService.leaveTopic()
+    webSocketService.disconnect()
   } catch (error) {
-    console.error('❌ Socket setup failed:', error)
-    // Don't redirect to home - app can still work without real-time
-    // Show warning to user that real-time updates might not be available
-    showWarning('Không thể kết nối real-time. Bạn vẫn có thể vote bình thường.', 5000)
+    console.error('Error cleaning up websocket:', error)
+  }
+}
+
+// Watch canVoteOrCreateOption to manage websocket connection
+watch(canVoteOrCreateOption, async (canVote, previousCanVote) => {
+  // If topic just expired or became unavailable (changed from true to false), cleanup websocket
+  if (previousCanVote === true && canVote === false) {
+    cleanupWebSocket()
+    
+    // Show snackbar notification based on restriction reason
+    const reason = voteRestrictionReason.value
+    if (reason === 'expired') {
+      showWarning('Topic này đã hết thời gian vote!', 5000)
+    } else if (reason === 'not_started') {
+      showWarning('Topic này chưa đến thời gian vote!', 5000)
+    } else if (reason === 'inactive') {
+      showWarning('Topic này đã bị đóng!', 5000)
+    }
+  }
+  
+  // If topic just started (changed from false to true), setup websocket
+  // This handles the case when topic data loads after component mount
+  if (previousCanVote === false && canVote === true) {
+    try {
+      const topicId = id.toString()
+      socketVoteStore.initializeTopic(topicId)
+      socketVoteStore.startListening()
+
+      await webSocketService.connect()
+      await setupWebSocketListeners()
+    } catch (error) {
+      console.error('❌ Socket setup failed:', error)
+      showWarning('Không thể kết nối real-time. Bạn vẫn có thể vote bình thường.', 5000)
+    }
+  }
+})
+
+// Socket connection and real-time updates setup
+const setupSocketConnection = async () => {
+  // Only setup websocket if topic allows voting/creating options
+  if (canVoteOrCreateOption.value) {
+    try {
+      // Initialize socket vote store for this topic
+      const topicId = id.toString()
+      socketVoteStore.initializeTopic(topicId)
+
+      // Start listening for vote updates
+      socketVoteStore.startListening()
+
+      // Initialize real-time sync
+      // Removed realtime sync service
+
+      // Connect to socket FIRST
+      await webSocketService.connect()
+
+      // Setup event listeners and join topic
+      await setupWebSocketListeners()
+    } catch (error) {
+      console.error('❌ Socket setup failed:', error)
+      // Don't redirect to home - app can still work without real-time
+      // Show warning to user that real-time updates might not be available
+      showWarning('Không thể kết nối real-time. Bạn vẫn có thể vote bình thường.', 5000)
+    }
   }
 
   // Start countdown timer - use UTC timestamp for consistent comparison
+  // Always start timer to show countdown even if websocket is not connected
   setInterval(() => {
     currentTime.value = Date.now()
   }, 1000)
@@ -669,23 +792,7 @@ onMounted(async () => {
 
 // Clean up socket connection on component unmount
 onUnmounted(() => {
-  // Stop listening to socket events
-  socketVoteStore.stopListening()
-  
-  // Clear socket vote service pending votes
-  // Removed clearPendingVotes
-
-  // Clear socket vote store for this topic
-  socketVoteStore.clearTopic(id.toString())
-
-  // Remove socket event listeners
-  webSocketService.off('new_option')
-  webSocketService.off('vote:update')
-  webSocketService.off('vote:status_response')
-  
-  // Leave topic and disconnect
-  webSocketService.leaveTopic()
-  webSocketService.disconnect()
+  cleanupWebSocket()
 })
 </script>
 
