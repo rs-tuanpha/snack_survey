@@ -308,9 +308,7 @@ export const postNewOption = async (
 
     // Upload image to Firebase if provided
     if (image) {
-      console.log('📤 Uploading image to Firebase...', image.name, image.size)
       imageUrl = await uploadImageToFirebase(image)
-      console.log('✅ Image uploaded, URL:', imageUrl)
       
       if (!imageUrl) {
         throw new Error('Failed to upload image to Firebase')
@@ -326,8 +324,6 @@ export const postNewOption = async (
       ...(link && { link }),
       ...(imageUrl && { image: imageUrl })
     }
-
-    console.log('📦 Sending create option request with payload:', createData)
 
     const response = await api.post<OptionCreationResponse>('/api/options', createData)
     return response.data.data

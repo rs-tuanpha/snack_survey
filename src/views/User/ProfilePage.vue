@@ -239,8 +239,6 @@ const handleUpdateAvatar = async () => {
     return;
   }
 
-  console.log("TEST", file);
-
   // Check file size
   if (file.size > THUMBNAIL_MAX_SIZE) {
     avatarUploadError.value = 'File vượt quá 5MB'
@@ -254,7 +252,6 @@ const handleUpdateAvatar = async () => {
   try {
     // Upload to Firebase
     const imageUrl = await uploadImageToFirebase(file)
-      console.log("TEST imageUrl", imageUrl);
     if (!imageUrl) {
       throw new Error('Upload ảnh thất bại')
     }

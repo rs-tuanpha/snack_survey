@@ -226,7 +226,6 @@ export class WebSocketService {
 
     try {
       const socketUrl = `${this.serverUrl}${this.namespace}`
-      console.log('🔌 Connecting to WebSocket:', socketUrl)
       
       this.socket = io(socketUrl, {
         auth: {
@@ -249,11 +248,6 @@ export class WebSocketService {
 
         this.socket!.on('connect', () => {
           clearTimeout(timeout)
-          console.log('✅ WebSocket connected successfully:', {
-            socketId: this.socket?.id,
-            userId: this.state.userId,
-            username: this.state.username
-          })
           
           this.state.connected = true
           this.state.reconnectAttempts = 0
@@ -323,12 +317,6 @@ export class WebSocketService {
    * Join a topic room
    */
   async joinTopic(topicId: string): Promise<TopicJoinedResponse> {
-    console.log('🏠 Joining topic room:', topicId, {
-      userId: this.state.userId,
-      username: this.state.username,
-      socketConnected: this.socket?.connected
-    })
-
     if (this.socket === null || !this.socket?.connected) {
       throw new Error('WebSocket not connected')
     }
@@ -356,7 +344,6 @@ export class WebSocketService {
 
       // Listen for the response
       const handleJoined = (data: TopicJoinedResponse) => {
-        console.log('✅ Received topic:joined response:', data)
         if (data.topicId === topicId) {
           clearTimeout(timeout)
           this.socket!.off('topic:joined', handleJoined)
@@ -381,7 +368,6 @@ export class WebSocketService {
       this.socket.on('error:topic', handleError)
 
       // Emit join request
-      console.log('📤 Emitting topic:join event:', payload)
       this.socket.emit('topic:join', payload)
     })
   }
@@ -740,10 +726,8 @@ export class WebSocketService {
     }
     
     this.socket.on(event, (data) => {
-      console.log('📥 Received event:', event, data)
       callback(data)
     })
-    console.log('📡 Listening to event:', event)
   }
 
   /**
@@ -759,7 +743,6 @@ export class WebSocketService {
     } else {
       this.socket.off(event)
     }
-    console.log('🔇 Removed listener for event:', event)
   }
 
   /**
@@ -828,7 +811,6 @@ export class WebSocketService {
 
     // Handle heartbeat from server
     this.socket.on('heartbeat', () => {
-      console.log('💓 Heartbeat received, responding...')
       this.socket!.emit('heartbeat_response', {
         timestamp: new Date().toISOString()
       })

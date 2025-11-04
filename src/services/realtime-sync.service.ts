@@ -98,7 +98,6 @@ export class RealtimeSyncService {
     const currentVersion = this.getLocalVersion(optionId)
     if (version <= currentVersion) {
       // Stale update, ignore
-      console.log(`Ignoring stale update for option ${optionId}: server version ${version} <= local version ${currentVersion}`)
       return
     }
 
@@ -417,7 +416,6 @@ export class RealtimeSyncService {
    */
   private emitSyncEvent(event: string, data: any): void {
     // This would emit events that UI can listen to
-    console.log(`Sync event: ${event}`, data)
   }
 }
 

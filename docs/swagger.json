@@ -287,16 +287,6 @@
             "description": "Optional avatar URL",
             "example": "https://example.com/avatar.jpg"
           },
-          "team": {
-            "type": "string",
-            "enum": [
-              "FE",
-              "PHP",
-              "ALL"
-            ],
-            "description": "Optional team assignment",
-            "example": "FE"
-          },
           "role": {
             "type": "string",
             "enum": [
@@ -363,16 +353,6 @@
                 ],
                 "description": "User role",
                 "example": "user"
-              },
-              "team": {
-                "type": "string",
-                "enum": [
-                  "FE",
-                  "PHP",
-                  "ALL"
-                ],
-                "description": "User team",
-                "example": "FE"
               },
               "isFirstLogin": {
                 "type": "boolean",
@@ -562,8 +542,7 @@
           "title",
           "startDate",
           "endDate",
-          "voteType",
-          "team"
+          "voteType"
         ],
         "properties": {
           "title": {
@@ -600,19 +579,15 @@
             "description": "Type of voting",
             "example": "single"
           },
-          "team": {
-            "type": "string",
-            "enum": [
-              "FE",
-              "PHP",
-              "ALL"
-            ],
-            "description": "Team associated with the topic",
-            "example": "FE"
-          },
           "isActive": {
             "type": "boolean",
             "description": "Whether the topic is active",
+            "default": true,
+            "example": true
+          },
+          "isMutable": {
+            "type": "boolean",
+            "description": "Whether users can add options to this topic",
             "default": true,
             "example": true
           }
@@ -655,19 +630,14 @@
             "description": "Type of voting",
             "example": "single"
           },
-          "team": {
-            "type": "string",
-            "enum": [
-              "FE",
-              "PHP",
-              "ALL"
-            ],
-            "description": "Team associated with the topic",
-            "example": "FE"
-          },
           "isActive": {
             "type": "boolean",
             "description": "Whether the topic is active",
+            "example": true
+          },
+          "isMutable": {
+            "type": "boolean",
+            "description": "Whether users can add options to this topic",
             "example": true
           }
         }
@@ -689,16 +659,6 @@
             "default": 10,
             "description": "Number of items per page",
             "example": 10
-          },
-          "team": {
-            "type": "string",
-            "enum": [
-              "FE",
-              "PHP",
-              "ALL"
-            ],
-            "description": "Filter by team",
-            "example": "FE"
           },
           "isActive": {
             "type": "boolean",
@@ -791,16 +751,6 @@
             "description": "Whether the topic is active",
             "example": true
           },
-          "team": {
-            "type": "string",
-            "enum": [
-              "FE",
-              "PHP",
-              "ALL"
-            ],
-            "description": "Team associated with the topic",
-            "example": "FE"
-          },
           "createdAt": {
             "type": "string",
             "format": "date-time",
@@ -857,24 +807,57 @@
         },
         "additionalProperties": false
       },
-      "UpdateUserTeamDTO": {
+      "UpdateUserStatusDTO": {
         "type": "object",
         "required": [
-          "team"
+          "isActive"
         ],
         "properties": {
-          "team": {
-            "type": "string",
-            "enum": [
-              "FE",
-              "PHP",
-              "ALL"
-            ],
-            "description": "New user team assignment",
-            "example": "FE"
+          "isActive": {
+            "type": "boolean",
+            "description": "User active status",
+            "example": true
           }
         },
         "additionalProperties": false
+      },
+      "AdminResetPasswordDTO": {
+        "type": "object",
+        "properties": {
+          "newPassword": {
+            "type": "string",
+            "minLength": 6,
+            "description": "New password (optional, will use default if not provided)",
+            "example": "Password123!"
+          }
+        },
+        "additionalProperties": false
+      },
+      "UserListQueryDTO": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "integer",
+            "minimum": 1,
+            "default": 1
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 10
+          },
+          "search": {
+            "type": "string",
+            "description": "Search by email",
+            "example": "user@example.com"
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Filter by active status",
+            "example": true
+          }
+        }
       },
       "Option": {
         "type": "object",
@@ -916,13 +899,6 @@
             "description": "Reference to the user who created the option",
             "example": "60d21b4667d0d8992e610c87"
           },
-          "userVotes": {
-            "type": "object",
-            "description": "Map of user IDs to vote timestamps for real-time tracking",
-            "example": {
-              "60d21b4667d0d8992e610c88": "2023-01-01T00:00:00.000Z"
-            }
-          },
           "voteCount": {
             "type": "number",
             "description": "Computed count of votes for this option",
@@ -955,7 +931,6 @@
           "startDate",
           "endDate",
           "voteType",
-          "team",
           "createdBy"
         ],
         "properties": {
@@ -1004,15 +979,11 @@
             "default": true,
             "example": true
           },
-          "team": {
-            "type": "string",
-            "enum": [
-              "FE",
-              "PHP",
-              "ALL"
-            ],
-            "description": "Team associated with the topic",
-            "example": "FE"
+          "isMutable": {
+            "type": "boolean",
+            "description": "Whether users can add options to this topic",
+            "default": true,
+            "example": true
           },
           "createdBy": {
             "type": "string",
@@ -1049,8 +1020,7 @@
           "username",
           "email",
           "password",
-          "role",
-          "team"
+          "role"
         ],
         "properties": {
           "_id": {
@@ -1085,15 +1055,10 @@
             "description": "User role",
             "example": "user"
           },
-          "team": {
-            "type": "string",
-            "enum": [
-              "FE",
-              "PHP",
-              "ALL"
-            ],
-            "description": "Team assignment",
-            "example": "FE"
+          "isActive": {
+            "type": "boolean",
+            "description": "User active status",
+            "example": true
           },
           "refreshToken": {
             "type": "string",
@@ -1142,8 +1107,7 @@
                   "value": {
                     "email": "user@example.com",
                     "password": "SecurePassword123!",
-                    "username": "johndoe",
-                    "team": "FE"
+                    "username": "johndoe"
                   }
                 },
                 "basic_user": {
@@ -1152,16 +1116,6 @@
                     "username": "johndoe",
                     "email": "john.doe@example.com",
                     "password": "Password123!"
-                  }
-                },
-                "with_team": {
-                  "summary": "User with team assignment",
-                  "value": {
-                    "username": "janedoe",
-                    "email": "jane.doe@example.com",
-                    "password": "SecurePass123!",
-                    "team": "FE",
-                    "avatar": "https://example.com/avatar.jpg"
                   }
                 }
               }
@@ -1314,6 +1268,62 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/users": {
+      "get": {
+        "summary": "Get list of active users for login",
+        "description": "Retrieve a list of active users for login page selection (Public endpoint, no authentication required)",
+        "tags": [
+          "Authentication"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            },
+            "description": "Page number"
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "default": 100
+            },
+            "description": "Number of items per page"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Active users list retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ListDataResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/User"
+                          }
+                        }
+                      }
+                    }
+                  ]
                 }
               }
             }
@@ -2015,136 +2025,77 @@
         }
       }
     },
-    "/api/options/{id}/vote": {
-      "post": {
-        "summary": "Vote for an option",
-        "description": "Vote for an option using REST API.\n**Note:** This is a legacy endpoint. For real-time voting, use WebSocket connection to `/topics` namespace.\n",
+    "/api/socket-vote/voters/{optionId}": {
+      "get": {
+        "summary": "Get voters for an option (Socket.IO fallback)",
+        "description": "Fallback endpoint for getting voters when Socket.IO is not available",
         "tags": [
-          "Options"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
+          "Socket Votes"
         ],
         "parameters": [
           {
             "in": "path",
-            "name": "id",
+            "name": "optionId",
             "required": true,
             "schema": {
               "type": "string",
               "pattern": "^[0-9a-fA-F]{24}$"
             },
-            "description": "Option ID"
+            "description": "MongoDB ObjectId of the option",
+            "example": "60d21b4667d0d8992e610c86"
           }
         ],
         "responses": {
           "200": {
-            "description": "Vote result (success may be true or false)",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/OptionVoteResponseDTO"
-                }
-              }
-            }
+            "description": "Voters retrieved successfully"
           },
           "400": {
-            "description": "Validation error or voting not allowed",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
+            "description": "Bad request - validation error"
           },
           "404": {
-            "description": "Option not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
+            "description": "Option not found"
+          },
+          "500": {
+            "description": "Internal server error"
           }
         }
-      },
-      "delete": {
-        "summary": "Remove vote from an option (Legacy REST endpoint)",
-        "description": "Remove vote from an option using REST API.\n**Note:** This is a legacy endpoint. For real-time voting, use WebSocket connection to `/topics` namespace.\n",
+      }
+    },
+    "/api/socket-vote/health": {
+      "get": {
+        "summary": "Socket vote service health check",
+        "description": "Check the health status of the socket vote service",
         "tags": [
-          "Options"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "pattern": "^[0-9a-fA-F]{24}$"
-            },
-            "description": "MongoDB ObjectId of the option"
-          }
+          "Socket Votes"
         ],
         "responses": {
           "200": {
-            "description": "Vote removed successfully",
+            "description": "Service is healthy",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/OptionVoteResponseDTO"
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "healthy"
+                    },
+                    "timestamp": {
+                      "type": "string"
+                    },
+                    "socketConnections": {
+                      "type": "number"
+                    },
+                    "activeTopics": {
+                      "type": "number"
+                    }
+                  }
                 }
               }
             }
           },
-          "400": {
-            "description": "Validation error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Option not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
+          "500": {
+            "description": "Service is unhealthy"
           }
         }
       }
@@ -2179,20 +2130,6 @@
               "$ref": "#/components/schemas/TopicListQueryDTO/properties/limit"
             },
             "description": "Number of items per page"
-          },
-          {
-            "in": "query",
-            "name": "team",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "FE",
-                "PHP",
-                "ALL"
-              ],
-              "$ref": "#/components/schemas/TopicListQueryDTO/properties/team"
-            },
-            "description": "Filter by team"
           },
           {
             "in": "query",
@@ -2713,6 +2650,68 @@
             }
           }
         }
+      },
+      "post": {
+        "summary": "Create a new user (Admin only)",
+        "description": "Creates a new user account (Admin only)",
+        "tags": [
+          "Users"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUserDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/DetailDataResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/User"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error or user already exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - Admin access required"
+          }
+        }
       }
     },
     "/api/users/profile": {
@@ -3135,13 +3134,25 @@
         }
       }
     },
-    "/api/users/{id}/team": {
-      "patch": {
-        "summary": "Update user team",
-        "description": "Updates a user's team assignment (admin only). Requires admin role and valid Bearer token.",
+    "/api/users/{id}/status": {
+      "put": {
+        "summary": "Update user status (Admin only)",
+        "description": "Enable or disable a user account (Admin only)",
         "tags": [
           "Users"
         ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "patch": {
+        "summary": "Update user status (Admin only)",
+        "tags": [
+          "Users"
+        ],
+        "description": "Enable or disable a user account (Admin only)",
         "security": [
           {
             "bearerAuth": []
@@ -3156,7 +3167,7 @@
               "type": "string",
               "pattern": "^[0-9a-fA-F]{24}$"
             },
-            "description": "User ID"
+            "description": "MongoDB ObjectId of the user"
           }
         ],
         "requestBody": {
@@ -3164,18 +3175,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateUserTeamDTO"
+                "$ref": "#/components/schemas/UpdateUserStatusDTO"
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "User team updated successfully",
+            "description": "User status updated successfully",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UserResponseDTO",
                   "allOf": [
                     {
                       "$ref": "#/components/schemas/DetailDataResponse"
@@ -3194,54 +3204,23 @@
             }
           },
           "400": {
-            "description": "Validation error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
+            "description": "Validation error"
           },
           "403": {
-            "description": "Forbidden - Admin access required",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
+            "description": "Forbidden - Admin access required"
           },
           "404": {
-            "description": "User not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
+            "description": "User not found"
           }
         }
       }
     },
-    "/api/vote/stats/{topic_id}": {
-      "get": {
-        "summary": "Get voting statistics for a topic",
-        "description": "Retrieves comprehensive voting statistics for a specific topic.\nIncludes total votes, participants, voting rate, and time remaining.\nThis endpoint is useful for:\n- Displaying topic statistics in admin panels\n- Analytics and reporting\n- Real-time dashboard updates\n",
+    "/api/users/{id}/reset-password": {
+      "post": {
+        "summary": "Reset user password (Admin only)",
+        "description": "Reset a user's password to default or provided value (Admin only)",
         "tags": [
-          "Vote Data"
+          "Users"
         ],
         "security": [
           {
@@ -3251,7 +3230,76 @@
         "parameters": [
           {
             "in": "path",
-            "name": "topic_id",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{24}$"
+            },
+            "description": "MongoDB ObjectId of the user"
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminResetPasswordDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Password reset successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/DetailDataResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/User"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "403": {
+            "description": "Forbidden - Admin access required"
+          },
+          "404": {
+            "description": "User not found"
+          }
+        }
+      }
+    },
+    "/api/vote/status/{topicId}": {
+      "get": {
+        "summary": "Get user's vote status for a topic",
+        "description": "Retrieve the current user's voting status and all options with vote information for a specific topic",
+        "tags": [
+          "Votes"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "topicId",
             "required": true,
             "schema": {
               "type": "string",
@@ -3263,21 +3311,21 @@
         ],
         "responses": {
           "200": {
-            "description": "Voting statistics retrieved successfully",
+            "description": "Vote status retrieved successfully",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/VotingStatsResponseDTO"
+                  "$ref": "#/components/schemas/VoteStatusResponseDTO"
                 }
               }
             }
           },
           "400": {
-            "description": "Bad request - invalid topic ID format",
+            "description": "Bad request - validation error",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationError"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -3287,7 +3335,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Error"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -3297,7 +3345,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Error"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -3307,7 +3355,110 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Error"
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/vote/voters/{optionId}": {
+      "get": {
+        "summary": "Get voters for an option",
+        "description": "Retrieve the list of users who voted for a specific option",
+        "tags": [
+          "Votes"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "optionId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{24}$"
+            },
+            "description": "MongoDB ObjectId of the option",
+            "example": "60d21b4667d0d8992e610c86"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Voters retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "voters": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "userId": {
+                                "type": "string"
+                              },
+                              "username": {
+                                "type": "string"
+                              },
+                              "email": {
+                                "type": "string"
+                              },
+                              "votedAt": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        },
+                        "totalVotes": {
+                          "type": "number"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Option not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }

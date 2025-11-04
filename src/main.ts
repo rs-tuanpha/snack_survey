@@ -38,6 +38,9 @@ function initializeApp() {
     // Mount the app
     app.mount('#app')
 
+    // Welcome message
+    console.log('👋 Welcome to SnackSurvey!')
+
     return app
   } catch (error) {
     console.error('Failed to initialize Vue application:', error)
