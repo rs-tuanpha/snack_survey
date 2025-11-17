@@ -107,27 +107,24 @@ const createOption = async () => {
       optionFormData &&
       handleValidateAddOption(optionFormData, topicStateData) === true
     ) {
-      const topicData = await getOptionsByTopicId(topicStateData.id)
-      setTimeout(async () => {
-        const optionList = topicData.value as IOption[]
-        let checkIsDuplicate = false
-        optionList.forEach((option) => {
-          if (
-            option.title === optionFormData?.title ||
-            (optionFormData?.link && optionFormData.link === option.link)
-          ) {
-            hasError.value = true
-            message.value = 'Option này đã tồn tại, vui lòng nhập lại!'
-            checkIsDuplicate = true
-            return
-          }
-        })
-        if (!checkIsDuplicate) {
-          await postNewOption(optionFormData.title, optionFormData.link, topicStateData.id)
-          hasError.value = false
-          message.value = 'Tạo mới thành công'
+      const optionList = await getOptionsByTopicId(topicStateData.id)
+      let checkIsDuplicate = false
+      optionList.forEach((option) => {
+        if (
+          option.title === optionFormData?.title ||
+          (optionFormData?.link && optionFormData.link === option.link)
+        ) {
+          hasError.value = true
+          message.value = 'Option này đã tồn tại, vui lòng nhập lại!'
+          checkIsDuplicate = true
+          return
         }
-      }, 200)
+      })
+      if (!checkIsDuplicate) {
+        await postNewOption(optionFormData.title, optionFormData.link, topicStateData.id)
+        hasError.value = false
+        message.value = 'Tạo mới thành công'
+      }
     }
   } catch {
     hasError.value = false

@@ -12,7 +12,7 @@
     >
       <v-autocomplete
         label="Chọn tài khoản"
-        :items="getAccounts"
+        :items="accounts"
         item-title="username"
         item-value="id"
         v-model="account"
@@ -26,7 +26,7 @@
   </v-container>
 
   <v-container v-if="!show">
-    <v-sheet max-width="638" width="100%" class="mx-auto d-flex justify-space-between align-center">
+    <v-sheet max-width="638" width="100%" class="mx-auto pa-2 d-flex rounded-t justify-space-between align-center">
       <div class="d-flex align-center">
         <v-avatar
           size="36px"
@@ -35,14 +35,14 @@
         >
           <v-img alt="Avatar" :src="accountInfo.avatar"></v-img>
         </v-avatar>
-        <i> Tài khoản: </i><strong>{{ accountInfo.username }}</strong>
+        <i class="text-body-1 mr-1"> Tài khoản: </i><strong>{{ accountInfo.username }}</strong>
       </div>
-      <v-btn class="ma-2 logout-btn" color="red" @click="logout">
+      <v-btn class="logout-btn" color="red" @click="logout">
         <v-icon icon="mdi-logout-variant"></v-icon>
       </v-btn>
     </v-sheet>
 
-    <v-sheet max-width="638" width="100%" class="mx-auto mb-2 pa-2" elevation="1" rounded>
+    <v-sheet max-width="638" width="100%" class="mx-auto mb-2 pa-2 rounded-b" elevation="1">
       <v-tabs v-model="tab" bg-color="primary" class="mb-1 rounded">
         <v-tab value="open" width="50%">Topics đang mở</v-tab>
         <v-tab value="close" width="50%">Topics đã đóng</v-tab>
@@ -148,6 +148,7 @@ const dialog = ref<boolean>(false)
 const message = ref<string>('')
 const alert = ref<boolean>(false)
 const searchTerm = ref('')
+const accounts = ref<IUser[]>([])
 const accountInfo: {
   username?: string
   avatar?: string
@@ -165,24 +166,24 @@ const login = async () => {
   show.value = false
 
   localStorage.setItem('account_info', account.value)
-  for (const item in getAccounts.value) {
-    if (getAccounts.value[item].id === account.value) {
-      accountInfo.avatar = getAccounts.value[item].avatar
-      accountInfo.username = getAccounts.value[item].username
-      accountInfo.team = getAccounts.value[item].team
-      localStorage.setItem('account_avatar', getAccounts.value[item].avatar ?? '')
-      localStorage.setItem('account_username', getAccounts.value[item].username ?? '')
-      localStorage.setItem('account_team', getAccounts.value[item].team ?? '')
-      topics.value = await getOpenTopicList(getAccounts.value[item].team ?? '')
-      if (topics.value.length === 0) {
-        alert.value = true
-      }
-      getTopicOptions()
+  const selectedAccount = accounts.value.find((acc) => acc.id === account.value)
+  if (selectedAccount) {
+    accountInfo.avatar = selectedAccount.avatar
+    accountInfo.username = selectedAccount.username
+    accountInfo.team = selectedAccount.team
+    localStorage.setItem('account_avatar', selectedAccount.avatar ?? '')
+    localStorage.setItem('account_username', selectedAccount.username ?? '')
+    localStorage.setItem('account_team', selectedAccount.team ?? '')
+    topics.value = await getOpenTopicList(selectedAccount.team ?? '')
+    if (topics.value.length === 0) {
+      alert.value = true
     }
+    getTopicOptions()
   }
 }
 
 onMounted(async () => {
+  accounts.value = await getAccounts()
   if (localStorage.getItem('account_info') && localStorage.getItem('account_username')) {
     show.value = false
     topics.value = await getOpenTopicList(localStorage.getItem('account_team'))

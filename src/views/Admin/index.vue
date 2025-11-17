@@ -187,12 +187,10 @@
                 <td>{{ item.name }}</td>
                 <td>{{ item.team }}</td>
                 <td>
-                  {{ item.status === true || item.date.toDate() >= new Date() ? 'Mở' : 'Đóng' }}
+                  {{ item.status === true || (item.date && item.date >= new Date()) ? 'Mở' : 'Đóng' }}
                 </td>
                 <td>
-                  {{
-                    dayjs(new Date((item?.date as any)?.seconds * 1000)).format('DD/MM/YYYY HH:mm')
-                  }}
+                  {{ item.date ? dayjs(item.date).format('DD/MM/YYYY HH:mm') : '' }}
                 </td>
                 <td>
                   <v-btn
@@ -230,7 +228,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, reactive, defineAsyncComponent } from 'vue'
+import { ref, watch, reactive, defineAsyncComponent, onMounted } from 'vue'
 import VueDatePicker from '@vuepic/vue-datepicker'
 import { collection, addDoc, doc, updateDoc, deleteDoc } from 'firebase/firestore'
 import { db } from '@/plugins/firebase'
@@ -249,7 +247,7 @@ const ModalEditOption = defineAsyncComponent(() => import('./ModalEditOption.vue
 
 // State
 const format = ref<string>('')
-const topics = getTopics
+const topics = ref<ITopic[]>([])
 const text = ref<string>('')
 const textBtn = ref<string>('Tạo mới')
 const topicId = ref<string>('')
@@ -282,16 +280,16 @@ watch(
 )
 
 watch(
-  () => topics,
-  async (topicsRef) => {
-    if (!topicsRef.value.length || !isFirstCheckStatus.value) {
+  topics,
+  async (topicsList) => {
+    if (!topicsList.length || !isFirstCheckStatus.value) {
       return
     }
     isFirstCheckStatus.value = false
     const syncStatusList: Promise<void>[] = []
     const currentDay = new Date()
-    topicsRef.value.forEach((topicItem) => {
-      if (topicItem.status === true && topicItem.date.toDate() < currentDay) {
+    topicsList.forEach((topicItem) => {
+      if (topicItem.status === true && topicItem.date && (topicItem.date as Date) < currentDay) {
         const topicRef = doc(db, 'topics', topicItem.id)
         syncStatusList.push(
           updateDoc(topicRef, { ...topicItem, status: false, updatedAt: currentDay })
@@ -299,9 +297,16 @@ watch(
       }
     })
     await Promise.all(syncStatusList)
+    if (syncStatusList.length > 0) {
+      topics.value = await getTopics()
+    }
   },
   { deep: true }
 )
+
+onMounted(async () => {
+  topics.value = await getTopics()
+})
 
 // Methods
 const confirm = (type: string) => {
@@ -379,23 +384,20 @@ const handleEditTopic = async (id: string) => {
 
 const getOptions = async (topicId: string, isSetOption: boolean = false) => {
   const topicData = await getOptionsByTopicId(topicId)
-  let optionArr = [] as IOption[]
-  setTimeout(() => {
-    if (isSetOption) {
-      options.value = topicData.value as IOption[]
-    } else {
-      optionArr = topicData.value as IOption[]
-    }
-  }, 200)
-  return optionArr
+  if (isSetOption) {
+    options.value = topicData
+  }
+  return topicData
 }
 
 // Reducer for confirm dialog
 const handleTopic = async (type: string) => {
+  const now = new Date()
   switch (type) {
     case 'create':
       try {
-        await addDoc(collection(db, 'topics'), { ...topicFormData, updatedAt: new Date() })
+        await addDoc(collection(db, 'topics'), { ...topicFormData, updatedAt: now })
+        topics.value = await getTopics()
         dialog.value = false
         alert.value = 'Thêm mới thành công'
         setTimeout(() => {
@@ -409,7 +411,11 @@ const handleTopic = async (type: string) => {
       }
       break
     case 'update':
-      update({ ...topicFormData, updatedAt: new Date() })
+        // Check if end date is greater than current date, set status to true
+      if (topicFormData?.date && topicFormData.date > now) {
+        topicFormData.status = true
+      }
+      update({ ...topicFormData, updatedAt: now })
       break
     case 'delete':
       deleteTopic()
@@ -421,6 +427,7 @@ const update = async (topic: object) => {
   const topicRef = doc(db, 'topics', topicId.value)
   try {
     await updateDoc(topicRef, topic)
+    topics.value = await getTopics()
     dialog.value = false
     alert.value = 'Cập nhật thành công'
     setTimeout(() => {
@@ -437,6 +444,7 @@ const update = async (topic: object) => {
 const deleteTopic = async () => {
   try {
     await deleteDoc(doc(db, 'topics', topicCancelId.value))
+    topics.value = await getTopics()
     dialog.value = false
     alert.value = ''
     if (reset.value === true) {
