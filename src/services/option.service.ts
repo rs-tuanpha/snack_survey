@@ -8,26 +8,35 @@ import {
   getDocs,
   query,
   where,
-  getDoc,
   orderBy,
   updateDoc,
   limit,
   runTransaction
 } from 'firebase/firestore'
-import { useCollection } from 'vuefire'
 import { uploadImageToFirebase } from './upload.service'
 import type { IUser } from '@/core/interfaces/model/user'
 
 /**
- * Get list option by topic id and order by voteCount (descending)
+ * Get list option by topic id and order by title (ascending)
  * @param {string} topicId
- * @return options collection with specific topicId
+ * @return {Promise<IOption[]>} options array with specific topicId
  */
-export const getOptionsByTopicId = async (topicId: string) => {
-  const result = useCollection<IOption>(
-    query(collection(db, 'options'), where('topicId', '==', topicId), orderBy('title', 'asc'))
-  )
-  return result
+export const getOptionsByTopicId = async (topicId: string): Promise<IOption[]> => {
+  try {
+    const q = query(
+      collection(db, 'options'),
+      where('topicId', '==', topicId),
+      orderBy('title', 'asc')
+    )
+    const querySnapshot = await getDocs(q)
+    return querySnapshot.docs.map((doc) => ({
+      ...doc.data(),
+      id: doc.id
+    })) as IOption[]
+  } catch {
+    alert('An error occurred when fetching options!')
+    return []
+  }
 }
 
 export const getRankByTopicId = (topicId: string) => {

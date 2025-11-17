@@ -9,9 +9,9 @@
         <p class="text-white text-body-1 mb-8">
           Thời hạn:
           {{
-            dayjs(new Date((currentTopic?.date as any)?.seconds * 1000)).format(
-              'DD/MM/YYYY, HH:MM:ss'
-            )
+            currentTopic?.date
+              ? dayjs(convertToDate(currentTopic.date)).format('DD/MM/YYYY, HH:mm:ss')
+              : ''
           }}
         </p>
         <!-- Countdown Timer Display -->
@@ -169,10 +169,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineAsyncComponent, onMounted, ref } from 'vue'
+import { computed, defineAsyncComponent, onMounted, onBeforeUnmount, ref } from 'vue'
 import { useCollection, useDocument } from 'vuefire'
 import dayjs from 'dayjs'
-import { debounce } from 'lodash'
+import { debounce } from 'vue-debounce'
 
 import { ETopicTeam } from '@/core/constants/enum'
 import useCommon from '@/core/hooks/useCommon'
@@ -238,11 +238,24 @@ const voteState = computed(() => {
   return votedIndices
 })
 
+// Helper function to convert Firestore Timestamp to Date
+const convertToDate = (date: any): Date => {
+  if (!date) return new Date()
+  if (date instanceof Date) return date
+  if (date?.toDate && typeof date.toDate === 'function') {
+    return date.toDate()
+  }
+  if (date?.seconds) {
+    return new Date(date.seconds * 1000)
+  }
+  return new Date(date)
+}
+
 // Calculate remaining time until topic deadline
 const timeRemaining = computed(() => {
   if (currentTopic.value?.date) {
-    const difference =
-      new Date((currentTopic.value?.date as any)?.seconds * 1000).getTime() - currentTime.value
+    const deadlineDate = convertToDate(currentTopic.value.date)
+    const difference = deadlineDate.getTime() - currentTime.value
     if (difference <= 0) {
       update()
       return {
@@ -339,6 +352,8 @@ const onClickSeeMore = (option: IOption) => {
 }
 
 // Component lifecycle hooks
+let countdownInterval: ReturnType<typeof setInterval> | null = null
+
 onMounted(async () => {
   // Reset account if needed
   const isResetAccount = localStorage.getItem('isResetAccount')
@@ -349,7 +364,7 @@ onMounted(async () => {
   }
 
   // Start countdown timer
-  setInterval(() => {
+  countdownInterval = setInterval(() => {
     currentTime.value = new Date().getTime()
   }, 1000)
 
@@ -362,6 +377,15 @@ onMounted(async () => {
 
   const userData = await getAccountById(accountId!)
   currentAccount.value = userData
+})
+
+onBeforeUnmount(() => {
+  // Cleanup debounce
+  handleChangeVote.cancel()
+  // Cleanup interval
+  if (countdownInterval) {
+    clearInterval(countdownInterval)
+  }
 })
 </script>
 

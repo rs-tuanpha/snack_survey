@@ -108,7 +108,7 @@ const updateOption = async () => {
     ) {
       await putOptionData(optionFormData)
       const topicData = await getOptionsByTopicId(props.topicState.data.id)
-      emits('update:optionList', topicData.value)
+      emits('update:optionList', topicData)
       hasError.value = false
       message.value = 'Cập nhật thành công'
     }

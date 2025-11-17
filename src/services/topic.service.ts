@@ -1,8 +1,7 @@
-import { useFirestore, useCollection } from 'vuefire'
 import { collection, getDocs, query, orderBy, getDoc, doc, updateDoc } from 'firebase/firestore'
+import { db } from '@/plugins/firebase'
 import type { ITopic } from '@/core/interfaces/model/topic'
 import { ETopicTeam } from '@/core/constants/enum'
-const db = useFirestore()
 
 /**
  * Get list topic data status open
@@ -42,9 +41,28 @@ export const getCloseTopicList = async (team: string | null): Promise<ITopic[]> 
   return openTopicList
 }
 
-export const getTopics = useCollection(
-  query(collection(db, 'topics'), orderBy('updatedAt', 'desc'))
-)
+/**
+ * Get all topics ordered by updatedAt (descending)
+ * @return {Promise<ITopic[]>}
+ */
+export const getTopics = async (): Promise<ITopic[]> => {
+  try {
+    const q = query(collection(db, 'topics'), orderBy('updatedAt', 'desc'))
+    const querySnapshot = await getDocs(q)
+    return querySnapshot.docs.map((doc) => {
+      const data = doc.data()
+      return {
+        ...data,
+        id: doc.id,
+        date: data.date?.toDate ? data.date.toDate() : data.date,
+        updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : data.updatedAt
+      } as ITopic
+    })
+  } catch {
+    alert('An error occurred when fetching topics!')
+    return []
+  }
+}
 
 export const getTopicRef = (topicId: string) => {
   return doc(db, 'topics', topicId);
