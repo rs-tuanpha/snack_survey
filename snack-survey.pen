@@ -1,0 +1,3613 @@
+{
+  "version": "2.14",
+  "children": [
+    {
+      "type": "frame",
+      "id": "fLNbM",
+      "x": 880,
+      "y": 0,
+      "name": "Food Vote Detail",
+      "clip": true,
+      "width": 1440,
+      "height": 1024,
+      "fill": "$bg",
+      "layout": "vertical",
+      "gap": 20,
+      "padding": [
+        24,
+        32
+      ],
+      "children": [
+        {
+          "type": "frame",
+          "id": "GrTpz",
+          "name": "Header",
+          "width": "fill_container",
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "id": "JzEJa",
+              "type": "ref",
+              "ref": "QEODG",
+              "name": "Back Button"
+            },
+            {
+              "id": "Tho53",
+              "type": "ref",
+              "ref": "A406n",
+              "name": "Add Option Button"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "Y3WcsG",
+          "name": "Body",
+          "width": "fill_container",
+          "height": "fill_container",
+          "gap": 20,
+          "children": [
+            {
+              "type": "frame",
+              "id": "PImRj",
+              "name": "Sidebar",
+              "width": 340,
+              "layout": "vertical",
+              "gap": 16,
+              "children": [
+                {
+                  "id": "jDiNh",
+                  "type": "ref",
+                  "ref": "g2WGF",
+                  "name": "Event Card",
+                  "width": "fill_container"
+                },
+                {
+                  "id": "HWHBz",
+                  "type": "ref",
+                  "ref": "RwUBU",
+                  "name": "Top Card",
+                  "width": "fill_container"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "AItgA",
+              "name": "Main Panel",
+              "clip": true,
+              "width": "fill_container",
+              "height": "fill_container",
+              "fill": "$surface",
+              "cornerRadius": 20,
+              "effect": {
+                "type": "shadow",
+                "shadowType": "outer",
+                "color": "#0000000A",
+                "offset": {
+                  "x": 0,
+                  "y": 2
+                },
+                "blur": 12
+              },
+              "layout": "vertical",
+              "gap": 20,
+              "padding": 24,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "RyWZD",
+                  "name": "Options Heading",
+                  "fill": "$text-secondary",
+                  "content": "TẤT CẢ OPTIONS (12)",
+                  "fontFamily": "$font-body",
+                  "fontSize": 13,
+                  "fontWeight": "600",
+                  "letterSpacing": 0.8
+                },
+                {
+                  "type": "frame",
+                  "id": "hB8KG",
+                  "name": "Options Grid",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 16,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "A07kbA",
+                      "name": "Options Row 1",
+                      "width": "fill_container",
+                      "gap": 16,
+                      "children": [
+                        {
+                          "id": "pryze",
+                          "type": "ref",
+                          "ref": "VJ1Vo",
+                          "name": "Option Heo quay tây bắc",
+                          "width": "fill_container",
+                          "descendants": {
+                            "AnuIH": {
+                              "fill": {
+                                "type": "image",
+                                "enabled": true,
+                                "url": "https://images.unsplash.com/photo-1689832832024-468541b539d4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4NDM0ODN8MHwxfHJhbmRvbXx8fHx8fHx8fDE3ODUzODYxNTF8&ixlib=rb-4.1.0&q=80&w=1080",
+                                "mode": "fill"
+                              },
+                              "layout": "none",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "EV7d5",
+                                  "x": 10,
+                                  "y": 8,
+                                  "name": "Winner Crown",
+                                  "width": 28,
+                                  "height": 28,
+                                  "icon": "crown",
+                                  "library": "lucide",
+                                  "fill": "#F59E0B",
+                                  "effect": {
+                                    "type": "shadow",
+                                    "shadowType": "outer",
+                                    "color": "#00000040",
+                                    "offset": {
+                                      "x": 0,
+                                      "y": 1
+                                    },
+                                    "blur": 3
+                                  }
+                                }
+                              ]
+                            },
+                            "bWTUo": {
+                              "content": "Heo quay tây bắc"
+                            },
+                            "fi5F8": {
+                              "content": "https://shopeefood.vn/ho-chi-minh/..."
+                            }
+                          }
+                        },
+                        {
+                          "id": "hOVJb",
+                          "type": "ref",
+                          "ref": "VJ1Vo",
+                          "name": "Option xôi chiên",
+                          "width": "fill_container",
+                          "descendants": {
+                            "AnuIH": {
+                              "fill": {
+                                "type": "image",
+                                "enabled": true,
+                                "url": "images/generated-1785386218609.png",
+                                "mode": "fill"
+                              }
+                            },
+                            "bWTUo": {
+                              "content": "xôi chiên"
+                            },
+                            "fi5F8": {
+                              "content": "https://shopeefood.vn/ho-chi-minh/..."
+                            }
+                          }
+                        },
+                        {
+                          "id": "WxCOE",
+                          "type": "ref",
+                          "ref": "VJ1Vo",
+                          "name": "Option Pizza 🍕",
+                          "width": "fill_container",
+                          "descendants": {
+                            "AnuIH": {
+                              "fill": {
+                                "type": "image",
+                                "enabled": true,
+                                "url": "https://images.unsplash.com/photo-1700760934249-93efbb574d23?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4NDM0ODN8MHwxfHJhbmRvbXx8fHx8fHx8fDE3ODUzODYxNTR8&ixlib=rb-4.1.0&q=80&w=1080",
+                                "mode": "fill"
+                              },
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "cnkbj",
+                                  "x": 10,
+                                  "y": 8,
+                                  "name": "Third Crown",
+                                  "width": 28,
+                                  "height": 28,
+                                  "icon": "crown",
+                                  "library": "lucide",
+                                  "fill": "#CD7F32",
+                                  "effect": {
+                                    "type": "shadow",
+                                    "shadowType": "outer",
+                                    "color": "#00000040",
+                                    "offset": {
+                                      "x": 0,
+                                      "y": 1
+                                    },
+                                    "blur": 3
+                                  }
+                                }
+                              ]
+                            },
+                            "bWTUo": {
+                              "content": "Pizza 🍕"
+                            },
+                            "fi5F8": {
+                              "content": "https://shopeefood.vn/ho-chi-minh/..."
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "UbNxV",
+                      "name": "Options Row 2",
+                      "width": "fill_container",
+                      "gap": 16,
+                      "children": [
+                        {
+                          "id": "w056Wj",
+                          "type": "ref",
+                          "ref": "VJ1Vo",
+                          "name": "Option Gà nướng lu 🍗",
+                          "width": "fill_container",
+                          "descendants": {
+                            "AnuIH": {
+                              "fill": {
+                                "type": "image",
+                                "enabled": true,
+                                "url": "images/generated-1785386218821.png",
+                                "mode": "fill"
+                              }
+                            },
+                            "bWTUo": {
+                              "content": "Gà nướng lu 🍗"
+                            },
+                            "fi5F8": {
+                              "content": "https://shopeefood.vn/ho-chi-minh/..."
+                            }
+                          }
+                        },
+                        {
+                          "id": "ls0Pc",
+                          "type": "ref",
+                          "ref": "VJ1Vo",
+                          "name": "Option Gà rán 🍗",
+                          "width": "fill_container",
+                          "descendants": {
+                            "AnuIH": {
+                              "fill": {
+                                "type": "image",
+                                "enabled": true,
+                                "url": "https://images.unsplash.com/photo-1670688866261-db6697858df8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4NDM0ODN8MHwxfHJhbmRvbXx8fHx8fHx8fDE3ODUzODYxNTZ8&ixlib=rb-4.1.0&q=80&w=1080",
+                                "mode": "fill"
+                              }
+                            },
+                            "bWTUo": {
+                              "content": "Gà rán 🍗"
+                            },
+                            "fi5F8": {
+                              "content": "https://shopeefood.vn/ho-chi-minh/..."
+                            }
+                          }
+                        },
+                        {
+                          "id": "f1aMB",
+                          "type": "ref",
+                          "ref": "VJ1Vo",
+                          "name": "Option Gỏi cuốn",
+                          "width": "fill_container",
+                          "descendants": {
+                            "AnuIH": {
+                              "fill": {
+                                "type": "image",
+                                "enabled": true,
+                                "url": "images/generated-1785386218588.png",
+                                "mode": "fill"
+                              }
+                            },
+                            "bWTUo": {
+                              "content": "Gỏi cuốn"
+                            },
+                            "fi5F8": {
+                              "content": "https://shopeefood.vn/ho-chi-minh/..."
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "gmtxT",
+                      "name": "Options Row 3",
+                      "width": "fill_container",
+                      "gap": 16,
+                      "children": [
+                        {
+                          "id": "DpCK2",
+                          "type": "ref",
+                          "ref": "VJ1Vo",
+                          "name": "Option Bún chả Hà Nội",
+                          "width": "fill_container",
+                          "descendants": {
+                            "AnuIH": {
+                              "fill": {
+                                "type": "image",
+                                "enabled": true,
+                                "url": "images/generated-1785386219050.png",
+                                "mode": "fill"
+                              }
+                            },
+                            "bWTUo": {
+                              "content": "Bún chả Hà Nội"
+                            },
+                            "fi5F8": {
+                              "content": "https://shopeefood.vn/ho-chi-minh/..."
+                            }
+                          }
+                        },
+                        {
+                          "id": "UWjG6",
+                          "type": "ref",
+                          "ref": "VJ1Vo",
+                          "name": "Option Cơm tấm sườn",
+                          "width": "fill_container",
+                          "descendants": {
+                            "AnuIH": {
+                              "fill": {
+                                "type": "image",
+                                "enabled": true,
+                                "url": "https://images.unsplash.com/photo-1774428755031-0991c8901f08?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4NDM0ODN8MHwxfHJhbmRvbXx8fHx8fHx8fDE3ODUzODYxNTl8&ixlib=rb-4.1.0&q=80&w=1080",
+                                "mode": "fill"
+                              }
+                            },
+                            "bWTUo": {
+                              "content": "Cơm tấm sườn"
+                            },
+                            "fi5F8": {
+                              "content": "https://shopeefood.vn/ho-chi-minh/..."
+                            }
+                          }
+                        },
+                        {
+                          "id": "r66O1",
+                          "type": "ref",
+                          "ref": "VJ1Vo",
+                          "name": "Option Lẩu thái",
+                          "width": "fill_container",
+                          "descendants": {
+                            "AnuIH": {
+                              "fill": {
+                                "type": "image",
+                                "enabled": true,
+                                "url": "https://images.unsplash.com/photo-1537441286629-976316a52818?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4NDM0ODN8MHwxfHJhbmRvbXx8fHx8fHx8fDE3ODUzODYxNzZ8&ixlib=rb-4.1.0&q=80&w=1080",
+                                "mode": "fill"
+                              }
+                            },
+                            "bWTUo": {
+                              "content": "Lẩu thái"
+                            },
+                            "fi5F8": {
+                              "content": "https://shopeefood.vn/ho-chi-minh/..."
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "MJwyL",
+      "x": 2400,
+      "y": 0,
+      "name": "Login",
+      "clip": true,
+      "width": 1440,
+      "height": 1024,
+      "fill": "$bg",
+      "layout": "vertical",
+      "gap": 28,
+      "padding": 32,
+      "justifyContent": "center",
+      "alignItems": "center",
+      "children": [
+        {
+          "id": "HnazY",
+          "type": "ref",
+          "ref": "jK56u",
+          "name": "Brand Block",
+          "width": 440
+        },
+        {
+          "type": "frame",
+          "id": "s7uoQg",
+          "name": "Login Card",
+          "width": 440,
+          "fill": "$surface",
+          "cornerRadius": 24,
+          "effect": {
+            "type": "shadow",
+            "shadowType": "outer",
+            "color": "#0000000F",
+            "offset": {
+              "x": 0,
+              "y": 4
+            },
+            "blur": 20
+          },
+          "layout": "vertical",
+          "gap": 20,
+          "padding": 28,
+          "children": [
+            {
+              "id": "P7Bgc",
+              "type": "ref",
+              "ref": "L5GKc",
+              "name": "Email Field",
+              "width": "fill_container",
+              "descendants": {
+                "mqVun": {
+                  "content": "EMAIL"
+                },
+                "j1MjX": {
+                  "content": "your@email.com"
+                }
+              }
+            },
+            {
+              "id": "xmOhX",
+              "type": "ref",
+              "ref": "L5GKc",
+              "name": "Password Field",
+              "width": "fill_container",
+              "descendants": {
+                "mqVun": {
+                  "content": "MẬT KHẨU"
+                },
+                "j1MjX": {
+                  "content": "••••••••"
+                }
+              }
+            },
+            {
+              "id": "AK8MN",
+              "type": "ref",
+              "ref": "Sw6tQ",
+              "name": "Login Button",
+              "width": "fill_container",
+              "descendants": {
+                "gY8ww": {
+                  "content": "ĐĂNG NHẬP"
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "N8kWd",
+              "name": "Auth Footer",
+              "width": "fill_container",
+              "gap": 6,
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "VjoJA",
+                  "name": "Footer Prompt",
+                  "fill": "$text-secondary",
+                  "content": "Chưa có tài khoản?",
+                  "fontFamily": "$font-body",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "Z3psnb",
+                  "name": "Footer Link",
+                  "fill": "$text-primary",
+                  "content": "Đăng ký",
+                  "fontFamily": "$font-body",
+                  "fontSize": 14,
+                  "fontWeight": "700"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "URKzr",
+      "x": 3920,
+      "y": 0,
+      "name": "Register",
+      "clip": true,
+      "width": 1440,
+      "height": 1024,
+      "fill": "$bg",
+      "layout": "vertical",
+      "gap": 28,
+      "padding": 32,
+      "justifyContent": "center",
+      "alignItems": "center",
+      "children": [
+        {
+          "id": "vCfiu",
+          "type": "ref",
+          "ref": "jK56u",
+          "name": "Brand Block",
+          "width": 440
+        },
+        {
+          "type": "frame",
+          "id": "Q2QIK5",
+          "name": "Register Card",
+          "width": 440,
+          "fill": "$surface",
+          "cornerRadius": 24,
+          "effect": {
+            "type": "shadow",
+            "shadowType": "outer",
+            "color": "#0000000F",
+            "offset": {
+              "x": 0,
+              "y": 4
+            },
+            "blur": 20
+          },
+          "layout": "vertical",
+          "gap": 20,
+          "padding": 28,
+          "children": [
+            {
+              "id": "MPdBE",
+              "type": "ref",
+              "ref": "L5GKc",
+              "name": "Username Field",
+              "width": "fill_container",
+              "descendants": {
+                "mqVun": {
+                  "content": "TÊN NGƯỜI DÙNG"
+                },
+                "j1MjX": {
+                  "content": "Nguyễn Văn A"
+                }
+              }
+            },
+            {
+              "id": "C3Xe9M",
+              "type": "ref",
+              "ref": "L5GKc",
+              "name": "Email Field",
+              "width": "fill_container",
+              "descendants": {
+                "mqVun": {
+                  "content": "EMAIL"
+                },
+                "j1MjX": {
+                  "content": "your@email.com"
+                }
+              }
+            },
+            {
+              "id": "KZgnl",
+              "type": "ref",
+              "ref": "L5GKc",
+              "name": "Password Field",
+              "width": "fill_container",
+              "descendants": {
+                "mqVun": {
+                  "content": "MẬT KHẨU"
+                },
+                "j1MjX": {
+                  "content": "••••••••"
+                }
+              }
+            },
+            {
+              "id": "HKwif",
+              "type": "ref",
+              "ref": "Sw6tQ",
+              "name": "Register Button",
+              "width": "fill_container",
+              "descendants": {
+                "gY8ww": {
+                  "content": "ĐĂNG KÝ"
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "T2udEB",
+              "name": "Auth Footer",
+              "width": "fill_container",
+              "gap": 6,
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "zArfF",
+                  "name": "Footer Prompt",
+                  "fill": "$text-secondary",
+                  "content": "Đã có tài khoản?",
+                  "fontFamily": "$font-body",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "Z1EPM",
+                  "name": "Footer Link",
+                  "fill": "$text-primary",
+                  "content": "Đăng nhập",
+                  "fontFamily": "$font-body",
+                  "fontSize": 14,
+                  "fontWeight": "700"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "z2gSo",
+      "x": 2400,
+      "y": 1104,
+      "name": "Home",
+      "clip": true,
+      "width": 1440,
+      "height": 1024,
+      "fill": "$bg",
+      "layout": "vertical",
+      "gap": 28,
+      "padding": [
+        48,
+        32
+      ],
+      "alignItems": "center",
+      "children": [
+        {
+          "type": "frame",
+          "id": "jH4wy",
+          "name": "Content",
+          "width": 896,
+          "layout": "vertical",
+          "gap": 28,
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "cR5Bs",
+              "name": "Header",
+              "width": "fill_container",
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "pHSd8",
+                  "name": "App Title",
+                  "fill": "$text-primary",
+                  "content": "Snack Survey",
+                  "fontFamily": "$font-heading",
+                  "fontSize": 36,
+                  "fontWeight": "800"
+                },
+                {
+                  "type": "frame",
+                  "id": "Dmwg4",
+                  "name": "User Area",
+                  "gap": 16,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "W7O9DH",
+                      "name": "User Name",
+                      "fill": "$text-primary",
+                      "content": "Đặng Ngọc Hùng",
+                      "fontFamily": "$font-body",
+                      "fontSize": 16,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "id": "nhUop",
+                      "type": "ref",
+                      "ref": "Sw6tQ",
+                      "name": "Logout Button",
+                      "descendants": {
+                        "gY8ww": {
+                          "content": "ĐĂNG XUẤT",
+                          "fontSize": 12
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "tWSjo",
+              "type": "ref",
+              "ref": "yN7EX",
+              "name": "Search Panel",
+              "width": "fill_container"
+            },
+            {
+              "id": "q7gEw",
+              "type": "ref",
+              "ref": "Oiqad",
+              "name": "Topic Card",
+              "width": "fill_container",
+              "descendants": {
+                "qORTH": {
+                  "enabled": false
+                }
+              }
+            },
+            {
+              "id": "l4c8MQ",
+              "type": "ref",
+              "ref": "qIv3k",
+              "name": "See More Button"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "lA4Oh",
+      "x": -1053,
+      "y": -1287,
+      "name": "Components",
+      "width": 1100,
+      "fill": "#FAFAF8",
+      "cornerRadius": 24,
+      "stroke": "$border",
+      "strokeWidth": 1,
+      "layout": "vertical",
+      "gap": 32,
+      "padding": 40,
+      "children": [
+        {
+          "type": "frame",
+          "id": "tnkYw",
+          "name": "Section Header",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 6,
+          "children": [
+            {
+              "type": "text",
+              "id": "DNcAQ",
+              "name": "Section Title",
+              "fill": "$text-primary",
+              "content": "Components",
+              "fontFamily": "$font-heading",
+              "fontSize": 28,
+              "fontWeight": "800"
+            },
+            {
+              "type": "text",
+              "id": "dvEgo",
+              "name": "Section Desc",
+              "fill": "$text-secondary",
+              "content": "Common reusable UI extracted from Login, Register, Home, Food Vote Detail",
+              "fontFamily": "$font-body",
+              "fontSize": 13,
+              "fontWeight": "normal"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "kZ6HC",
+          "name": "Buttons",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 16,
+          "children": [
+            {
+              "type": "text",
+              "id": "YKJ7W",
+              "name": "Buttons Label",
+              "fill": "$text-muted",
+              "content": "BUTTONS",
+              "fontFamily": "$font-body",
+              "fontSize": 11,
+              "fontWeight": "700",
+              "letterSpacing": 0.8
+            },
+            {
+              "type": "frame",
+              "id": "hDiLi",
+              "name": "Buttons Row",
+              "width": "fill_container",
+              "gap": 16,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "Sw6tQ",
+                  "name": "Button Primary",
+                  "reusable": true,
+                  "fill": "$primary",
+                  "cornerRadius": 999,
+                  "padding": [
+                    14,
+                    28
+                  ],
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "gY8ww",
+                      "name": "Label",
+                      "fill": "#FFFFFF",
+                      "content": "ĐĂNG NHẬP",
+                      "fontFamily": "$font-body",
+                      "fontSize": 14,
+                      "fontWeight": "700",
+                      "letterSpacing": 0.4
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "A406n",
+                  "name": "Button Primary Icon",
+                  "reusable": true,
+                  "fill": "$primary",
+                  "cornerRadius": 12,
+                  "gap": 8,
+                  "padding": [
+                    12,
+                    20
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "NeeM3",
+                      "name": "Icon",
+                      "width": 16,
+                      "height": 16,
+                      "icon": "plus",
+                      "library": "lucide",
+                      "fill": "#FFFFFF"
+                    },
+                    {
+                      "type": "text",
+                      "id": "snvYT",
+                      "name": "Label",
+                      "fill": "#FFFFFF",
+                      "content": "THÊM OPTION",
+                      "fontFamily": "$font-body",
+                      "fontSize": 13,
+                      "fontWeight": "700"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "QEODG",
+                  "name": "Button Secondary",
+                  "reusable": true,
+                  "fill": "$surface",
+                  "cornerRadius": 10,
+                  "stroke": "$border",
+                  "strokeWidth": 1,
+                  "gap": 8,
+                  "padding": [
+                    10,
+                    16
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "UrSwe",
+                      "name": "Icon",
+                      "width": 16,
+                      "height": 16,
+                      "icon": "arrow-left",
+                      "library": "lucide",
+                      "fill": "$text-primary"
+                    },
+                    {
+                      "type": "text",
+                      "id": "ragOC",
+                      "name": "Label",
+                      "fill": "$text-primary",
+                      "content": "QUAY LẠI",
+                      "fontFamily": "$font-body",
+                      "fontSize": 13,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "qIv3k",
+                  "name": "Button Ghost",
+                  "reusable": true,
+                  "fill": "$surface",
+                  "cornerRadius": 999,
+                  "effect": {
+                    "type": "shadow",
+                    "shadowType": "outer",
+                    "color": "#0000000F",
+                    "offset": {
+                      "x": 0,
+                      "y": 2
+                    },
+                    "blur": 8
+                  },
+                  "padding": [
+                    10,
+                    24
+                  ],
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "cAL9M",
+                      "name": "Label",
+                      "fill": "$text-primary",
+                      "content": "XEM THÊM",
+                      "fontFamily": "$font-body",
+                      "fontSize": 12,
+                      "fontWeight": "700",
+                      "letterSpacing": 0.4
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "IfYr4",
+                  "name": "Button Icon",
+                  "reusable": true,
+                  "width": 48,
+                  "height": 48,
+                  "fill": "#FB923C",
+                  "cornerRadius": 999,
+                  "layout": "vertical",
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "Q7bnBG",
+                      "name": "Icon",
+                      "width": 20,
+                      "height": 20,
+                      "icon": "search",
+                      "library": "lucide",
+                      "fill": "#FFFFFF"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "uvdku",
+          "name": "Forms",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 16,
+          "children": [
+            {
+              "type": "text",
+              "id": "LJQb9",
+              "name": "Forms Label",
+              "fill": "$text-muted",
+              "content": "FORMS",
+              "fontFamily": "$font-body",
+              "fontSize": 11,
+              "fontWeight": "700",
+              "letterSpacing": 0.8
+            },
+            {
+              "type": "frame",
+              "id": "H8DcR",
+              "name": "Forms Row",
+              "width": "fill_container",
+              "gap": 24,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "L5GKc",
+                  "name": "Input Field",
+                  "reusable": true,
+                  "width": 320,
+                  "layout": "vertical",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "mqVun",
+                      "name": "Label",
+                      "fill": "$text-primary",
+                      "content": "EMAIL",
+                      "fontFamily": "$font-body",
+                      "fontSize": 11,
+                      "fontWeight": "700",
+                      "letterSpacing": 0.6
+                    },
+                    {
+                      "type": "frame",
+                      "id": "DwiDz",
+                      "name": "Input",
+                      "width": "fill_container",
+                      "height": 48,
+                      "fill": "$surface",
+                      "cornerRadius": 14,
+                      "stroke": "$border",
+                      "strokeWidth": 1,
+                      "padding": [
+                        0,
+                        16
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "j1MjX",
+                          "name": "Placeholder",
+                          "fill": "$text-muted",
+                          "content": "your@email.com",
+                          "fontFamily": "$font-body",
+                          "fontSize": 15,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "jK56u",
+                  "name": "Brand Block",
+                  "reusable": true,
+                  "width": 320,
+                  "layout": "vertical",
+                  "gap": 8,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "CpWe4",
+                      "name": "Title",
+                      "fill": "$text-primary",
+                      "content": "Snack Survey",
+                      "textAlign": "center",
+                      "fontFamily": "$font-heading",
+                      "fontSize": 32,
+                      "fontWeight": "800"
+                    },
+                    {
+                      "type": "text",
+                      "id": "y747r",
+                      "name": "Subtitle",
+                      "fill": "$text-secondary",
+                      "content": "Đăng nhập để tiếp tục",
+                      "textAlign": "center",
+                      "fontFamily": "$font-body",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "W7pZw",
+          "name": "Badges",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 16,
+          "children": [
+            {
+              "type": "text",
+              "id": "oVzDP",
+              "name": "Badges Label",
+              "fill": "$text-muted",
+              "content": "BADGES",
+              "fontFamily": "$font-body",
+              "fontSize": 11,
+              "fontWeight": "700",
+              "letterSpacing": 0.8
+            },
+            {
+              "type": "frame",
+              "id": "F8ZN76",
+              "name": "Badges Row",
+              "width": "fill_container",
+              "gap": 20,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "CLcmG",
+                  "name": "Status Badge",
+                  "reusable": true,
+                  "fill": "$status-bg",
+                  "cornerRadius": 999,
+                  "padding": [
+                    6,
+                    12
+                  ],
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "zexeB",
+                      "name": "Label",
+                      "fill": "$status",
+                      "content": "MỞ",
+                      "fontFamily": "$font-body",
+                      "fontSize": 11,
+                      "fontWeight": "700",
+                      "letterSpacing": 0.4
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "fx2Q8",
+                  "name": "Vote Badge",
+                  "reusable": true,
+                  "width": 36,
+                  "height": 36,
+                  "fill": "$vote-gold",
+                  "cornerRadius": 999,
+                  "layout": "vertical",
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "sEkrM",
+                      "name": "Count",
+                      "fill": "#FFFFFF",
+                      "content": "12",
+                      "fontFamily": "$font-heading",
+                      "fontSize": 14,
+                      "fontWeight": "700"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "wutpp",
+                  "name": "Rank Medal",
+                  "reusable": true,
+                  "width": 28,
+                  "height": 28,
+                  "fill": "$medal-gold",
+                  "cornerRadius": 999,
+                  "stroke": "#FFFFFF",
+                  "strokeWidth": 2.5,
+                  "effect": {
+                    "type": "shadow",
+                    "shadowType": "outer",
+                    "color": "#F59E0B99",
+                    "offset": {
+                      "x": 0,
+                      "y": 2
+                    },
+                    "blur": 6
+                  },
+                  "layout": "vertical",
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "SIQTk",
+                      "name": "Crown",
+                      "width": 16,
+                      "height": 16,
+                      "icon": "crown",
+                      "library": "Material Symbols Rounded",
+                      "weight": 700,
+                      "fill": "#FFFFFF"
+                    }
+                  ]
+                },
+                {
+                  "id": "haZTD",
+                  "type": "ref",
+                  "ref": "wutpp",
+                  "name": "Rank Medal Silver",
+                  "fill": "$medal-silver",
+                  "effect": {
+                    "type": "shadow",
+                    "shadowType": "outer",
+                    "color": "#64748B88",
+                    "offset": {
+                      "x": 0,
+                      "y": 2
+                    },
+                    "blur": 6
+                  }
+                },
+                {
+                  "id": "JQFLA",
+                  "type": "ref",
+                  "ref": "wutpp",
+                  "name": "Rank Medal Bronze",
+                  "fill": "$medal-bronze",
+                  "effect": {
+                    "type": "shadow",
+                    "shadowType": "outer",
+                    "color": "#C2410C88",
+                    "offset": {
+                      "x": 0,
+                      "y": 2
+                    },
+                    "blur": 6
+                  }
+                },
+                {
+                  "type": "frame",
+                  "id": "UIe6S",
+                  "name": "Vote Pill",
+                  "reusable": true,
+                  "fill": "$rank-gold",
+                  "cornerRadius": 999,
+                  "padding": [
+                    6,
+                    10
+                  ],
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "RhUlC",
+                      "name": "Label",
+                      "fill": "#92400E",
+                      "content": "7 votes",
+                      "fontFamily": "$font-body",
+                      "fontSize": 11,
+                      "fontWeight": "700"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "JySBp",
+          "name": "Cards",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 16,
+          "children": [
+            {
+              "type": "text",
+              "id": "az7eb",
+              "name": "Cards Label",
+              "fill": "$text-muted",
+              "content": "CARDS",
+              "fontFamily": "$font-body",
+              "fontSize": 11,
+              "fontWeight": "700",
+              "letterSpacing": 0.8
+            },
+            {
+              "type": "frame",
+              "id": "kEq62",
+              "name": "Cards Row",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 20,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "V1cLs",
+                  "name": "Option Chip",
+                  "reusable": true,
+                  "width": 280,
+                  "fill": "#F3F4F6",
+                  "cornerRadius": 16,
+                  "gap": 10,
+                  "padding": [
+                    10,
+                    12
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "uwrNU",
+                      "name": "Thumb",
+                      "clip": true,
+                      "width": 40,
+                      "height": 40,
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "images/generated-1785386218588.png",
+                        "mode": "fill"
+                      },
+                      "cornerRadius": 10
+                    },
+                    {
+                      "type": "text",
+                      "id": "L5KJG",
+                      "name": "Name",
+                      "fill": "$text-primary",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Heo quay tây b...",
+                      "fontFamily": "$font-body",
+                      "fontSize": 13,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "oWpHL",
+                      "name": "Votes",
+                      "fill": "$rank-gold",
+                      "cornerRadius": 999,
+                      "padding": [
+                        6,
+                        10
+                      ],
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "docUR",
+                          "name": "Votes Label",
+                          "fill": "#92400E",
+                          "content": "7 votes",
+                          "fontFamily": "$font-body",
+                          "fontSize": 11,
+                          "fontWeight": "700"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "VJ1Vo",
+                  "name": "Option Card",
+                  "reusable": true,
+                  "clip": true,
+                  "width": 280,
+                  "fill": "$surface",
+                  "cornerRadius": 16,
+                  "effect": {
+                    "type": "shadow",
+                    "shadowType": "outer",
+                    "color": "#0000000F",
+                    "offset": {
+                      "x": 0,
+                      "y": 2
+                    },
+                    "blur": 8
+                  },
+                  "layout": "vertical",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "AnuIH",
+                      "name": "Food Image",
+                      "clip": true,
+                      "width": "fill_container",
+                      "height": 140,
+                      "fill": "#F3F4F6",
+                      "layout": "none"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "AxE9W",
+                      "name": "Card Body",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 10,
+                      "padding": [
+                        12,
+                        14
+                      ],
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "bWTUo",
+                          "name": "Food Title",
+                          "fill": "$text-primary",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Gà nướng lu 🍗",
+                          "fontFamily": "$font-heading",
+                          "fontSize": 15,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "fi5F8",
+                          "name": "Food Url",
+                          "fill": "$text-muted",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "https://shopeefood.vn/...",
+                          "fontFamily": "$font-body",
+                          "fontSize": 11,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "Q85cK1",
+                          "name": "Card Footer",
+                          "width": "fill_container",
+                          "justifyContent": "space_between",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "id": "OEyh4",
+                              "type": "ref",
+                              "ref": "DGhAn",
+                              "name": "Voters"
+                            },
+                            {
+                              "id": "J7FuQP",
+                              "type": "ref",
+                              "ref": "W8B7Y",
+                              "name": "Vote Button"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "OAR1d",
+                  "name": "Rank Item",
+                  "reusable": true,
+                  "width": 320,
+                  "fill": "$surface",
+                  "cornerRadius": 12,
+                  "gap": 12,
+                  "padding": [
+                    10,
+                    12
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "Vw5ju",
+                      "name": "Thumb Wrap",
+                      "width": 50,
+                      "height": 56,
+                      "layout": "none",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "n9YkVI",
+                          "x": 3,
+                          "y": 10,
+                          "name": "Rank Thumb",
+                          "clip": true,
+                          "width": 44,
+                          "height": 44,
+                          "fill": "#F3F4F6",
+                          "cornerRadius": 10
+                        },
+                        {
+                          "id": "TAJmp",
+                          "type": "ref",
+                          "ref": "wutpp",
+                          "name": "Rank Medal",
+                          "x": 11,
+                          "y": 0
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "eQNJM",
+                      "name": "Rank Info",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 2,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "H05uK",
+                          "name": "Rank Title",
+                          "fill": "$text-primary",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Heo quay tây bắc",
+                          "fontFamily": "$font-heading",
+                          "fontSize": 13,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "P72wp",
+                          "name": "Rank Votes",
+                          "fill": "$text-secondary",
+                          "content": "7 người vote",
+                          "fontFamily": "$font-body",
+                          "fontSize": 11,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "wEKEh",
+                      "type": "ref",
+                      "ref": "fx2Q8",
+                      "name": "Vote Badge",
+                      "descendants": {
+                        "sEkrM": {
+                          "content": "7"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "Oiqad",
+                  "name": "Topic Card",
+                  "reusable": true,
+                  "width": 1018,
+                  "fill": {
+                    "type": "gradient",
+                    "gradientType": "angular",
+                    "enabled": true,
+                    "rotation": 0,
+                    "size": {
+                      "width": 1,
+                      "height": 1
+                    },
+                    "colors": [
+                      {
+                        "color": "#F97316",
+                        "position": 0
+                      },
+                      {
+                        "color": "#EAB308",
+                        "position": 0.2
+                      },
+                      {
+                        "color": "#22C55E",
+                        "position": 0.4
+                      },
+                      {
+                        "color": "#06B6D4",
+                        "position": 0.6
+                      },
+                      {
+                        "color": "#3B82F6",
+                        "position": 0.8
+                      },
+                      {
+                        "color": "#F97316",
+                        "position": 1
+                      }
+                    ]
+                  },
+                  "cornerRadius": 28,
+                  "layout": "vertical",
+                  "padding": 3,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "sBxKx",
+                      "name": "Topic Card",
+                      "width": "fill_container",
+                      "fill": "$surface",
+                      "cornerRadius": 25,
+                      "layout": "vertical",
+                      "gap": 18,
+                      "padding": 24,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "enfHb",
+                          "name": "Topic Header",
+                          "width": "fill_container",
+                          "justifyContent": "space_between",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "jIOCr",
+                              "name": "Title Row",
+                              "width": "fill_container",
+                              "gap": 12,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "id": "il6VY",
+                                  "type": "ref",
+                                  "ref": "CLcmG",
+                                  "name": "Status Badge"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "GezFd",
+                                  "name": "Topic Title",
+                                  "fill": "$text-primary",
+                                  "content": "Sinh nhật T7 2026 ✨",
+                                  "fontFamily": "$font-heading",
+                                  "fontSize": 22,
+                                  "fontWeight": "700"
+                                }
+                              ]
+                            },
+                            {
+                              "id": "WI8dY",
+                              "type": "ref",
+                              "ref": "DGhAn",
+                              "name": "Voters"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "e9DBn",
+                          "name": "Meta Row",
+                          "width": "fill_container",
+                          "gap": 8,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "id": "krztT",
+                              "type": "ref",
+                              "ref": "bB7Rd",
+                              "name": "Date Pill",
+                              "descendants": {
+                                "F1Si8n": {
+                                  "content": "30/07/2026"
+                                }
+                              }
+                            },
+                            {
+                              "id": "n1htOW",
+                              "type": "ref",
+                              "ref": "FII0q",
+                              "name": "Time Pill",
+                              "descendants": {
+                                "LnR2t": {
+                                  "content": "Còn 27 phút, 15 giây"
+                                }
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "qORTH",
+                          "x": 24,
+                          "y": 121,
+                          "name": "Options Row",
+                          "enabled": false,
+                          "width": "fill_container(966)",
+                          "gap": 12,
+                          "children": [
+                            {
+                              "id": "vsNla",
+                              "type": "ref",
+                              "ref": "V1cLs",
+                              "name": "Option Chip 1",
+                              "width": "fill_container",
+                              "descendants": {
+                                "uwrNU": {
+                                  "fill": {
+                                    "type": "image",
+                                    "enabled": true,
+                                    "url": "images/generated-1785386218588.png",
+                                    "mode": "fill"
+                                  }
+                                },
+                                "L5KJG": {
+                                  "content": "Heo quay tây b..."
+                                },
+                                "docUR": {
+                                  "content": "7 votes"
+                                }
+                              }
+                            },
+                            {
+                              "id": "xH0oG",
+                              "type": "ref",
+                              "ref": "V1cLs",
+                              "name": "Option Chip 2",
+                              "width": "fill_container",
+                              "descendants": {
+                                "uwrNU": {
+                                  "fill": {
+                                    "type": "image",
+                                    "enabled": true,
+                                    "url": "images/generated-1785386218609.png",
+                                    "mode": "fill"
+                                  }
+                                },
+                                "L5KJG": {
+                                  "content": "xôi chiên"
+                                },
+                                "docUR": {
+                                  "content": "5 votes"
+                                }
+                              }
+                            },
+                            {
+                              "id": "h63JP",
+                              "type": "ref",
+                              "ref": "V1cLs",
+                              "name": "Option Chip 3",
+                              "width": "fill_container",
+                              "descendants": {
+                                "uwrNU": {
+                                  "fill": {
+                                    "type": "image",
+                                    "enabled": true,
+                                    "url": "images/generated-1785386218821.png",
+                                    "mode": "fill"
+                                  }
+                                },
+                                "L5KJG": {
+                                  "content": "Pizza 🍕"
+                                },
+                                "docUR": {
+                                  "content": "3 votes"
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "sFZml",
+                  "type": "ref",
+                  "ref": "Oiqad",
+                  "name": "Topic Card Closed",
+                  "width": 1011,
+                  "fill": "#E5E7EB",
+                  "height": "fit_content",
+                  "flipX": false,
+                  "flipY": false,
+                  "x": 0,
+                  "y": 602,
+                  "descendants": {
+                    "il6VY": {
+                      "fill": "#FEE2E2"
+                    },
+                    "il6VY/zexeB": {
+                      "content": "ĐÓNG",
+                      "fill": "#B91C1C"
+                    },
+                    "GezFd": {
+                      "content": "Sinh nhật T7 2026 ✨"
+                    },
+                    "krztT/F1Si8n": {
+                      "content": "30/07/2026"
+                    },
+                    "n1htOW": {
+                      "fill": "#F3F4F6"
+                    },
+                    "n1htOW/VZRNl": {
+                      "fill": "$text-secondary"
+                    },
+                    "n1htOW/LnR2t": {
+                      "content": "Đã kết thúc",
+                      "fill": "$text-secondary"
+                    },
+                    "qORTH": {
+                      "enabled": true
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "rH8hE",
+          "name": "Pills",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 16,
+          "children": [
+            {
+              "type": "text",
+              "id": "TZ5me",
+              "name": "Pills Label",
+              "fill": "$text-muted",
+              "content": "PILLS & ACTIONS",
+              "fontFamily": "$font-body",
+              "fontSize": 11,
+              "fontWeight": "700",
+              "letterSpacing": 0.8
+            },
+            {
+              "type": "frame",
+              "id": "XeLyy",
+              "name": "Pills Row",
+              "width": "fill_container",
+              "gap": 16,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "bB7Rd",
+                  "name": "Date Pill",
+                  "reusable": true,
+                  "fill": "#F3F4F6",
+                  "cornerRadius": 999,
+                  "gap": 6,
+                  "padding": [
+                    8,
+                    12
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "EWXHT",
+                      "name": "Icon",
+                      "width": 14,
+                      "height": 14,
+                      "icon": "calendar",
+                      "library": "lucide",
+                      "fill": "$text-secondary"
+                    },
+                    {
+                      "type": "text",
+                      "id": "F1Si8n",
+                      "name": "Label",
+                      "fill": "$text-primary",
+                      "content": "30/07/2026",
+                      "fontFamily": "$font-body",
+                      "fontSize": 12,
+                      "fontWeight": "500"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "FII0q",
+                  "name": "Time Pill",
+                  "reusable": true,
+                  "fill": "$primary-soft",
+                  "cornerRadius": 999,
+                  "gap": 6,
+                  "padding": [
+                    8,
+                    12
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "VZRNl",
+                      "name": "Icon",
+                      "width": 14,
+                      "height": 14,
+                      "icon": "timer",
+                      "library": "lucide",
+                      "fill": "$primary"
+                    },
+                    {
+                      "type": "text",
+                      "id": "LnR2t",
+                      "name": "Label",
+                      "fill": "$primary",
+                      "content": "Còn 27 phút, 15 giây",
+                      "fontFamily": "$font-body",
+                      "fontSize": 12,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "DGhAn",
+                  "name": "Avatar Stack",
+                  "reusable": true,
+                  "gap": -8,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "ellipse",
+                      "id": "FlmER",
+                      "name": "Avatar 1",
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop",
+                        "mode": "fill"
+                      },
+                      "width": 24,
+                      "height": 24,
+                      "stroke": "#FFFFFF",
+                      "strokeWidth": 2
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "a9csX",
+                      "name": "Avatar 2",
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop",
+                        "mode": "fill"
+                      },
+                      "width": 24,
+                      "height": 24,
+                      "stroke": "#FFFFFF",
+                      "strokeWidth": 2
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "eZNw1",
+                      "name": "Avatar 3",
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=100&h=100&fit=crop",
+                        "mode": "fill"
+                      },
+                      "width": 24,
+                      "height": 24,
+                      "stroke": "#FFFFFF",
+                      "strokeWidth": 2
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "W8B7Y",
+                  "name": "Vote Action",
+                  "reusable": true,
+                  "width": 36,
+                  "height": 36,
+                  "fill": "$primary-soft",
+                  "cornerRadius": 10,
+                  "layout": "vertical",
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "R5Fra0",
+                      "name": "Icon",
+                      "width": 18,
+                      "height": 18,
+                      "icon": "thumbs-up",
+                      "library": "lucide",
+                      "fill": "$primary"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "yN7EX",
+              "name": "Search Panel",
+              "reusable": true,
+              "width": 560,
+              "fill": "#FFF5EB",
+              "cornerRadius": 24,
+              "effect": {
+                "type": "shadow",
+                "shadowType": "outer",
+                "color": "#0000000A",
+                "offset": {
+                  "x": 0,
+                  "y": 2
+                },
+                "blur": 12
+              },
+              "layout": "vertical",
+              "gap": 10,
+              "padding": 20,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "k5kTh",
+                  "name": "Search Label",
+                  "fill": "$text-secondary",
+                  "content": "TÌM TOPIC",
+                  "fontFamily": "$font-body",
+                  "fontSize": 11,
+                  "fontWeight": "700",
+                  "letterSpacing": 0.6
+                },
+                {
+                  "type": "frame",
+                  "id": "wiipF",
+                  "name": "Search Row",
+                  "width": "fill_container",
+                  "gap": 12,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "pRT0I",
+                      "name": "Search Input",
+                      "width": "fill_container",
+                      "height": 48,
+                      "fill": "$surface",
+                      "cornerRadius": 14,
+                      "stroke": "$border",
+                      "strokeWidth": 1,
+                      "padding": [
+                        0,
+                        16
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "Tkwk6",
+                          "name": "Search Placeholder",
+                          "fill": "$text-muted",
+                          "content": "Tìm topic...",
+                          "fontFamily": "$font-body",
+                          "fontSize": 15,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "w4p7DQ",
+                      "type": "ref",
+                      "ref": "IfYr4",
+                      "name": "Search Button"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "S955m3",
+          "name": "Event",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 16,
+          "children": [
+            {
+              "type": "text",
+              "id": "T0CrSY",
+              "name": "Event Label",
+              "fill": "$text-muted",
+              "content": "EVENT",
+              "fontFamily": "$font-body",
+              "fontSize": 11,
+              "fontWeight": "700",
+              "letterSpacing": 0.8
+            },
+            {
+              "type": "frame",
+              "id": "g2WGF",
+              "name": "Event Card",
+              "reusable": true,
+              "width": 360,
+              "fill": "$surface",
+              "cornerRadius": 20,
+              "effect": {
+                "type": "shadow",
+                "shadowType": "outer",
+                "color": "#0000000A",
+                "offset": {
+                  "x": 0,
+                  "y": 2
+                },
+                "blur": 12
+              },
+              "layout": "vertical",
+              "gap": 14,
+              "padding": 20,
+              "children": [
+                {
+                  "id": "Pdh9H",
+                  "type": "ref",
+                  "ref": "CLcmG",
+                  "name": "Status Badge"
+                },
+                {
+                  "type": "text",
+                  "id": "F1sHo",
+                  "name": "Event Title",
+                  "fill": "$text-primary",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Sinh nhật T7 2026 ✨",
+                  "fontFamily": "$font-heading",
+                  "fontSize": 22,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "text",
+                  "id": "M3p870",
+                  "name": "Event Desc",
+                  "fill": "$text-secondary",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Vote món ăn cho buổi sinh nhật các thành viên tháng 7/2026. Ai cũng được vote nhiều món, chọn món ngon nhất để tổ chức nhé! 🎁🎂🎉🎈",
+                  "lineHeight": 1.45,
+                  "fontFamily": "$font-body",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "frame",
+                  "id": "mBoZ5",
+                  "name": "Meta Row",
+                  "width": "fill_container",
+                  "gap": 8,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "id": "wrJDj",
+                      "type": "ref",
+                      "ref": "bB7Rd",
+                      "name": "Date Pill",
+                      "descendants": {
+                        "F1Si8n": {
+                          "content": "30/07/2026"
+                        }
+                      }
+                    },
+                    {
+                      "id": "XyHFj",
+                      "type": "ref",
+                      "ref": "FII0q",
+                      "name": "Time Pill",
+                      "descendants": {
+                        "LnR2t": {
+                          "content": "Còn 27 phút, 15 giây"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "K6Yop",
+          "name": "Rank Variants",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 16,
+          "children": [
+            {
+              "type": "text",
+              "id": "nQC7V",
+              "name": "Rank Variants Label",
+              "fill": "$text-muted",
+              "content": "RANK ITEM VARIANTS",
+              "fontFamily": "$font-body",
+              "fontSize": 11,
+              "fontWeight": "700",
+              "letterSpacing": 0.8
+            },
+            {
+              "type": "frame",
+              "id": "EKGQ0",
+              "name": "Rank Variants Row",
+              "width": 361,
+              "layout": "vertical",
+              "gap": 10,
+              "children": [
+                {
+                  "id": "nml4d",
+                  "type": "ref",
+                  "ref": "OAR1d",
+                  "name": "Rank Gold",
+                  "width": "fill_container",
+                  "fill": "$rank-gold",
+                  "descendants": {
+                    "n9YkVI": {
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "https://images.unsplash.com/photo-1597819995527-d7aca873746e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4NDM0ODN8MHwxfHJhbmRvbXx8fHx8fHx8fDE3ODUzODYxNjF8&ixlib=rb-4.1.0&q=80&w=1080",
+                        "mode": "fill"
+                      }
+                    },
+                    "TAJmp": {
+                      "fill": "$medal-gold",
+                      "effect": {
+                        "type": "shadow",
+                        "shadowType": "outer",
+                        "color": "#F59E0BAA",
+                        "offset": {
+                          "x": 0,
+                          "y": 2
+                        },
+                        "blur": 6
+                      }
+                    },
+                    "H05uK": {
+                      "content": "Heo quay tây bắc"
+                    },
+                    "P72wp": {
+                      "content": "7 người vote"
+                    },
+                    "wEKEh": {
+                      "fill": "$medal-gold"
+                    },
+                    "wEKEh/sEkrM": {
+                      "content": "7"
+                    }
+                  }
+                },
+                {
+                  "id": "SyJIU",
+                  "type": "ref",
+                  "ref": "OAR1d",
+                  "name": "Rank Silver",
+                  "width": "fill_container",
+                  "fill": "$rank-silver-bg",
+                  "descendants": {
+                    "n9YkVI": {
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "https://images.unsplash.com/photo-1743148509702-2198b23ede1c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4NDM0ODN8MHwxfHJhbmRvbXx8fHx8fHx8fDE3ODUzODYxNjJ8&ixlib=rb-4.1.0&q=80&w=1080",
+                        "mode": "fill"
+                      }
+                    },
+                    "TAJmp": {
+                      "fill": "$medal-silver",
+                      "effect": {
+                        "type": "shadow",
+                        "shadowType": "outer",
+                        "color": "#64748B88",
+                        "offset": {
+                          "x": 0,
+                          "y": 2
+                        },
+                        "blur": 6
+                      }
+                    },
+                    "H05uK": {
+                      "content": "xôi chiên"
+                    },
+                    "P72wp": {
+                      "content": "5 người vote"
+                    },
+                    "wEKEh": {
+                      "fill": "$medal-silver"
+                    },
+                    "wEKEh/sEkrM": {
+                      "content": "5"
+                    }
+                  }
+                },
+                {
+                  "id": "U7x5IJ",
+                  "type": "ref",
+                  "ref": "OAR1d",
+                  "name": "Rank Bronze",
+                  "width": "fill_container",
+                  "fill": "$rank-bronze-bg",
+                  "descendants": {
+                    "n9YkVI": {
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "https://images.unsplash.com/photo-1662043591511-59ffee7fe503?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4NDM0ODN8MHwxfHJhbmRvbXx8fHx8fHx8fDE3ODUzODYxNjJ8&ixlib=rb-4.1.0&q=80&w=1080",
+                        "mode": "fill"
+                      }
+                    },
+                    "TAJmp": {
+                      "fill": "$medal-bronze",
+                      "effect": {
+                        "type": "shadow",
+                        "shadowType": "outer",
+                        "color": "#C2410C88",
+                        "offset": {
+                          "x": 0,
+                          "y": 2
+                        },
+                        "blur": 6
+                      }
+                    },
+                    "H05uK": {
+                      "content": "Pizza 🍕"
+                    },
+                    "P72wp": {
+                      "content": "3 người vote"
+                    },
+                    "wEKEh": {
+                      "fill": "$medal-bronze"
+                    },
+                    "wEKEh/sEkrM": {
+                      "content": "3"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "RwUBU",
+              "name": "Top Card",
+              "reusable": true,
+              "width": 360,
+              "fill": "$surface",
+              "cornerRadius": 20,
+              "effect": {
+                "type": "shadow",
+                "shadowType": "outer",
+                "color": "#0000000A",
+                "offset": {
+                  "x": 0,
+                  "y": 2
+                },
+                "blur": 12
+              },
+              "layout": "vertical",
+              "gap": 10,
+              "padding": 16,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "t3otSP",
+                  "name": "Top Header",
+                  "gap": 8,
+                  "padding": 4,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "szqZM",
+                      "name": "Top Title",
+                      "fill": "$text-primary",
+                      "content": "🏆 TOP",
+                      "fontFamily": "$font-heading",
+                      "fontSize": 16,
+                      "fontWeight": "700"
+                    }
+                  ]
+                },
+                {
+                  "id": "F2yL2",
+                  "type": "ref",
+                  "ref": "OAR1d",
+                  "name": "Rank 1",
+                  "width": "fill_container",
+                  "fill": "$rank-gold",
+                  "descendants": {
+                    "n9YkVI": {
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "https://images.unsplash.com/photo-1597819995527-d7aca873746e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4NDM0ODN8MHwxfHJhbmRvbXx8fHx8fHx8fDE3ODUzODYxNjF8&ixlib=rb-4.1.0&q=80&w=1080",
+                        "mode": "fill"
+                      }
+                    },
+                    "TAJmp": {
+                      "fill": "$medal-gold",
+                      "effect": {
+                        "type": "shadow",
+                        "shadowType": "outer",
+                        "color": "#F59E0BAA",
+                        "offset": {
+                          "x": 0,
+                          "y": 2
+                        },
+                        "blur": 6
+                      }
+                    },
+                    "H05uK": {
+                      "content": "Heo quay tây bắc"
+                    },
+                    "P72wp": {
+                      "content": "7 người vote"
+                    },
+                    "wEKEh": {
+                      "fill": "$medal-gold"
+                    },
+                    "wEKEh/sEkrM": {
+                      "content": "7"
+                    }
+                  }
+                },
+                {
+                  "id": "Egmic",
+                  "type": "ref",
+                  "ref": "OAR1d",
+                  "name": "Rank 2",
+                  "width": "fill_container",
+                  "fill": "$rank-silver-bg",
+                  "descendants": {
+                    "n9YkVI": {
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "https://images.unsplash.com/photo-1743148509702-2198b23ede1c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4NDM0ODN8MHwxfHJhbmRvbXx8fHx8fHx8fDE3ODUzODYxNjJ8&ixlib=rb-4.1.0&q=80&w=1080",
+                        "mode": "fill"
+                      }
+                    },
+                    "TAJmp": {
+                      "fill": "$medal-silver",
+                      "effect": {
+                        "type": "shadow",
+                        "shadowType": "outer",
+                        "color": "#64748B88",
+                        "offset": {
+                          "x": 0,
+                          "y": 2
+                        },
+                        "blur": 6
+                      }
+                    },
+                    "H05uK": {
+                      "content": "xôi chiên"
+                    },
+                    "P72wp": {
+                      "content": "5 người vote"
+                    },
+                    "wEKEh": {
+                      "fill": "$medal-silver"
+                    },
+                    "wEKEh/sEkrM": {
+                      "content": "5"
+                    }
+                  }
+                },
+                {
+                  "id": "Kk28X",
+                  "type": "ref",
+                  "ref": "OAR1d",
+                  "name": "Rank 3",
+                  "width": "fill_container",
+                  "fill": "$rank-bronze-bg",
+                  "descendants": {
+                    "n9YkVI": {
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "https://images.unsplash.com/photo-1662043591511-59ffee7fe503?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4NDM0ODN8MHwxfHJhbmRvbXx8fHx8fHx8fDE3ODUzODYxNjJ8&ixlib=rb-4.1.0&q=80&w=1080",
+                        "mode": "fill"
+                      }
+                    },
+                    "TAJmp": {
+                      "fill": "$medal-bronze",
+                      "effect": {
+                        "type": "shadow",
+                        "shadowType": "outer",
+                        "color": "#C2410C88",
+                        "offset": {
+                          "x": 0,
+                          "y": 2
+                        },
+                        "blur": 6
+                      }
+                    },
+                    "H05uK": {
+                      "content": "Pizza 🍕"
+                    },
+                    "P72wp": {
+                      "content": "3 người vote"
+                    },
+                    "wEKEh": {
+                      "fill": "$medal-bronze"
+                    },
+                    "wEKEh/sEkrM": {
+                      "content": "3"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "z9GkGO",
+          "name": "Admin",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 16,
+          "children": [
+            {
+              "type": "text",
+              "id": "XWUD4",
+              "name": "Admin Label",
+              "fill": "$text-muted",
+              "content": "ADMIN",
+              "fontFamily": "$font-body",
+              "fontSize": 11,
+              "fontWeight": "700",
+              "letterSpacing": 0.8
+            },
+            {
+              "type": "frame",
+              "id": "JpFNf",
+              "name": "Admin Row",
+              "width": "fill_container",
+              "gap": 16,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "d8RMrn",
+                  "name": "Team Badge",
+                  "reusable": true,
+                  "fill": "$primary-soft",
+                  "cornerRadius": 999,
+                  "padding": [
+                    4,
+                    10
+                  ],
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "fY8II",
+                      "name": "Label",
+                      "fill": "$primary",
+                      "content": "All",
+                      "fontFamily": "$font-body",
+                      "fontSize": 11,
+                      "fontWeight": "700"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "p6dsX",
+                  "name": "Status Closed",
+                  "reusable": true,
+                  "fill": "#FECACA",
+                  "cornerRadius": 999,
+                  "padding": [
+                    4,
+                    10
+                  ],
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "b8eCF",
+                      "name": "Label",
+                      "fill": "#991B1B",
+                      "content": "Đóng",
+                      "fontFamily": "$font-body",
+                      "fontSize": 11,
+                      "fontWeight": "700"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "y1tbrF",
+                  "name": "Icon Button",
+                  "reusable": true,
+                  "width": 32,
+                  "height": 32,
+                  "fill": "#F3F4F6",
+                  "cornerRadius": 999,
+                  "layout": "vertical",
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "scgdT",
+                      "name": "Icon",
+                      "width": 14,
+                      "height": 14,
+                      "icon": "pencil",
+                      "library": "lucide",
+                      "fill": "$text-primary"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "fIh0N",
+                  "name": "Icon Button Accent",
+                  "reusable": true,
+                  "width": 32,
+                  "height": 32,
+                  "fill": "$primary",
+                  "cornerRadius": 999,
+                  "layout": "vertical",
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "w6SUsv",
+                      "name": "Icon",
+                      "width": 14,
+                      "height": 14,
+                      "icon": "calendar-clock",
+                      "library": "lucide",
+                      "fill": "#FFFFFF"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "xk2SF",
+              "name": "Admin Topic Row",
+              "reusable": true,
+              "width": 1100,
+              "height": 56,
+              "fill": "#FFF1F2",
+              "stroke": "#00000014",
+              "strokeWidth": {
+                "bottom": 1
+              },
+              "padding": [
+                0,
+                8
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "D0UQS",
+                  "name": "Cell STT",
+                  "width": 56,
+                  "height": "fill_container",
+                  "padding": [
+                    0,
+                    8
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "ucfg3",
+                      "name": "STT",
+                      "fill": "$text-primary",
+                      "content": "1",
+                      "fontFamily": "$font-body",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "UR02w",
+                  "name": "Cell Name",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "padding": [
+                    0,
+                    8
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "xIEvH",
+                      "name": "Name",
+                      "fill": "$text-primary",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Xả quỹ tháng 6/2026 🥭🍍🥑🍉🍌",
+                      "fontFamily": "$font-body",
+                      "fontSize": 13,
+                      "fontWeight": "700"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "bC7Gk",
+                  "name": "Cell Team",
+                  "width": 88,
+                  "height": "fill_container",
+                  "padding": [
+                    0,
+                    8
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "id": "hHclA",
+                      "type": "ref",
+                      "ref": "d8RMrn",
+                      "name": "Team"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "AXilO",
+                  "name": "Cell Status",
+                  "width": 100,
+                  "height": "fill_container",
+                  "padding": [
+                    0,
+                    8
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "id": "b7mJPl",
+                      "type": "ref",
+                      "ref": "p6dsX",
+                      "name": "Status"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "OFWjy",
+                  "name": "Cell Deadline",
+                  "width": 148,
+                  "height": "fill_container",
+                  "padding": [
+                    0,
+                    8
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "BFXk1",
+                      "name": "Deadline",
+                      "fill": "$text-secondary",
+                      "content": "25/06/2026 12:00",
+                      "fontFamily": "$font-body",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "x2kDyE",
+                  "name": "Cell Actions",
+                  "width": 100,
+                  "height": "fill_container",
+                  "gap": 6,
+                  "padding": [
+                    0,
+                    8
+                  ],
+                  "justifyContent": "end",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "id": "mcuJG",
+                      "type": "ref",
+                      "ref": "y1tbrF",
+                      "name": "Edit"
+                    },
+                    {
+                      "id": "uY2xl",
+                      "type": "ref",
+                      "ref": "fIh0N",
+                      "name": "Extend"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "R0K2X",
+      "x": 5440,
+      "y": 0,
+      "name": "Admin",
+      "clip": true,
+      "width": 1440,
+      "height": 1024,
+      "fill": "$bg",
+      "layout": "vertical",
+      "gap": 24,
+      "padding": [
+        40,
+        32
+      ],
+      "alignItems": "center",
+      "children": [
+        {
+          "type": "frame",
+          "id": "K2Zfjw",
+          "name": "Content",
+          "width": 1100,
+          "layout": "vertical",
+          "gap": 24,
+          "children": [
+            {
+              "type": "frame",
+              "id": "N3CwQ",
+              "name": "Header",
+              "width": "fill_container",
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "QShhj",
+                  "name": "Page Title",
+                  "fill": "$text-primary",
+                  "content": "Quản lý Topic",
+                  "fontFamily": "$font-heading",
+                  "fontSize": 32,
+                  "fontWeight": "800"
+                },
+                {
+                  "type": "frame",
+                  "id": "Z5fNYK",
+                  "name": "Header Actions",
+                  "gap": 10,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "id": "u6tW4",
+                      "type": "ref",
+                      "ref": "QEODG",
+                      "name": "Library Button",
+                      "descendants": {
+                        "UrSwe": {
+                          "icon": "book-open"
+                        },
+                        "ragOC": {
+                          "content": "THƯ VIỆN"
+                        }
+                      }
+                    },
+                    {
+                      "id": "jqMQC",
+                      "type": "ref",
+                      "ref": "A406n",
+                      "name": "Add Topic Button",
+                      "descendants": {
+                        "snvYT": {
+                          "content": "THÊM TOPIC"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "HSDbU",
+              "name": "Table Panel",
+              "width": "fill_container",
+              "fill": "$surface",
+              "cornerRadius": 24,
+              "effect": {
+                "type": "shadow",
+                "shadowType": "outer",
+                "color": "#0000000A",
+                "offset": {
+                  "x": 0,
+                  "y": 2
+                },
+                "blur": 12
+              },
+              "layout": "vertical",
+              "padding": [
+                8,
+                16,
+                16,
+                16
+              ],
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "x5xtbT",
+                  "name": "Table Header",
+                  "width": "fill_container",
+                  "height": 44,
+                  "stroke": "$text-primary",
+                  "strokeWidth": {
+                    "bottom": 2
+                  },
+                  "padding": [
+                    0,
+                    8
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "s0MDh",
+                      "name": "H STT",
+                      "width": 56,
+                      "height": "fill_container",
+                      "padding": [
+                        0,
+                        8
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "NKf2R",
+                          "name": "STT",
+                          "fill": "$text-primary",
+                          "content": "STT",
+                          "fontFamily": "$font-body",
+                          "fontSize": 11,
+                          "fontWeight": "800",
+                          "letterSpacing": 0.4
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "Xh35f",
+                      "name": "H TÊN TOPIC",
+                      "width": "fill_container",
+                      "height": "fill_container",
+                      "padding": [
+                        0,
+                        8
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "iJt9d",
+                          "name": "TÊN TOPIC",
+                          "fill": "$text-primary",
+                          "content": "TÊN TOPIC",
+                          "fontFamily": "$font-body",
+                          "fontSize": 11,
+                          "fontWeight": "800",
+                          "letterSpacing": 0.4
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "W9eG3O",
+                      "name": "H TEAM",
+                      "width": 88,
+                      "height": "fill_container",
+                      "padding": [
+                        0,
+                        8
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "hTvxz",
+                          "name": "TEAM",
+                          "fill": "$text-primary",
+                          "content": "TEAM",
+                          "fontFamily": "$font-body",
+                          "fontSize": 11,
+                          "fontWeight": "800",
+                          "letterSpacing": 0.4
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "thKD7",
+                      "name": "H TRẠNG THÁI",
+                      "width": 100,
+                      "height": "fill_container",
+                      "padding": [
+                        0,
+                        8
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "j7v54o",
+                          "name": "TRẠNG THÁI",
+                          "fill": "$text-primary",
+                          "content": "TRẠNG THÁI",
+                          "fontFamily": "$font-body",
+                          "fontSize": 11,
+                          "fontWeight": "800",
+                          "letterSpacing": 0.4
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "rcMFq",
+                      "name": "H DEADLINE",
+                      "width": 148,
+                      "height": "fill_container",
+                      "padding": [
+                        0,
+                        8
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "QOndk",
+                          "name": "DEADLINE",
+                          "fill": "$text-primary",
+                          "content": "DEADLINE",
+                          "fontFamily": "$font-body",
+                          "fontSize": 11,
+                          "fontWeight": "800",
+                          "letterSpacing": 0.4
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "GzNxA",
+                      "name": "H TÁC VỤ",
+                      "width": 100,
+                      "height": "fill_container",
+                      "padding": [
+                        0,
+                        8
+                      ],
+                      "justifyContent": "end",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "RI3G1",
+                          "name": "TÁC VỤ",
+                          "fill": "$text-primary",
+                          "content": "TÁC VỤ",
+                          "fontFamily": "$font-body",
+                          "fontSize": 11,
+                          "fontWeight": "800",
+                          "letterSpacing": 0.4
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "us9fI",
+                  "type": "ref",
+                  "ref": "xk2SF",
+                  "name": "Row 1",
+                  "width": "fill_container",
+                  "descendants": {
+                    "ucfg3": {
+                      "content": "1"
+                    },
+                    "xIEvH": {
+                      "content": "Xả quỹ tháng 6/2026 🥭🍍🥑🍉🍌"
+                    },
+                    "BFXk1": {
+                      "content": "25/06/2026 12:00"
+                    }
+                  }
+                },
+                {
+                  "id": "OLohq",
+                  "type": "ref",
+                  "ref": "xk2SF",
+                  "name": "Row 2",
+                  "width": "fill_container",
+                  "descendants": {
+                    "ucfg3": {
+                      "content": "2"
+                    },
+                    "xIEvH": {
+                      "content": "Sinh nhật T5 2026 ✨"
+                    },
+                    "BFXk1": {
+                      "content": "28/05/2026 11:00"
+                    }
+                  }
+                },
+                {
+                  "id": "oshRv",
+                  "type": "ref",
+                  "ref": "xk2SF",
+                  "name": "Row 3",
+                  "width": "fill_container",
+                  "descendants": {
+                    "ucfg3": {
+                      "content": "3"
+                    },
+                    "xIEvH": {
+                      "content": "Bình chọn logo áo team DU2 👕"
+                    },
+                    "BFXk1": {
+                      "content": "07/05/2026 17:00"
+                    }
+                  }
+                },
+                {
+                  "id": "tuvLV",
+                  "type": "ref",
+                  "ref": "xk2SF",
+                  "name": "Row 4",
+                  "width": "fill_container",
+                  "descendants": {
+                    "ucfg3": {
+                      "content": "4"
+                    },
+                    "xIEvH": {
+                      "content": "Đặt áo thun team DU2"
+                    },
+                    "BFXk1": {
+                      "content": "30/04/2026 17:00"
+                    }
+                  }
+                },
+                {
+                  "id": "ij0Ik",
+                  "type": "ref",
+                  "ref": "xk2SF",
+                  "name": "Row 5",
+                  "width": "fill_container",
+                  "descendants": {
+                    "ucfg3": {
+                      "content": "5"
+                    },
+                    "xIEvH": {
+                      "content": "Sinh nhật T4 2026 ✨"
+                    },
+                    "BFXk1": {
+                      "content": "27/04/2026 11:00"
+                    }
+                  }
+                },
+                {
+                  "id": "U5iEMa",
+                  "type": "ref",
+                  "ref": "xk2SF",
+                  "name": "Row 6",
+                  "width": "fill_container",
+                  "descendants": {
+                    "ucfg3": {
+                      "content": "6"
+                    },
+                    "xIEvH": {
+                      "content": "Xả quỹ tháng 4/2026 🥭🍍🥑🍉🍌"
+                    },
+                    "BFXk1": {
+                      "content": "24/04/2026 11:00"
+                    }
+                  }
+                },
+                {
+                  "id": "UG6X3",
+                  "type": "ref",
+                  "ref": "xk2SF",
+                  "name": "Row 7",
+                  "width": "fill_container",
+                  "descendants": {
+                    "ucfg3": {
+                      "content": "7"
+                    },
+                    "xIEvH": {
+                      "content": "Sinh nhật T3 2026 ✨"
+                    },
+                    "BFXk1": {
+                      "content": "27/03/2026 11:00"
+                    }
+                  }
+                },
+                {
+                  "id": "rxyMv",
+                  "type": "ref",
+                  "ref": "xk2SF",
+                  "name": "Row 8",
+                  "width": "fill_container",
+                  "descendants": {
+                    "ucfg3": {
+                      "content": "8"
+                    },
+                    "xIEvH": {
+                      "content": "Xả quỹ tháng 3/2026 🥭🍍🥑🍉🍌"
+                    },
+                    "BFXk1": {
+                      "content": "25/03/2026 11:00"
+                    }
+                  }
+                },
+                {
+                  "id": "l3XscA",
+                  "type": "ref",
+                  "ref": "xk2SF",
+                  "name": "Row 9",
+                  "width": "fill_container",
+                  "descendants": {
+                    "ucfg3": {
+                      "content": "9"
+                    },
+                    "xIEvH": {
+                      "content": "Sinh nhật T2 2026 ✨"
+                    },
+                    "BFXk1": {
+                      "content": "26/02/2026 11:00"
+                    }
+                  }
+                },
+                {
+                  "id": "nc4Z4",
+                  "type": "ref",
+                  "ref": "xk2SF",
+                  "name": "Row 10",
+                  "width": "fill_container",
+                  "descendants": {
+                    "ucfg3": {
+                      "content": "10"
+                    },
+                    "xIEvH": {
+                      "content": "Xả quỹ tháng 2/2026 🥭🍍🥑🍉🍌"
+                    },
+                    "BFXk1": {
+                      "content": "25/02/2026 11:00"
+                    }
+                  }
+                },
+                {
+                  "type": "frame",
+                  "id": "xeRc0",
+                  "name": "Table Footer",
+                  "width": "fill_container",
+                  "padding": [
+                    16,
+                    8,
+                    4,
+                    8
+                  ],
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "gmRY8",
+                      "name": "Total Count",
+                      "fill": "$text-secondary",
+                      "content": "Tổng: 49 topic",
+                      "fontFamily": "$font-body",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "GWZe1",
+                      "name": "Pagination",
+                      "gap": 4,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "qofNi",
+                          "name": "Prev",
+                          "width": 32,
+                          "height": 32,
+                          "fill": "$surface",
+                          "cornerRadius": 8,
+                          "stroke": "$border",
+                          "strokeWidth": 1,
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "fuzhg",
+                              "name": "Prev Icon",
+                              "width": 16,
+                              "height": 16,
+                              "icon": "chevron-left",
+                              "library": "lucide",
+                              "fill": "$text-primary"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "M0x5K",
+                          "name": "Page 1",
+                          "width": 32,
+                          "height": 32,
+                          "fill": "$text-primary",
+                          "cornerRadius": 8,
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "rfOTg",
+                              "name": "Page Label",
+                              "fill": "#FFFFFF",
+                              "content": "1",
+                              "fontFamily": "$font-body",
+                              "fontSize": 12,
+                              "fontWeight": "700"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "p5gFe",
+                          "name": "Page 2",
+                          "width": 32,
+                          "height": 32,
+                          "fill": "$surface",
+                          "cornerRadius": 8,
+                          "stroke": "$border",
+                          "strokeWidth": 1,
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "wTt3Z",
+                              "name": "Page Label",
+                              "fill": "$text-primary",
+                              "content": "2",
+                              "fontFamily": "$font-body",
+                              "fontSize": 12,
+                              "fontWeight": "700"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "TGGuW",
+                          "name": "Page 3",
+                          "width": 32,
+                          "height": 32,
+                          "fill": "$surface",
+                          "cornerRadius": 8,
+                          "stroke": "$border",
+                          "strokeWidth": 1,
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "zNoz7",
+                              "name": "Page Label",
+                              "fill": "$text-primary",
+                              "content": "3",
+                              "fontFamily": "$font-body",
+                              "fontSize": 12,
+                              "fontWeight": "700"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "tYeDT",
+                          "name": "Page 4",
+                          "width": 32,
+                          "height": 32,
+                          "fill": "$surface",
+                          "cornerRadius": 8,
+                          "stroke": "$border",
+                          "strokeWidth": 1,
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "PkMIk",
+                              "name": "Page Label",
+                              "fill": "$text-primary",
+                              "content": "4",
+                              "fontFamily": "$font-body",
+                              "fontSize": 12,
+                              "fontWeight": "700"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "cQpt3",
+                          "name": "Page 5",
+                          "width": 32,
+                          "height": 32,
+                          "fill": "$surface",
+                          "cornerRadius": 8,
+                          "stroke": "$border",
+                          "strokeWidth": 1,
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "UFe0U",
+                              "name": "Page Label",
+                              "fill": "$text-primary",
+                              "content": "5",
+                              "fontFamily": "$font-body",
+                              "fontSize": 12,
+                              "fontWeight": "700"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "Z6o647",
+                          "name": "Next",
+                          "width": 32,
+                          "height": 32,
+                          "fill": "$surface",
+                          "cornerRadius": 8,
+                          "stroke": "$border",
+                          "strokeWidth": 1,
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "mOB2q",
+                              "name": "Next Icon",
+                              "width": 16,
+                              "height": 16,
+                              "icon": "chevron-right",
+                              "library": "lucide",
+                              "fill": "$text-primary"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variables": {
+    "bg": {
+      "type": "color",
+      "value": "#FFF8F0"
+    },
+    "surface": {
+      "type": "color",
+      "value": "#FFFFFF"
+    },
+    "primary": {
+      "type": "color",
+      "value": "#E65F05"
+    },
+    "primary-soft": {
+      "type": "color",
+      "value": "#FFF0E6"
+    },
+    "text-primary": {
+      "type": "color",
+      "value": "#1A1A1A"
+    },
+    "text-secondary": {
+      "type": "color",
+      "value": "#6B7280"
+    },
+    "text-muted": {
+      "type": "color",
+      "value": "#9CA3AF"
+    },
+    "status": {
+      "type": "color",
+      "value": "#0D9488"
+    },
+    "status-bg": {
+      "type": "color",
+      "value": "#CCFBF1"
+    },
+    "rank-gold": {
+      "type": "color",
+      "value": "#FEF3C7"
+    },
+    "vote-gold": {
+      "type": "color",
+      "value": "#F59E0B"
+    },
+    "border": {
+      "type": "color",
+      "value": "#E5E7EB"
+    },
+    "font-heading": {
+      "type": "string",
+      "value": "Funnel Sans"
+    },
+    "font-body": {
+      "type": "string",
+      "value": "Inter"
+    },
+    "rank-gold-bg": {
+      "type": "color",
+      "value": "#FEF3C7"
+    },
+    "rank-silver": {
+      "type": "color",
+      "value": "#E5E7EB"
+    },
+    "rank-silver-bg": {
+      "type": "color",
+      "value": "#F3F4F6"
+    },
+    "rank-bronze": {
+      "type": "color",
+      "value": "#D97706"
+    },
+    "rank-bronze-bg": {
+      "type": "color",
+      "value": "#FFEDD5"
+    },
+    "medal-gold": {
+      "type": "color",
+      "value": "#F59E0B"
+    },
+    "medal-silver": {
+      "type": "color",
+      "value": "#94A3B8"
+    },
+    "medal-bronze": {
+      "type": "color",
+      "value": "#C2410C"
+    }
+  },
+  "fileToken": "b3a0eadf-0d02-42c0-a80d-0035df219571"
+}

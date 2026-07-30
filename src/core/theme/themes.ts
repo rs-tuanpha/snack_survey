@@ -12,7 +12,7 @@ export type ThemeDefinition = {
 /** Registry of available themes. */
 export const THEMES: ThemeDefinition[] = [
   { id: 'classic', label: 'Classic' },
-  { id: 'snack', label: 'Snack Soft' },
+  { id: 'snack', label: 'Snack Survey' },
   { id: 'stall', label: 'Stall Label' }
 ]
 

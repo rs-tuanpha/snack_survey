@@ -4,7 +4,7 @@
       <li v-for="item in items" :key="item.id" class="flex items-center gap-4 px-1 py-3">
         <img
           :src="item.thumbnail || DEFAULT_CARD_IMG"
-          class="w-12 h-12 object-cover border-[length:var(--border-w)] border-[color:var(--stroke)] rounded-[var(--radius-media)] shrink-0"
+          class="w-12 h-12 object-cover rounded-[10px] shrink-0"
         />
         <div class="flex-1 min-w-0">
           <p class="font-sans text-sm font-bold text-ink truncate">{{ item.title || '(No title)' }}</p>
@@ -12,7 +12,7 @@
             v-if="item.link"
             :href="item.link"
             target="_blank"
-            class="font-mono text-xs text-muted truncate block hover:text-terracotta hover:underline"
+            class="font-sans text-xs text-muted truncate block hover:text-terracotta hover:underline"
           >{{ item.link }}</a>
         </div>
         <UiButton size="xs" variant="danger" title="Xóa khỏi thư viện" @click="handleDelete(item.id)">
@@ -26,7 +26,7 @@
       <UiButton v-if="hasMore" size="sm" variant="secondary" :disabled="loading" @click="loadMore">
         {{ loading ? 'Đang tải...' : 'Load more' }}
       </UiButton>
-      <span v-else class="font-mono text-[10px] text-muted">{{ items.length ? 'Hết danh sách' : '' }}</span>
+      <span v-else class="font-sans text-[10px] text-muted">{{ items.length ? 'Hết danh sách' : '' }}</span>
       <UiButton size="sm" variant="secondary" @click="handleClose">Đóng</UiButton>
     </div>
   </UiDialog>

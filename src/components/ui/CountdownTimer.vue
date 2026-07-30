@@ -48,10 +48,10 @@ onUnmounted(() => {
 
 <template>
   <div class="inline-flex flex-col items-start">
-    <span v-if="label" class="block font-mono font-black text-[10px] uppercase tracking-[.1em] text-ink mb-1.5">
+    <span v-if="label" class="block font-sans font-bold text-[11px] tracking-[0.06em] text-muted mb-1.5">
       {{ label }}
     </span>
-    <span class="font-mono font-black text-2xl text-terracotta tabular-nums">
+    <span class="font-serif font-bold text-2xl text-terracotta tabular-nums">
       {{ display }}
     </span>
   </div>

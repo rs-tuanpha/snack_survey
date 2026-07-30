@@ -1,5 +1,7 @@
 <script setup lang="ts">
-defineProps<{
+import { useSlots, computed } from 'vue'
+
+const props = defineProps<{
   modelValue: boolean
   title?: string
   maxWidth?: string
@@ -9,29 +11,31 @@ const emit = defineEmits<{
   'update:modelValue': [value: boolean]
 }>()
 
+const slots = useSlots()
+const hasTitle = computed(() => Boolean(slots.title || props.title))
+
 const close = () => emit('update:modelValue', false)
 </script>
 
 <template>
   <Teleport to="body">
     <Transition name="dialog">
-      <div v-if="modelValue" class="fixed inset-0 z-50 flex items-center justify-center">
+      <div v-if="modelValue" class="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div class="bg-ink/40 fixed inset-0" @click="close" />
         <div
-          class="relative w-full bg-cream overflow-hidden focus:outline-none"
+          class="relative w-full bg-white overflow-hidden focus:outline-none border border-stone-200 shadow-[0_16px_48px_rgba(0,0,0,0.12)] flex flex-col max-h-[85vh]"
           :class="maxWidth || 'max-w-lg'"
-          :style="{
-            borderWidth: 'var(--border-w-strong)',
-            borderStyle: 'solid',
-            borderColor: 'var(--stroke)',
-            borderRadius: 'var(--radius-dialog)',
-            boxShadow: 'var(--elev-5)'
-          }"
+          :style="{ borderRadius: 'var(--radius-dialog)' }"
         >
-          <div class="max-h-[85vh] overflow-y-auto p-6">
-            <div v-if="$slots.title || title" class="font-serif font-black text-2xl text-ink mb-4">
+          <div
+            v-if="hasTitle"
+            class="shrink-0 px-6 sm:px-7 py-4 border-b border-stone-100 bg-white z-10"
+          >
+            <div class="font-serif font-bold text-[22px] text-ink">
               <slot name="title">{{ title }}</slot>
             </div>
+          </div>
+          <div class="overflow-y-auto min-h-0 flex-1 px-6 sm:px-7 py-4">
             <slot />
           </div>
         </div>
@@ -41,14 +45,12 @@ const close = () => emit('update:modelValue', false)
 </template>
 
 <style scoped>
-.dialog-enter-active, .dialog-leave-active {
+.dialog-enter-active,
+.dialog-leave-active {
   transition: opacity 150ms ease;
 }
-.dialog-enter-from, .dialog-leave-to {
+.dialog-enter-from,
+.dialog-leave-to {
   opacity: 0;
-}
-[data-theme="snack"] .dialog-enter-active,
-[data-theme="snack"] .dialog-leave-active {
-  transition: opacity 200ms ease, transform 200ms ease;
 }
 </style>

@@ -10,18 +10,18 @@
     <meta property="og:image" content="https://firebasestorage.googleapis.com/v0/b/snack-survey-deff4.appspot.com/o/default-vote-thumb.jpg?alt=media&token=0943e06b-0e10-449a-8a90-c784b48c896c">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Nunito:wght@600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&family=Special+Elite&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&family=Funnel+Sans:wght@400;500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Nunito:wght@600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&family=Special+Elite&display=swap" rel="stylesheet">
   </head>
   <body>
     <script>
       (function () {
         try {
           var raw = localStorage.getItem('snack-survey-theme')
-          var theme = raw ? JSON.parse(raw) : 'stall'
-          if (typeof theme !== 'string') theme = 'stall'
+          var theme = raw ? JSON.parse(raw) : 'snack'
+          if (typeof theme !== 'string') theme = 'snack'
           document.documentElement.dataset.theme = theme
         } catch (e) {
-          document.documentElement.dataset.theme = 'stall'
+          document.documentElement.dataset.theme = 'snack'
         }
       })()
     </script>

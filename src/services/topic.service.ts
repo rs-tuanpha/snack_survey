@@ -37,20 +37,27 @@ const isTopicOpen = (topic: ITopic) => {
   return topic.status === true && deadlineMs > 0 && deadlineMs >= Date.now()
 }
 
-/** Open topics first, then newest created (updatedAt fallback for legacy docs). */
+/** Open topics first, then by deadline date (newest first) within each group. */
 const sortTopicsForHome = (a: ITopic, b: ITopic) => {
   const openDiff = Number(isTopicOpen(b)) - Number(isTopicOpen(a))
   if (openDiff !== 0) return openDiff
   return (
+    toMillis(b.date) - toMillis(a.date) ||
     toMillis(b.createdAt) - toMillis(a.createdAt) ||
     toMillis(b.updatedAt) - toMillis(a.updatedAt)
   )
 }
 
+/** Sort by deadline date newest first (Admin list, closed fallbacks). */
+export const sortTopicsByDateDesc = (a: ITopic, b: ITopic) =>
+  toMillis(b.date) - toMillis(a.date) ||
+  toMillis(b.createdAt) - toMillis(a.createdAt) ||
+  toMillis(b.updatedAt) - toMillis(a.updatedAt)
+
 /**
  * Full team-scoped topic list (same visibility rules as legacy open/close lists).
  * Team match is case-insensitive for ALL because Admin stores "All".
- * Order: open topics first, then newest created within each group.
+ * Order: open topics first, then by deadline date (newest first) within each group.
  */
 export const getAllTopicsForTeam = async (team: string | null): Promise<ITopic[]> => {
   const snapshot = await getDocs(collection(db, 'topics'))

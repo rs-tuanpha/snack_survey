@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen flex flex-col px-6 py-8">
+  <div class="min-h-screen flex flex-col px-6 py-8 bg-[var(--color-cream,#FFF8F0)]">
     <div class="w-full max-w-6xl mx-auto mb-4">
       <UiButton variant="secondary" size="sm" shape="rounded" @click="goHome">
         <i class="mdi mdi-arrow-left"></i> Quay lại
@@ -7,53 +7,29 @@
     </div>
     <div class="w-full max-w-6xl mx-auto flex flex-col lg:flex-row gap-6">
       <!-- LEFT: Sidebar -->
-      <div class="w-full lg:w-1/3">
-        <!-- Topic Info -->
-        <div class="theme-panel-md bg-surface p-6 mb-4">
-          <div class="flex items-center gap-2 mb-2">
-            <span
-              v-if="currentTopic"
-              class="theme-chip text-[10px] uppercase px-2.5 py-0.5"
-              :class="currentTopic?.status ? 'bg-sage text-white' : 'bg-retro-pink text-ink'"
-            >
-              {{ currentTopic?.status ? 'Mở' : 'Đóng' }}
-            </span>
-          </div>
-          <h1 class="font-serif font-black text-2xl text-ink mb-1">{{ currentTopic?.name }}</h1>
-          <p class="font-sans text-sm text-muted mb-4">{{ currentTopic?.description }}</p>
-          <div class="flex flex-wrap items-center gap-3">
-            <div class="theme-chip text-[10px] font-bold text-muted px-3 py-1.5 inline-flex items-center gap-1.5">
-              <i class="mdi mdi-calendar"></i>
-              {{ currentTopic?.date ? dayjs(new Date((currentTopic?.date as any)?.seconds * 1000)).format('DD/MM/YYYY') : '---' }}
-            </div>
-            <div v-if="Boolean(countdown)" class="theme-chip text-[10px] font-bold text-terracotta px-3 py-1.5 inline-flex items-center gap-1.5">
-              <i class="mdi mdi-clock-time-eight-outline"></i> Còn {{ countdown }}
-            </div>
-          </div>
-        </div>
+      <div class="w-full lg:w-1/3 flex flex-col gap-4">
+        <UiEventCard
+          :title="currentTopic?.name || ''"
+          :description="currentTopic?.description"
+          :open="Boolean(currentTopic?.status)"
+          :date-label="
+            currentTopic?.date
+              ? dayjs(new Date((currentTopic?.date as any)?.seconds * 1000)).format('DD/MM/YYYY')
+              : '---'
+          "
+          :time-label="countdown ? `Còn ${countdown}` : undefined"
+        />
 
-        <!-- Ranking List -->
-        <div v-if="topOptions.length" class="theme-panel-md bg-surface p-5">
-          <h4 class="font-sans font-black text-sm uppercase tracking-[.1em] text-muted mb-4">🏆 TOP</h4>
-          <div class="space-y-3">
-            <div
-              v-for="(opt, oi) in topOptions.slice(0, 3)"
-              :key="opt.id"
-              class="theme-panel relative flex items-center gap-3 px-4 py-3"
-              :class="[oi === 0 ? 'bg-retro-yellow/30' : '', oi === 1 ? 'bg-stone-100' : '', oi === 2 ? 'bg-amber-50/60' : '']"
-            >
-              <img :src="RANK_ICON[oi]" class="absolute -top-0 -left-0 z-20 w-10 h-10 shrink-0" />
-              <div class="relative shrink-0">
-                <img :src="opt.thumbnail || DEFAULT_CARD_IMG" class="w-12 h-12 object-cover border-[length:var(--border-w)] border-[color:var(--stroke)] rounded-[var(--radius-media)]" />
-              </div>
-              <div class="flex-1 min-w-0">
-                <p class="font-sans text-base font-bold text-ink truncate">{{ opt.title }}</p>
-                <p class="font-mono text-xs text-muted">{{ uniqueVoters(opt.voteBy).length }} người vote</p>
-              </div>
-              <span class="theme-chip text-sm font-black text-ink px-3 py-1 bg-retro-yellow !shadow-[var(--elev-0)] shrink-0">{{ uniqueVoters(opt.voteBy).length }}</span>
-            </div>
-          </div>
-        </div>
+        <UiTopCard v-if="topOptions.length">
+          <UiRankItem
+            v-for="(opt, oi) in topOptions.slice(0, 3)"
+            :key="opt.id"
+            :title="opt.title"
+            :thumbnail="opt.thumbnail"
+            :vote-count="uniqueVoters(opt.voteBy).length"
+            :rank="(oi as 0 | 1 | 2)"
+          />
+        </UiTopCard>
       </div>
 
       <!-- RIGHT: Options -->
@@ -68,9 +44,9 @@
         </div>
 
         <!-- Options Grid -->
-        <div class="theme-panel-md bg-surface p-6">
+        <div class="rounded-[20px] bg-white p-6 shadow-[0_2px_12px_0_rgba(0,0,0,0.04)]">
           <div class="flex items-center justify-between mb-4">
-            <h4 class="theme-label text-muted">Tất cả options ({{ options.length }})</h4>
+            <h4 class="font-sans text-[13px] font-semibold text-muted">Tất cả options ({{ options.length }})</h4>
           </div>
           <div v-if="options.length" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <option-card
@@ -93,7 +69,7 @@
 
     <!-- Loading Overlay -->
     <div v-if="showOverlay" class="fixed inset-0 bg-ink/40 z-40 flex items-center justify-center">
-      <div class="w-8 h-8 border-[2px] border-ink border-t-terracotta rounded-full animate-spin"></div>
+      <div class="w-8 h-8 border-2 border-stone-200 border-t-terracotta rounded-full animate-spin"></div>
     </div>
 
     <!-- Vote List Dialog -->
@@ -113,9 +89,8 @@ import { computed, defineAsyncComponent, onMounted, ref } from 'vue'
 import { useCollection, useDocument } from 'vuefire'
 import dayjs from 'dayjs'
 import { debounce } from 'lodash'
-import { RANK_ICON, DEFAULT_CARD_IMG } from '@/core/constants/app'
 
-import { UiAlert, UiAvatar, UiButton, UiDialog } from '@/components/ui'
+import { UiAlert, UiAvatar, UiButton, UiDialog, UiEventCard, UiRankItem, UiTopCard } from '@/components/ui'
 import { ETopicTeam } from '@/core/constants/enum'
 import useCommon from '@/core/hooks/useCommon'
 import type { IOption } from '@/core/interfaces/model/option'

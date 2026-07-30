@@ -1,50 +1,39 @@
 <template>
   <div class="relative">
-    <img
-      v-if="rank !== null && rank !== undefined"
-      :src="RANK_ICON[rank]"
-      class="absolute -top-3 -left-3 w-12 h-12 z-20 drop-shadow-[1px_1px_0_rgba(28,25,23,0.6)] pointer-events-none theme-rank-icon"
-    />
     <div
-      class="theme-panel flex flex-col h-full !p-0 transition-[transform,box-shadow] duration-100 hover:[transform:var(--interactive-hover)]"
+      class="flex flex-col h-full bg-white rounded-2xl overflow-hidden shadow-[0_2px_8px_0_rgba(0,0,0,0.06)]"
     >
-      <div class="w-full h-[150px] overflow-hidden" :style="{ borderRadius: 'var(--radius-media) var(--radius-media) 0 0' }">
-        <img :src="option?.thumbnail || DEFAULT_CARD_IMG" class="w-full h-full object-cover" />
-      </div>
-      <div class="flex flex-col flex-1 p-4">
-      <p class="font-sans text-base font-bold text-ink truncate">{{ option?.title ?? '' }}</p>
-      <a :href="option?.link" target="_blank" class="block text-sm text-muted truncate mt-0.5 hover:text-terracotta hover:underline">{{ option?.link }}</a>
-      <div class="flex items-center justify-between mt-auto pt-3">
-        <div class="flex -space-x-2">
-          <UiAvatar
-            v-for="user in voters.slice(0, 3)"
-            :key="user.id || user.username"
-            :src="user.avatar"
-            :fallback="user.username"
-            size="sm"
-            class="!w-7 !h-7 border-[length:var(--border-w)] border-[color:var(--stroke)] rounded-full ring-2 ring-surface"
-          />
-          <div
-            v-if="voters.length > 3"
-            class="w-7 h-7 font-mono font-bold text-[9px] flex items-center justify-center cursor-pointer bg-retro-blue"
-            :style="{
-              borderWidth: 'var(--border-w)',
-              borderStyle: 'solid',
-              borderColor: 'var(--stroke)',
-              borderRadius: '9999px'
-            }"
-            :title="`${voters.length - 3} others`"
-            @click.stop="onClickSeeMore(option)"
-          >
-            +{{ voters.length - 3 }}
-          </div>
-        </div>
-        <i
-          class="mdi mdi-thumb-up text-2xl cursor-pointer transition-transform duration-100 hover:scale-110 active:scale-90"
-          :class="isVoted ? 'text-terracotta' : 'text-retro-blue'"
-          @click.prevent="handleChangeVote(index)"
+      <div class="relative w-full h-[140px] overflow-hidden bg-stone-100">
+        <img :src="option?.thumbnail || DEFAULT_CARD_IMG" class="w-full h-full object-cover" alt="" />
+        <UiRankMedal
+          v-if="rank !== null && rank !== undefined && rank < 3"
+          :rank="(rank as 0 | 1 | 2)"
+          class="absolute top-2 left-2"
         />
       </div>
+      <div class="flex flex-col flex-1 gap-2.5 px-3.5 py-3">
+        <p class="font-serif text-[15px] font-bold text-ink truncate">{{ option?.title ?? '' }}</p>
+        <a
+          :href="option?.link"
+          target="_blank"
+          class="block text-[11px] text-stone-400 truncate hover:text-terracotta hover:underline"
+          >{{ option?.link }}</a
+        >
+        <div class="flex items-center justify-between mt-auto pt-1">
+          <div class="flex items-center">
+            <UiAvatarStack :users="voters" :max="3" @click="onClickSeeMore(option)" />
+            <button
+              v-if="voters.length > 3"
+              type="button"
+              class="w-6 h-6 font-sans font-bold text-[9px] flex items-center justify-center cursor-pointer bg-stone-200 text-ink rounded-full ring-2 ring-white -ml-2 relative z-10"
+              :title="`${voters.length - 3} others`"
+              @click.stop="onClickSeeMore(option)"
+            >
+              +{{ voters.length - 3 }}
+            </button>
+          </div>
+          <UiVoteAction :active="isVoted" @click="handleChangeVote(index)" />
+        </div>
       </div>
     </div>
   </div>
@@ -53,8 +42,8 @@
 <script setup lang="ts">
 import type { IOption } from '@/core/interfaces/model/option'
 import type { IUser } from '@/core/interfaces/model/user'
-import { DEFAULT_CARD_IMG, RANK_ICON } from '@/core/constants/app'
-import { UiAvatar } from '@/components/ui'
+import { DEFAULT_CARD_IMG } from '@/core/constants/app'
+import { UiAvatarStack, UiRankMedal, UiVoteAction } from '@/components/ui'
 import { computed } from 'vue'
 import { isSameVoter, uniqueVoters } from '@/core/utils/voter'
 
@@ -71,7 +60,9 @@ const emits = defineEmits<{
 }>()
 
 const voters = computed(() => uniqueVoters(props.option?.voteBy))
-const isVoted = computed(() => voters.value.some((voter) => isSameVoter(voter, props.currentAccount)))
+const isVoted = computed(() =>
+  voters.value.some((voter) => isSameVoter(voter, props.currentAccount))
+)
 
 const handleChangeVote = (index: number) => emits('handleChangeVote', index)
 const onClickSeeMore = (payload: IOption) => emits('onClickSeeMore', payload)

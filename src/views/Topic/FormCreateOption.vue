@@ -34,24 +34,24 @@
           />
 
           <div v-if="props.topicState.link">
-            <label class="block theme-label text-ink mb-1.5">
+            <label class="block theme-label text-ink mb-2">
               Upload Image (optional, max 5MB)
             </label>
             <input
               type="file"
               accept="image/*"
               @change="handleFileChange"
-              class="theme-control w-full font-sans text-sm text-ink bg-cream px-4 py-2.5 outline-none file:mr-3 file:py-1 file:px-3 file:border file:border-[color:var(--stroke)] file:rounded-[var(--radius-control)] file:bg-terracotta file:text-ink file:font-mono file:font-bold file:text-[10px] file:uppercase file:cursor-pointer"
+              class="theme-control w-full font-sans text-sm text-ink px-4 py-2.5 outline-none file:mr-3 file:py-1.5 file:px-3 file:border-0 file:rounded-full file:bg-terracotta file:text-white file:font-sans file:font-bold file:text-[12px] file:cursor-pointer"
             />
             <p v-if="uploadMessage" class="font-sans text-xs text-terracotta mt-1">{{ uploadMessage }}</p>
           </div>
         </div>
 
         <div class="flex justify-between items-center mt-4">
-          <UiButton variant="pink" size="sm" @click="isOpen = false">
+          <UiButton variant="secondary" size="sm" shape="rounded" @click="isOpen = false">
             Huỷ
           </UiButton>
-          <UiButton type="submit" variant="blue" size="sm" @click="handleAddOption">
+          <UiButton type="submit" variant="primary" size="sm" shape="rounded" @click="handleAddOption">
             Thêm mới option
           </UiButton>
         </div>
