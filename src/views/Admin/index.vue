@@ -495,6 +495,7 @@ const handleTopic = async (actionType: string) => {
         const docRef = await addDoc(collection(db, 'topics'), {
           ...topicFormData,
           status: true,
+          createdAt: new Date(),
           updatedAt: new Date()
         })
         dialog.value = false

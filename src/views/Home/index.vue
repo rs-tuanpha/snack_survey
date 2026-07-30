@@ -211,6 +211,7 @@ import type { IOption } from '@/core/interfaces/model/option'
 import type { IUser } from '@/core/interfaces/model/user'
 import { UiButton, UiCard, UiDialog, UiInput, UiAvatar, UiAlert } from '@/components/ui'
 import { DEFAULT_CARD_IMG, RANK_ICON } from '@/core/constants/app'
+import { uniqueVoters } from '@/core/utils/voter'
 
 import useCommon from '@/core/hooks/useCommon'
 const { handleRouter } = useCommon('useCommonStore')
@@ -238,25 +239,15 @@ const accountInfo: {
 const listVoteBy = ref<IUser[]>([])
 const hasMore = ref(false)
 const visibleCount = ref(TOPIC_PAGE_SIZE)
+/** Closed topics stay hidden until the user clicks "Xem thêm". */
+const includeClosed = ref(false)
 const accounts = ref<IUser[]>([])
 
-const filteredTopics = computed(() => {
-  const term = removeDiacritics(searchTerm.value.trim())
-  if (!term) return topics.value
-  return topics.value.filter((topic) => removeDiacritics(topic.name.trim()).includes(term))
-})
-
-const refreshVisible = () => {
-  const list = filteredTopics.value
-  searchedTopics.value = list.slice(0, visibleCount.value)
-  hasMore.value = visibleCount.value < list.length
-}
-
-const errorClass = computed(() =>
-  error.value && !message.value.includes('Vui lòng')
-    ? 'border-terracotta shadow-[2px_2px_0_0_rgba(224,122,95,0.8)]'
-    : ''
-)
+const removeDiacritics = (s: string) =>
+  s
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
 
 const isTopicOpen = (topic: ITopic) => {
   const deadline = (topic.date as any)?.seconds
@@ -265,6 +256,34 @@ const isTopicOpen = (topic: ITopic) => {
   return topic.status === true && deadline && deadline >= new Date()
 }
 
+/** Search filter over the full team list (open + closed). */
+const searchedAllTopics = computed(() => {
+  const term = removeDiacritics(searchTerm.value.trim())
+  if (!term) return topics.value
+  return topics.value.filter((topic) => removeDiacritics(topic.name.trim()).includes(term))
+})
+
+const refreshVisible = () => {
+  const openList = searchedAllTopics.value.filter(isTopicOpen)
+  const all = searchedAllTopics.value
+
+  if (!includeClosed.value) {
+    // Default: show every open topic (no closed yet)
+    searchedTopics.value = openList
+    hasMore.value = all.some((t) => !isTopicOpen(t))
+    return
+  }
+
+  searchedTopics.value = all.slice(0, visibleCount.value)
+  hasMore.value = visibleCount.value < all.length
+}
+
+const errorClass = computed(() =>
+  error.value && !message.value.includes('Vui lòng')
+    ? 'border-terracotta shadow-[2px_2px_0_0_rgba(224,122,95,0.8)]'
+    : ''
+)
+
 const topicTopOptions = computed(() => {
   const map: Record<string, IOption[]> = {}
   options.value.forEach((opt) => {
@@ -272,7 +291,7 @@ const topicTopOptions = computed(() => {
     map[opt.topicId].push(opt)
   })
   for (const id in map) {
-    map[id].sort((a, b) => b.voteCount - a.voteCount)
+    map[id].sort((a, b) => uniqueVoters(b.voteBy).length - uniqueVoters(a.voteBy).length)
     map[id] = map[id].slice(0, 3)
   }
   return map
@@ -280,6 +299,7 @@ const topicTopOptions = computed(() => {
 
 const loadTopics = async (team: string | null) => {
   loading.value = true
+  includeClosed.value = false
   visibleCount.value = TOPIC_PAGE_SIZE
   try {
     topics.value = await getAllTopicsForTeam(team)
@@ -299,18 +319,19 @@ const loadMoreTopics = async () => {
   if (!hasMore.value || loadingMore.value) return
   loadingMore.value = true
   try {
-    visibleCount.value += TOPIC_PAGE_SIZE
+    if (!includeClosed.value) {
+      // First click: unlock closed topics, keep page size of 5
+      const openCount = searchedAllTopics.value.filter(isTopicOpen).length
+      includeClosed.value = true
+      visibleCount.value = openCount + TOPIC_PAGE_SIZE
+    } else {
+      visibleCount.value += TOPIC_PAGE_SIZE
+    }
     refreshVisible()
   } finally {
     loadingMore.value = false
   }
 }
-
-const removeDiacritics = (s: string) =>
-  s
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
 
 const suggestedAccounts = computed(() => {
   if (!username.value) return []
@@ -437,6 +458,7 @@ watch(show, (isLoginForm) => {
 })
 
 const performSearch = () => {
+  includeClosed.value = false
   visibleCount.value = TOPIC_PAGE_SIZE
   refreshVisible()
 }
@@ -452,21 +474,13 @@ onBeforeUnmount(() => {
 const attachVoteBy = (topicList: ITopic[], optionList: IOption[]) => {
   topicList.forEach((topic) => {
     const result = optionList.filter((option) => option.topicId === topic.id)
-    const map: { [key: string]: IUser } = {}
-    const combinedArray: IUser[] = []
+    const combined: IUser[] = []
     result.forEach((option) => {
       ;(option.voteBy || []).forEach((obj) => {
-        if (!map[obj?.id]) {
-          map[obj?.id] = obj
-        }
+        combined.push(obj)
       })
     })
-    for (const id in map) {
-      if (Object.prototype.hasOwnProperty.call(map, id)) {
-        combinedArray.push(map[id])
-      }
-    }
-    topic.voteBy = combinedArray
+    topic.voteBy = uniqueVoters(combined)
   })
 }
 
@@ -487,6 +501,7 @@ const logout = async () => {
   topics.value = []
   searchedTopics.value = []
   hasMore.value = false
+  includeClosed.value = false
   visibleCount.value = TOPIC_PAGE_SIZE
   searchTerm.value = ''
   show.value = true
@@ -498,7 +513,7 @@ const logout = async () => {
 
 const onClickAvatar = (voteBy: IUser[]) => {
   if (voteBy.length > 0) {
-    listVoteBy.value = voteBy
+    listVoteBy.value = uniqueVoters(voteBy)
     dialog.value = true
   }
 }

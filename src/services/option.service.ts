@@ -18,6 +18,7 @@ import { useCollection } from 'vuefire'
 import { uploadImageToFirebase } from './upload.service'
 import { upsertOptionLibrary } from './optionLibrary.service'
 import type { IUser } from '@/core/interfaces/model/user'
+import { findVoterIndex, uniqueVoters } from '@/core/utils/voter'
 
 /**
  * Get list option by topic id and order by voteCount (descending)
@@ -42,8 +43,11 @@ export const getRankByTopicId = (topicId: string) => {
 
 const FIRESTORE_IN_LIMIT = 30
 
-const mapOptionDoc = (d: { id: string; data: () => Record<string, unknown> }): IOption =>
-  ({ ...d.data(), id: d.id }) as IOption
+const mapOptionDoc = (d: { id: string; data: () => Record<string, unknown> }): IOption => {
+  const data = d.data()
+  const voteBy = uniqueVoters((data.voteBy as IUser[]) || [])
+  return { ...data, id: d.id, voteBy, voteCount: voteBy.length } as IOption
+}
 
 /**
  * Options belonging to the given topic ids (chunked Firestore `in` queries).
@@ -214,14 +218,14 @@ export const handleSingleVote = async (
 
       if (prevOptionDoc.exists()) {
         const prevOptionData = prevOptionDoc.data()
-        const prevVoteBy = (prevOptionData.voteBy || []) as IUser[]
-        const prevUserVoteIndex = prevVoteBy.findIndex((voter) => voter.id === currentUser.id)
+        const prevVoteBy = uniqueVoters((prevOptionData.voteBy || []) as IUser[])
+        const prevUserVoteIndex = findVoterIndex(prevVoteBy, currentUser)
 
         if (prevUserVoteIndex !== -1) {
           prevVoteBy.splice(prevUserVoteIndex, 1)
           transaction.update(prevOptionRef, {
             voteBy: prevVoteBy,
-            voteCount: prevOptionData.voteCount - 1
+            voteCount: prevVoteBy.length
           })
         }
       }
@@ -236,16 +240,19 @@ export const handleSingleVote = async (
     }
 
     const optionData = optionDoc.data()
-    const voteBy = (optionData.voteBy || []) as IUser[]
-    const userVoteIndex = voteBy.findIndex((voter) => voter.id === currentUser.id)
+    const voteBy = uniqueVoters((optionData.voteBy || []) as IUser[])
+    const userVoteIndex = findVoterIndex(voteBy, currentUser)
 
     if (userVoteIndex === -1) {
       voteBy.push(currentUser)
-      transaction.update(optionRef, {
-        voteBy,
-        voteCount: optionData.voteCount + 1
-      })
+    } else {
+      // Replace legacy duplicate identity with current account snapshot
+      voteBy[userVoteIndex] = currentUser
     }
+    transaction.update(optionRef, {
+      voteBy,
+      voteCount: voteBy.length
+    })
   })
 }
 
@@ -265,23 +272,19 @@ export const handleMultipleVote = async (optionId: string, currentUser: IUser): 
     }
 
     const optionData = optionDoc.data()
-    const voteBy = (optionData.voteBy || []) as IUser[]
-    const userVoteIndex = voteBy.findIndex((voter) => voter.id === currentUser.id)
+    const voteBy = uniqueVoters((optionData.voteBy || []) as IUser[])
+    const userVoteIndex = findVoterIndex(voteBy, currentUser)
 
     if (userVoteIndex !== -1) {
       // Unvote
       voteBy.splice(userVoteIndex, 1)
-      transaction.update(optionRef, {
-        voteBy,
-        voteCount: optionData.voteCount - 1
-      })
     } else {
       // Vote
       voteBy.push(currentUser)
-      transaction.update(optionRef, {
-        voteBy,
-        voteCount: optionData.voteCount + 1
-      })
     }
+    transaction.update(optionRef, {
+      voteBy,
+      voteCount: voteBy.length
+    })
   })
 }

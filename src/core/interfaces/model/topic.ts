@@ -12,5 +12,6 @@ export interface ITopic {
   option?: boolean | null
   team?: `${ETopicTeam}`
   voteBy?: IUser[]
+  createdAt?: Date
   updatedAt?: Date
 }

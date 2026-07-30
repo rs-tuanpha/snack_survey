@@ -27,15 +27,30 @@ const mapTopicDoc = (id: string, data: Record<string, unknown>): ITopic =>
     ...data,
     id,
     date: (data.date as { toDate?: () => Date })?.toDate?.() ?? data.date,
+    createdAt: (data.createdAt as { toDate?: () => Date })?.toDate?.() ?? data.createdAt,
     updatedAt: (data.updatedAt as { toDate?: () => Date })?.toDate?.() ?? data.updatedAt
   }) as ITopic
 
-const sortByNewest = (a: ITopic, b: ITopic) =>
-  toMillis(b.updatedAt) - toMillis(a.updatedAt) || toMillis(b.date) - toMillis(a.date)
+/** Open = status true and deadline still in the future (same rule as Home UI). */
+const isTopicOpen = (topic: ITopic) => {
+  const deadlineMs = toMillis(topic.date)
+  return topic.status === true && deadlineMs > 0 && deadlineMs >= Date.now()
+}
+
+/** Open topics first, then newest created (updatedAt fallback for legacy docs). */
+const sortTopicsForHome = (a: ITopic, b: ITopic) => {
+  const openDiff = Number(isTopicOpen(b)) - Number(isTopicOpen(a))
+  if (openDiff !== 0) return openDiff
+  return (
+    toMillis(b.createdAt) - toMillis(a.createdAt) ||
+    toMillis(b.updatedAt) - toMillis(a.updatedAt)
+  )
+}
 
 /**
  * Full team-scoped topic list (same visibility rules as legacy open/close lists).
  * Team match is case-insensitive for ALL because Admin stores "All".
+ * Order: open topics first, then newest created within each group.
  */
 export const getAllTopicsForTeam = async (team: string | null): Promise<ITopic[]> => {
   const snapshot = await getDocs(collection(db, 'topics'))
@@ -46,7 +61,7 @@ export const getAllTopicsForTeam = async (team: string | null): Promise<ITopic[]
       items.push(mapTopicDoc(d.id, data))
     }
   })
-  return items.sort(sortByNewest)
+  return items.sort(sortTopicsForHome)
 }
 
 /**

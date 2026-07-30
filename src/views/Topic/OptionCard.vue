@@ -17,15 +17,15 @@
       <div class="flex items-center justify-between mt-auto pt-3">
         <div class="flex -space-x-2">
           <UiAvatar
-            v-for="user in option?.voteBy?.slice(0, 3)"
-            :key="user.username"
+            v-for="user in voters.slice(0, 3)"
+            :key="user.id || user.username"
             :src="user.avatar"
             :fallback="user.username"
             size="sm"
             class="!w-7 !h-7 border-[length:var(--border-w)] border-[color:var(--stroke)] rounded-full ring-2 ring-surface"
           />
           <div
-            v-if="option?.voteBy?.length > 3"
+            v-if="voters.length > 3"
             class="w-7 h-7 font-mono font-bold text-[9px] flex items-center justify-center cursor-pointer bg-retro-blue"
             :style="{
               borderWidth: 'var(--border-w)',
@@ -33,15 +33,15 @@
               borderColor: 'var(--stroke)',
               borderRadius: '9999px'
             }"
-            :title="`${option?.voteBy?.length - 3} others`"
+            :title="`${voters.length - 3} others`"
             @click.stop="onClickSeeMore(option)"
           >
-            +{{ option?.voteBy?.length - 3 }}
+            +{{ voters.length - 3 }}
           </div>
         </div>
         <i
           class="mdi mdi-thumb-up text-2xl cursor-pointer transition-transform duration-100 hover:scale-110 active:scale-90"
-          :class="option.voteBy.some((voter) => voter.id === currentAccount?.id) ? 'text-terracotta' : 'text-retro-blue'"
+          :class="isVoted ? 'text-terracotta' : 'text-retro-blue'"
           @click.prevent="handleChangeVote(index)"
         />
       </div>
@@ -55,8 +55,10 @@ import type { IOption } from '@/core/interfaces/model/option'
 import type { IUser } from '@/core/interfaces/model/user'
 import { DEFAULT_CARD_IMG, RANK_ICON } from '@/core/constants/app'
 import { UiAvatar } from '@/components/ui'
+import { computed } from 'vue'
+import { isSameVoter, uniqueVoters } from '@/core/utils/voter'
 
-defineProps<{
+const props = defineProps<{
   index: number
   option: IOption
   currentAccount: IUser | null
@@ -67,6 +69,9 @@ const emits = defineEmits<{
   (e: 'handleChangeVote', index: number): void
   (e: 'onClickSeeMore', payload: IOption): void
 }>()
+
+const voters = computed(() => uniqueVoters(props.option?.voteBy))
+const isVoted = computed(() => voters.value.some((voter) => isSameVoter(voter, props.currentAccount)))
 
 const handleChangeVote = (index: number) => emits('handleChangeVote', index)
 const onClickSeeMore = (payload: IOption) => emits('onClickSeeMore', payload)

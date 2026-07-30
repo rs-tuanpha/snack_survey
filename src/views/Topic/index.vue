@@ -48,9 +48,9 @@
               </div>
               <div class="flex-1 min-w-0">
                 <p class="font-sans text-base font-bold text-ink truncate">{{ opt.title }}</p>
-                <p class="font-mono text-xs text-muted">{{ opt.voteBy?.length || 0 }} người vote</p>
+                <p class="font-mono text-xs text-muted">{{ uniqueVoters(opt.voteBy).length }} người vote</p>
               </div>
-              <span class="theme-chip text-sm font-black text-ink px-3 py-1 bg-retro-yellow !shadow-[var(--elev-0)] shrink-0">{{ opt.voteBy?.length || 0 }}</span>
+              <span class="theme-chip text-sm font-black text-ink px-3 py-1 bg-retro-yellow !shadow-[var(--elev-0)] shrink-0">{{ uniqueVoters(opt.voteBy).length }}</span>
             </div>
           </div>
         </div>
@@ -130,6 +130,7 @@ import {
 } from '@/services/option.service'
 import { getTopicRef, updateTopic } from '@/services/topic.service'
 import { useCommonStore } from '@/stores'
+import { isSameVoter, uniqueVoters } from '@/core/utils/voter'
 import OptionCard from './OptionCard.vue'
 
 const FormCreateOption = defineAsyncComponent(() => import('./FormCreateOption.vue'))
@@ -155,19 +156,27 @@ const topOptions = useCollection<IOption>(topOptionsRef)
 const optionsRef = computed(() => getOptionsRefById(id.toString()))
 const options = useCollection<IOption>(optionsRef)
 
-const optionRankMap = computed(() => {
-  const map: Record<string, number> = {}
-  const sorted = [...options.value].sort((a, b) => (b.voteCount ?? 0) - (a.voteCount ?? 0))
-  sorted.slice(0, 3).forEach((opt, i) => { if (opt.id) map[opt.id] = i })
-  return map
-})
-
 const voteState = computed(() => {
   if (!currentAccount.value) return []
   return options.value
-    .map((option, index) => ({ optionId: option.id, index, isVoted: option.voteBy.some((voter) => voter.id === currentAccount.value?.id) }))
+    .map((option, index) => ({
+      optionId: option.id,
+      index,
+      isVoted: uniqueVoters(option.voteBy).some((voter) => isSameVoter(voter, currentAccount.value))
+    }))
     .filter((vote) => vote.isVoted)
     .map((vote) => vote.index)
+})
+
+const optionRankMap = computed(() => {
+  const map: Record<string, number> = {}
+  const sorted = [...options.value].sort(
+    (a, b) => uniqueVoters(b.voteBy).length - uniqueVoters(a.voteBy).length
+  )
+  sorted.slice(0, 3).forEach((opt, i) => {
+    if (opt.id) map[opt.id] = i
+  })
+  return map
 })
 
 const timeRemaining = computed(() => {
@@ -222,7 +231,7 @@ const showAlert = (message: string, type: string) => {
 }
 
 const onClickSeeMore = (option: IOption) => {
-  listVoteBy.value = option.voteBy
+  listVoteBy.value = uniqueVoters(option.voteBy)
   dialog.value = true
 }
 
