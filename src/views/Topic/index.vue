@@ -96,7 +96,7 @@ import useCommon from '@/core/hooks/useCommon'
 import type { IOption } from '@/core/interfaces/model/option'
 import type { ITopic } from '@/core/interfaces/model/topic'
 import type { IUser } from '@/core/interfaces/model/user'
-import { getAccountById } from '@/services/account.service'
+import { requireAuthAccount } from '@/services/auth.service'
 import {
   getOptionsRefById,
   handleMultipleVote,
@@ -211,15 +211,16 @@ const onClickSeeMore = (option: IOption) => {
 }
 
 onMounted(async () => {
-  const isResetAccount = localStorage.getItem('isResetAccount')
-  if (isResetAccount !== 'true') {
-    localStorage.clear()
-    localStorage.setItem('isResetAccount', 'true')
-    handleRouter.pushPath('/')
-  }
   setInterval(() => { currentTime.value = new Date().getTime() }, 1000)
-  const accountId = localStorage.getItem('account_info')
-  if (!accountId) { handleRouter.pushPath('/'); return }
-  currentAccount.value = await getAccountById(accountId!)
+  const account = await requireAuthAccount()
+  if (!account) {
+    handleRouter.pushPath('/')
+    return
+  }
+  currentAccount.value = account
+  localStorage.setItem('account_info', account.id)
+  localStorage.setItem('account_avatar', account.avatar ?? '')
+  localStorage.setItem('account_username', account.username ?? '')
+  localStorage.setItem('account_team', account.team ?? '')
 })
 </script>

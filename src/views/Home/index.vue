@@ -183,7 +183,13 @@ import { fetchAccounts } from '@/services/account.service'
 import { getAllTopicsForTeam, TOPIC_PAGE_SIZE } from '@/services/topic.service'
 import { debounce } from 'vue-debounce'
 import { getOptionsByTopicIds } from '@/services/option.service'
-import { signIn, signUp, resetPassword, signOut as authSignOut } from '@/services/auth.service'
+import {
+  signIn,
+  signUp,
+  resetPassword,
+  signOut as authSignOut,
+  requireAuthAccount
+} from '@/services/auth.service'
 import type { ITopic } from '@/core/interfaces/model/topic'
 import type { IOption } from '@/core/interfaces/model/option'
 import type { IUser } from '@/core/interfaces/model/user'
@@ -516,16 +522,14 @@ const submit = async () => {
 
 onMounted(async () => {
   document.addEventListener('click', closeSuggestions)
-  const savedId = localStorage.getItem('account_info')
-  if (savedId) {
-    show.value = false
-    accountInfo.avatar = localStorage.getItem('account_avatar') ?? ''
-    accountInfo.username = localStorage.getItem('account_username') ?? ''
-    accountInfo.team = localStorage.getItem('account_team') ?? ''
-    await loadTopics(localStorage.getItem('account_team'))
-  } else {
-    await loadAccountsForSuggestions()
+  // Force Firebase Auth: drop legacy localStorage-only sessions
+  const account = await requireAuthAccount()
+  if (account) {
+    setAccountInfo(account)
+    return
   }
+  show.value = true
+  await loadAccountsForSuggestions()
 })
 
 watch(show, (isLoginForm) => {
@@ -571,8 +575,6 @@ const goTopicVote = (id: string) => {
 
 const logout = async () => {
   await authSignOut()
-  localStorage.clear()
-  localStorage.setItem('isResetAccount', 'true')
   topics.value = []
   searchedTopics.value = []
   hasMore.value = false
@@ -585,6 +587,9 @@ const logout = async () => {
   confirmPassword.value = ''
   username.value = ''
   mode.value = 'login'
+  accountInfo.avatar = ''
+  accountInfo.username = ''
+  accountInfo.team = ''
 }
 
 const onClickAvatar = (voteBy: IUser[]) => {
