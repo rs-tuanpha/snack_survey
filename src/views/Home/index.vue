@@ -101,6 +101,11 @@
       <div class="flex justify-between items-center">
         <h1 class="font-serif font-extrabold text-3xl text-ink">Snack Survey</h1>
         <div class="flex items-center gap-4">
+          <UiAvatar
+            :src="accountInfo.avatar"
+            :fallback="accountInfo.username"
+            size="sm"
+          />
           <span class="font-sans text-lg font-bold text-ink">{{ accountInfo.username }}</span>
           <UiButton variant="primary" size="sm" shape="rounded" @click="logout">Đăng xuất</UiButton>
         </div>
@@ -144,7 +149,7 @@
     <div class="flex flex-col gap-2 max-h-[300px] overflow-y-auto pr-1">
       <div v-for="user in listVoteBy" :key="user.username" class="flex items-center gap-2 py-1">
         <UiAvatar
-          :src="user.avatar || ''"
+          :src="avatarUrlFromEmail(user.email)"
           :fallback="user.username"
           size="sm"
           :title="user.username"
@@ -175,6 +180,7 @@ import type { IOption } from '@/core/interfaces/model/option'
 import type { IUser } from '@/core/interfaces/model/user'
 import { UiButton, UiDialog, UiAvatar, UiAlert, UiTopicCard, UiSearchPanel, UiBrandBlock } from '@/components/ui'
 import { uniqueVoters } from '@/core/utils/voter'
+import { avatarUrlFromEmail } from '@/core/utils/avatar'
 import dayjs from 'dayjs'
 
 import useCommon from '@/core/hooks/useCommon'
@@ -350,11 +356,12 @@ const setMode = (next: 'login' | 'register' | 'forgot') => {
 }
 
 const setAccountInfo = (account: IUser) => {
+  const avatar = avatarUrlFromEmail(account.email)
   localStorage.setItem('account_info', account.id)
-  localStorage.setItem('account_avatar', account.avatar ?? '')
+  localStorage.setItem('account_avatar', avatar)
   localStorage.setItem('account_username', account.username ?? '')
   localStorage.setItem('account_team', account.team ?? '')
-  accountInfo.avatar = account.avatar ?? ''
+  accountInfo.avatar = avatar
   accountInfo.username = account.username ?? ''
   accountInfo.team = account.team ?? ''
   show.value = false

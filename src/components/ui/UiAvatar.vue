@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 const props = withDefaults(
   defineProps<{
@@ -14,6 +14,14 @@ const props = withDefaults(
   }
 )
 
+const broken = ref(false)
+watch(
+  () => props.src,
+  () => {
+    broken.value = false
+  }
+)
+
 const sizeClasses = computed(
   () =>
     ({
@@ -24,6 +32,7 @@ const sizeClasses = computed(
 )
 
 const initial = computed(() => props.fallback.charAt(0).toUpperCase())
+const showImage = computed(() => Boolean(props.src) && !broken.value)
 </script>
 
 <template>
@@ -31,7 +40,13 @@ const initial = computed(() => props.fallback.charAt(0).toUpperCase())
     class="rounded-full overflow-hidden bg-[var(--color-primary-soft,#FFF0E6)] text-terracotta inline-flex items-center justify-center font-sans font-bold select-none shrink-0 ring-2 ring-white"
     :class="sizeClasses"
   >
-    <img v-if="src" :src="src" :alt="fallback" class="w-full h-full object-cover" />
+    <img
+      v-if="showImage"
+      :src="src"
+      :alt="fallback"
+      class="w-full h-full object-cover"
+      @error="broken = true"
+    />
     <span v-else>{{ initial }}</span>
   </div>
 </template>
