@@ -11,6 +11,15 @@ import { auth, db } from '@/plugins/firebase'
 import type { IUser } from '@/core/interfaces/model/user'
 import { getAccountByEmail } from './account.service'
 import { THEME_STORAGE_KEY } from '@/core/theme/themes'
+import { ALLOWED_EMAIL_DOMAIN } from '@/core/constants/app'
+import { isAllowedEmailDomain } from '@/core/utils/regexValidate'
+
+export class EmailDomainError extends Error {
+  constructor(message = `Chỉ chấp nhận email @${ALLOWED_EMAIL_DOMAIN}`) {
+    super(message)
+    this.name = 'EmailDomainError'
+  }
+}
 
 const ACCOUNT_STORAGE_KEYS = [
   'account_info',
@@ -51,7 +60,8 @@ export const waitForAuthUser = (): Promise<User | null> =>
  */
 export const requireAuthAccount = async (): Promise<IUser | null> => {
   const fbUser = await waitForAuthUser()
-  if (!fbUser?.email) {
+  if (!fbUser?.email || !isAllowedEmailDomain(fbUser.email)) {
+    if (fbUser) await fbSignOut(auth)
     clearAccountStorage()
     return null
   }
@@ -66,6 +76,7 @@ export const requireAuthAccount = async (): Promise<IUser | null> => {
 
 export const signIn = async (email: string, password: string): Promise<IUser | null> => {
   const normalized = normalizeEmail(email)
+  if (!isAllowedEmailDomain(normalized)) throw new EmailDomainError()
   const credential = await signInWithEmailAndPassword(auth, normalized, password)
   const user = credential.user
   const account = await getAccountByEmail(user.email ?? normalized)
@@ -78,6 +89,7 @@ export const signUp = async (
   password: string
 ): Promise<IUser | null> => {
   const normalized = normalizeEmail(email)
+  if (!isAllowedEmailDomain(normalized)) throw new EmailDomainError()
   const credential = await createUserWithEmailAndPassword(auth, normalized, password)
   const uid = credential.user.uid
   const account: IUser = {
@@ -93,7 +105,9 @@ export const signUp = async (
 
 /** Sends Firebase password-reset email. Always resolves for valid email format. */
 export const resetPassword = async (email: string): Promise<void> => {
-  await sendPasswordResetEmail(auth, normalizeEmail(email))
+  const normalized = normalizeEmail(email)
+  if (!isAllowedEmailDomain(normalized)) throw new EmailDomainError()
+  await sendPasswordResetEmail(auth, normalized)
 }
 
 export const signOut = async (): Promise<void> => {
