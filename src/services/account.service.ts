@@ -3,7 +3,7 @@ import { db } from '@/plugins/firebase'
 import type { IUser } from '@/core/interfaces/model/user'
 
 /**
- * One-shot fetch of all accounts (for login/register suggestions).
+ * One-shot fetch of all accounts.
  */
 export const fetchAccounts = async (): Promise<IUser[]> => {
   const snapshot = await getDocs(collection(db, 'accounts'))

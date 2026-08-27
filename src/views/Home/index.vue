@@ -3,37 +3,15 @@
     <div class="w-full max-w-[440px] flex flex-col gap-7 items-center">
       <UiBrandBlock :subtitle="authSubtitle" />
       <div class="w-full bg-white rounded-3xl p-7 flex flex-col gap-5 shadow-[0_4px_20px_0_rgba(0,0,0,0.06)]">
-        <div v-if="mode === 'register'" class="relative">
+        <div v-if="mode === 'register'">
           <label class="block text-[11px] font-bold tracking-[0.6px] text-ink mb-2 uppercase">Tên người dùng</label>
           <input
             v-model="username"
             placeholder="Nguyễn Văn A"
             class="w-full h-12 font-sans text-[15px] text-ink px-4 rounded-[14px] bg-white border border-stone-200 outline-none placeholder:text-stone-400 focus:border-terracotta/40"
             :class="errorClass"
-            @focus="suggestionsOpen = true"
             @keyup.enter="submit"
           />
-          <div
-            v-if="suggestionsOpen && suggestedAccounts.length"
-            class="absolute z-20 mt-1 w-full bg-white border border-stone-200 rounded-xl max-h-48 overflow-y-auto shadow-lg"
-          >
-            <div
-              v-for="acct in suggestedAccounts"
-              :key="acct.id"
-              class="flex items-center gap-3 px-3 py-2.5 cursor-pointer hover:bg-cream transition-colors duration-75 border-b border-stone-100 last:border-b-0"
-              @click="pickSuggestion(acct)"
-            >
-              <UiAvatar :src="acct.avatar" :fallback="acct.username" size="sm" />
-              <div class="flex-1 min-w-0">
-                <span class="font-sans text-sm font-bold text-ink block truncate">{{
-                  acct.username
-                }}</span>
-                <span v-if="acct.email" class="font-sans text-[10px] text-muted truncate block">{{
-                  acct.email
-                }}</span>
-              </div>
-            </div>
-          </div>
         </div>
 
         <div>
@@ -41,7 +19,7 @@
           <input
             v-model="email"
             type="email"
-            placeholder="your@email.com"
+            placeholder="your@runsystem.net"
             class="w-full h-12 font-sans text-[15px] text-ink px-4 rounded-[14px] bg-white border border-stone-200 outline-none placeholder:text-stone-400 focus:border-terracotta/40"
             :class="errorClass"
             @keyup.enter="submit"
@@ -123,6 +101,11 @@
       <div class="flex justify-between items-center">
         <h1 class="font-serif font-extrabold text-3xl text-ink">Snack Survey</h1>
         <div class="flex items-center gap-4">
+          <UiAvatar
+            :src="accountInfo.avatar"
+            :fallback="accountInfo.username"
+            size="sm"
+          />
           <span class="font-sans text-lg font-bold text-ink">{{ accountInfo.username }}</span>
           <UiButton variant="primary" size="sm" shape="rounded" @click="logout">Đăng xuất</UiButton>
         </div>
@@ -166,7 +149,7 @@
     <div class="flex flex-col gap-2 max-h-[300px] overflow-y-auto pr-1">
       <div v-for="user in listVoteBy" :key="user.username" class="flex items-center gap-2 py-1">
         <UiAvatar
-          :src="user.avatar || ''"
+          :src="avatarUrlFromEmail(user.email)"
           :fallback="user.username"
           size="sm"
           :title="user.username"
@@ -179,16 +162,25 @@
 
 <script setup lang="ts">
 import { onMounted, ref, reactive, watch, computed, onBeforeUnmount } from 'vue'
-import { fetchAccounts } from '@/services/account.service'
 import { getAllTopicsForTeam, TOPIC_PAGE_SIZE } from '@/services/topic.service'
 import { debounce } from 'vue-debounce'
 import { getOptionsByTopicIds } from '@/services/option.service'
-import { signIn, signUp, resetPassword, signOut as authSignOut } from '@/services/auth.service'
+import {
+  signIn,
+  signUp,
+  resetPassword,
+  signOut as authSignOut,
+  requireAuthAccount,
+  EmailDomainError
+} from '@/services/auth.service'
+import { ALLOWED_EMAIL_DOMAIN } from '@/core/constants/app'
+import { isAllowedEmailDomain } from '@/core/utils/regexValidate'
 import type { ITopic } from '@/core/interfaces/model/topic'
 import type { IOption } from '@/core/interfaces/model/option'
 import type { IUser } from '@/core/interfaces/model/user'
 import { UiButton, UiDialog, UiAvatar, UiAlert, UiTopicCard, UiSearchPanel, UiBrandBlock } from '@/components/ui'
 import { uniqueVoters } from '@/core/utils/voter'
+import { avatarUrlFromEmail } from '@/core/utils/avatar'
 import dayjs from 'dayjs'
 
 import useCommon from '@/core/hooks/useCommon'
@@ -209,7 +201,6 @@ const email = ref('')
 const password = ref('')
 const confirmPassword = ref('')
 const username = ref('')
-const suggestionsOpen = ref(false)
 
 const authSubtitle = computed(() => {
   if (mode.value === 'register') return 'Tạo tài khoản mới'
@@ -233,7 +224,6 @@ const hasMore = ref(false)
 const visibleCount = ref(TOPIC_PAGE_SIZE)
 /** Closed topics stay hidden until the user clicks "Xem thêm". */
 const includeClosed = ref(false)
-const accounts = ref<IUser[]>([])
 
 const removeDiacritics = (s: string) =>
   s
@@ -338,11 +328,6 @@ const loadTopics = async (team: string | null) => {
   }
 }
 
-const loadAccountsForSuggestions = async () => {
-  if (accounts.value.length) return
-  accounts.value = await fetchAccounts()
-}
-
 const loadMoreTopics = async () => {
   if (!hasMore.value || loadingMore.value) return
   loadingMore.value = true
@@ -362,47 +347,28 @@ const loadMoreTopics = async () => {
   }
 }
 
-const suggestedAccounts = computed(() => {
-  if (!username.value) return []
-  const q = removeDiacritics(username.value)
-  return accounts.value
-    .filter((item: IUser) => item.username && removeDiacritics(item.username).includes(q))
-    .slice(0, 8)
-})
-
-const pickSuggestion = (acct: IUser) => {
-  username.value = acct.username
-  if (acct.email) email.value = acct.email
-  suggestionsOpen.value = false
-}
-
-const closeSuggestions = (e: MouseEvent) => {
-  const target = e.target as HTMLElement
-  if (!target.closest('.relative')) {
-    suggestionsOpen.value = false
-  }
-}
-
 const setMode = (next: 'login' | 'register' | 'forgot') => {
   mode.value = next
   error.value = false
   message.value = ''
-  suggestionsOpen.value = false
   if (next !== 'register') confirmPassword.value = ''
   if (next === 'forgot') password.value = ''
 }
 
 const setAccountInfo = (account: IUser) => {
+  const avatar = avatarUrlFromEmail(account.email)
   localStorage.setItem('account_info', account.id)
-  localStorage.setItem('account_avatar', account.avatar ?? '')
+  localStorage.setItem('account_avatar', avatar)
   localStorage.setItem('account_username', account.username ?? '')
   localStorage.setItem('account_team', account.team ?? '')
-  accountInfo.avatar = account.avatar ?? ''
+  accountInfo.avatar = avatar
   accountInfo.username = account.username ?? ''
   accountInfo.team = account.team ?? ''
   show.value = false
   loadTopics(account.team ?? '')
 }
+
+const domainErrorMessage = `Chỉ chấp nhận email @${ALLOWED_EMAIL_DOMAIN}`
 
 const submit = async () => {
   const trimmedEmail = email.value.trim()
@@ -411,6 +377,11 @@ const submit = async () => {
     if (!trimmedEmail) {
       error.value = true
       message.value = 'Vui lòng nhập email'
+      return
+    }
+    if (!isAllowedEmailDomain(trimmedEmail)) {
+      error.value = true
+      message.value = domainErrorMessage
       return
     }
     loading.value = true
@@ -423,16 +394,20 @@ const submit = async () => {
         'Nếu email tồn tại trong hệ thống, bạn sẽ nhận link đặt lại mật khẩu.'
     } catch (e: any) {
       error.value = true
-      const code = e?.code
-      if (code === 'auth/invalid-email') {
-        message.value = 'Email không hợp lệ'
-      } else if (code === 'auth/too-many-requests') {
-        message.value = 'Quá nhiều lần thử, vui lòng thử lại sau'
+      if (e instanceof EmailDomainError) {
+        message.value = domainErrorMessage
       } else {
-        // Neutral success-style message even on user-not-found to avoid account enumeration
-        error.value = false
-        message.value =
-          'Nếu email tồn tại trong hệ thống, bạn sẽ nhận link đặt lại mật khẩu.'
+        const code = e?.code
+        if (code === 'auth/invalid-email') {
+          message.value = 'Email không hợp lệ'
+        } else if (code === 'auth/too-many-requests') {
+          message.value = 'Quá nhiều lần thử, vui lòng thử lại sau'
+        } else {
+          // Neutral success-style message even on user-not-found to avoid account enumeration
+          error.value = false
+          message.value =
+            'Nếu email tồn tại trong hệ thống, bạn sẽ nhận link đặt lại mật khẩu.'
+        }
       }
     } finally {
       loading.value = false
@@ -444,6 +419,11 @@ const submit = async () => {
     if (!username.value.trim() || !trimmedEmail || !password.value || !confirmPassword.value) {
       error.value = true
       message.value = 'Vui lòng điền đầy đủ thông tin'
+      return
+    }
+    if (!isAllowedEmailDomain(trimmedEmail)) {
+      error.value = true
+      message.value = domainErrorMessage
       return
     }
     if (password.value.length < 6) {
@@ -459,6 +439,10 @@ const submit = async () => {
   } else if (!trimmedEmail || !password.value) {
     error.value = true
     message.value = 'Vui lòng nhập email và mật khẩu'
+    return
+  } else if (!isAllowedEmailDomain(trimmedEmail)) {
+    error.value = true
+    message.value = domainErrorMessage
     return
   }
 
@@ -485,6 +469,10 @@ const submit = async () => {
     }
   } catch (e: any) {
     error.value = true
+    if (e instanceof EmailDomainError) {
+      message.value = domainErrorMessage
+      return
+    }
     const code = e?.code
     if (mode.value === 'register') {
       if (code === 'auth/email-already-in-use') {
@@ -515,21 +503,13 @@ const submit = async () => {
 }
 
 onMounted(async () => {
-  document.addEventListener('click', closeSuggestions)
-  const savedId = localStorage.getItem('account_info')
-  if (savedId) {
-    show.value = false
-    accountInfo.avatar = localStorage.getItem('account_avatar') ?? ''
-    accountInfo.username = localStorage.getItem('account_username') ?? ''
-    accountInfo.team = localStorage.getItem('account_team') ?? ''
-    await loadTopics(localStorage.getItem('account_team'))
-  } else {
-    await loadAccountsForSuggestions()
+  // Force Firebase Auth: drop legacy localStorage-only sessions
+  const account = await requireAuthAccount()
+  if (account) {
+    setAccountInfo(account)
+    return
   }
-})
-
-watch(show, (isLoginForm) => {
-  if (isLoginForm) loadAccountsForSuggestions()
+  show.value = true
 })
 
 const performSearch = () => {
@@ -543,7 +523,6 @@ watch(searchTerm, debouncedSearch)
 
 onBeforeUnmount(() => {
   debouncedSearch.cancel()
-  document.removeEventListener('click', closeSuggestions)
 })
 
 const attachVoteBy = (topicList: ITopic[], optionList: IOption[]) => {
@@ -571,8 +550,6 @@ const goTopicVote = (id: string) => {
 
 const logout = async () => {
   await authSignOut()
-  localStorage.clear()
-  localStorage.setItem('isResetAccount', 'true')
   topics.value = []
   searchedTopics.value = []
   hasMore.value = false
@@ -585,6 +562,9 @@ const logout = async () => {
   confirmPassword.value = ''
   username.value = ''
   mode.value = 'login'
+  accountInfo.avatar = ''
+  accountInfo.username = ''
+  accountInfo.team = ''
 }
 
 const onClickAvatar = (voteBy: IUser[]) => {

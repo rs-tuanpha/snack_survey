@@ -1,9 +1,9 @@
 import type { IOption } from '@/core/interfaces/model/option'
 import type { IOptionLibrary } from '@/core/interfaces/model/optionLibrary'
+import { getHashingMD5 } from '@/core/utils/common'
 import { fetchDOMMetadata, fetchOpenGraphMetadata } from '@/core/utils/metadata'
 import { db } from '@/plugins/firebase'
 import {
-  addDoc,
   collection,
   doc,
   getDocs,
@@ -19,6 +19,26 @@ import { uploadImageToFirebase } from './upload.service'
 import { upsertOptionLibrary } from './optionLibrary.service'
 import type { IUser } from '@/core/interfaces/model/user'
 import { findVoterIndex, uniqueVoters } from '@/core/utils/voter'
+
+export class DuplicateOptionError extends Error {
+  constructor(message = 'Option này đã tồn tại trong topic') {
+    super(message)
+    this.name = 'DuplicateOptionError'
+  }
+}
+
+/** Unique key inside a topic: prefer link; fall back to title when link is empty. */
+export const getOptionUniqueSource = (title: string, link: string): string => {
+  const trimmedLink = (link || '').trim()
+  if (trimmedLink) return trimmedLink
+  return (title || '').trim()
+}
+
+/** Stable doc id so concurrent creates with the same link cannot insert twice. */
+export const buildTopicOptionDocId = (topicId: string, title: string, link: string): string => {
+  const source = getOptionUniqueSource(title, link)
+  return `${topicId}_${getHashingMD5(source)}`
+}
 
 /**
  * Get list option by topic id and order by voteCount (descending)
@@ -81,12 +101,37 @@ export const getAllOptions = async (): Promise<IOption[]> => {
 }
 
 /**
- * create new option
- * @param {string} title
- * @param {string} link
- * @param {string} topicId
- * @param image optional upload file
- * @param existingThumbnail skip OG fetch when cloning from library
+ * Unique within topic by link (trimmed). If link is empty, unique by title.
+ */
+export const isDuplicateInTopic = (
+  item: { title: string; link: string },
+  existing: IOption[]
+): boolean => {
+  const title = (item.title || '').trim()
+  const link = (item.link || '').trim()
+  return existing.some((option) => {
+    const optionLink = (option.link || '').trim()
+    const optionTitle = (option.title || '').trim()
+    if (link) return Boolean(optionLink) && optionLink === link
+    if (title) return !optionLink && optionTitle === title
+    return false
+  })
+}
+
+/** Loads topic options and checks link/title uniqueness (covers legacy random ids). */
+export const findDuplicateOptionInTopic = async (
+  topicId: string,
+  title: string,
+  link: string
+): Promise<IOption | null> => {
+  const snapshot = await getDocs(query(collection(db, 'options'), where('topicId', '==', topicId)))
+  const existing = snapshot.docs.map((d) => mapOptionDoc(d))
+  return existing.find((option) => isDuplicateInTopic({ title, link }, [option])) ?? null
+}
+
+/**
+ * create new option — unique per topic by link (or title when link empty).
+ * Uses deterministic doc id so concurrent submits cannot create two docs.
  */
 export const postNewOption = async (
   title: string,
@@ -96,40 +141,55 @@ export const postNewOption = async (
   existingThumbnail?: string | null
 ) => {
   try {
+    const trimmedTitle = (title || '').trim()
+    const trimmedLink = (link || '').trim()
+    const source = getOptionUniqueSource(trimmedTitle, trimmedLink)
+    if (!source) {
+      throw new Error('Option cần có link hoặc tiêu đề')
+    }
+
+    const duplicate = await findDuplicateOptionInTopic(topicId, trimmedTitle, trimmedLink)
+    if (duplicate) {
+      throw new DuplicateOptionError()
+    }
+
+    const optionId = buildTopicOptionDocId(topicId, trimmedTitle, trimmedLink)
+    const optionRef = doc(db, 'options', optionId)
+
     let thumbnail = ''
 
     if (image) {
       thumbnail = (await uploadImageToFirebase(image)) || ''
     } else if (existingThumbnail) {
       thumbnail = existingThumbnail
-    } else if (link) {
-      const metadata = (await fetchOpenGraphMetadata(link)) || (await fetchDOMMetadata(link))
+    } else if (trimmedLink) {
+      const metadata =
+        (await fetchOpenGraphMetadata(trimmedLink)) || (await fetchDOMMetadata(trimmedLink))
       thumbnail = metadata?.image || ''
     }
-    const docref = await addDoc(collection(db, 'options'), {
-      title,
-      link,
-      topicId,
-      thumbnail,
-      voteBy: [],
-      voteCount: 0
+
+    // Atomic create-by-id: same link → same id → concurrent submits cannot insert two docs
+    await runTransaction(db, async (transaction) => {
+      const existingById = await transaction.get(optionRef)
+      if (existingById.exists()) {
+        throw new DuplicateOptionError()
+      }
+      transaction.set(optionRef, {
+        title: trimmedTitle,
+        link: trimmedLink,
+        topicId,
+        thumbnail,
+        voteBy: [],
+        voteCount: 0
+      })
     })
-    await upsertOptionLibrary(title, link, thumbnail)
-    return docref.firestore.toJSON()
+    await upsertOptionLibrary(trimmedTitle, trimmedLink, thumbnail)
+    return optionId
   } catch (e) {
+    if (e instanceof DuplicateOptionError) throw e
     if (e instanceof Error) throw new Error(e.message)
     else throw e
   }
-}
-
-const isDuplicateInTopic = (item: { title: string; link: string }, existing: IOption[]) => {
-  const title = (item.title || '').trim()
-  const link = (item.link || '').trim()
-  return existing.some((option) => {
-    if (link && option.link && option.link.trim() === link) return true
-    if (!link && title && option.title?.trim() === title) return true
-    return false
-  })
 }
 
 /**

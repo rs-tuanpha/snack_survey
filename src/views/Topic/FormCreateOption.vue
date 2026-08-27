@@ -4,7 +4,7 @@
       <i class="mdi mdi-plus"></i> Thêm option
     </UiButton>
     <UiDialog v-model="isOpen" title="Thêm Option">
-      <form @submit.prevent>
+      <form @submit.prevent="handleAddOption">
         <UiAlert
           v-if="message"
           :type="hasError ? 'error' : 'success'"
@@ -48,11 +48,18 @@
         </div>
 
         <div class="flex justify-between items-center mt-4">
-          <UiButton variant="secondary" size="sm" shape="rounded" @click="isOpen = false">
+          <UiButton variant="secondary" size="sm" shape="rounded" :disabled="submitting" @click="isOpen = false">
             Huỷ
           </UiButton>
-          <UiButton type="submit" variant="primary" size="sm" shape="rounded" @click="handleAddOption">
-            Thêm mới option
+          <UiButton
+            type="submit"
+            variant="primary"
+            size="sm"
+            shape="rounded"
+            :disabled="submitting"
+            @click="handleAddOption"
+          >
+            {{ submitting ? 'Đang thêm...' : 'Thêm mới option' }}
           </UiButton>
         </div>
       </form>
@@ -62,12 +69,10 @@
 
 <script setup lang="ts">
 import { UiAlert, UiButton, UiDialog, UiInput } from '@/components/ui'
-import { postNewOption } from '@/services/option.service'
+import { DuplicateOptionError, isDuplicateInTopic, postNewOption } from '@/services/option.service'
 import { reactive, ref } from 'vue'
 import {
   handleValidateAddOption,
-  linkRules,
-  titleRules,
   checkLinkRequired,
   checkTitleRequired
 } from '../Admin/Admin.validate'
@@ -82,8 +87,9 @@ const props = defineProps<{
 }>()
 
 const hasError = ref<boolean>(false)
-const message = ref<String>('')
+const message = ref<string>('')
 const uploadMessage = ref('')
+const submitting = ref(false)
 
 const form = reactive({
   link: '',
@@ -110,53 +116,55 @@ const handleFileChange = (event: Event) => {
   }
 }
 
+const resetFields = () => {
+  form.title = ''
+  form.link = ''
+  image.value = null
+  uploadMessage.value = ''
+}
+
 /**
- * handle add option
- * check if option exited, noti error
- * else add option to firebase
+ * Add option — unique by link within topic (title when link empty).
  */
 const handleAddOption = async () => {
+  if (submitting.value) return
+  if (!props.topicState || handleValidateAddOption(form, props.topicState) !== true) return
+
+  if (isDuplicateInTopic(form, props.options)) {
+    hasError.value = true
+    message.value = 'Option với link này đã tồn tại, vui lòng nhập link khác!'
+    return
+  }
+
+  submitting.value = true
+  hasError.value = false
+  message.value = ''
   try {
-    if (props.topicState && handleValidateAddOption(form, props.topicState) === true) {
-      let optionExited = false
-      props.options.forEach((option) => {
-        if (
-          (option.title && option.title === form?.title) ||
-          (option.link && option.link === form?.link)
-        ) {
-          hasError.value = true
-          message.value = 'Option này đã tồn tại, vui lòng nhập lại!'
-          optionExited = true
-          return
-        }
-      })
-      if (optionExited) {
-        return
-      }
-      await postNewOption(form.title, form.link, props.id, image.value)
-      hasError.value = false
-      message.value = 'Tạo mới thành công'
-      handleResetForm()
-    }
-  } catch {
+    await postNewOption(form.title, form.link, props.id, image.value)
     hasError.value = false
-    message.value = 'Tạo mới không thành công!'
-  } finally {
+    message.value = 'Tạo mới thành công'
+    resetFields()
     setTimeout(() => {
-      form.title = ''
-      form.link = ''
-      image.value = null
       message.value = ''
       isOpen.value = false
-    }, 2000)
+      submitting.value = false
+    }, 1200)
+  } catch (e) {
+    hasError.value = true
+    if (e instanceof DuplicateOptionError) {
+      message.value = 'Option với link này đã tồn tại, vui lòng nhập link khác!'
+    } else {
+      message.value = 'Tạo mới không thành công!'
+    }
+    submitting.value = false
   }
 }
 
 // reset form on open form
 const handleResetForm = () => {
-  form.link = ''
-  form.title = ''
-  image.value = null
+  resetFields()
+  message.value = ''
+  hasError.value = false
   isOpen.value = true
 }
 </script>

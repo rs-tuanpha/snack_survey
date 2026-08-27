@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { IUser } from '@/core/interfaces/model/user'
+import { avatarUrlFromEmail } from '@/core/utils/avatar'
 import UiAvatar from './UiAvatar.vue'
 
 withDefaults(
@@ -29,7 +30,7 @@ defineEmits<{
     <UiAvatar
       v-for="user in users.slice(0, max)"
       :key="user.id || user.username"
-      :src="user.avatar"
+      :src="avatarUrlFromEmail(user.email)"
       :fallback="user.username"
       size="sm"
       class="!w-6 !h-6"

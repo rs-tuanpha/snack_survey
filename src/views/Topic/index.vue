@@ -11,7 +11,7 @@
         <UiEventCard
           :title="currentTopic?.name || ''"
           :description="currentTopic?.description"
-          :open="Boolean(currentTopic?.status)"
+          :open="isVotingOpen"
           :date-label="
             currentTopic?.date
               ? dayjs(new Date((currentTopic?.date as any)?.seconds * 1000)).format('DD/MM/YYYY')
@@ -37,10 +37,10 @@
         <!-- Alerts -->
         <div class="flex items-center gap-2 mb-4">
           <div class="flex-1">
-            <UiAlert v-if="!common.loading && !currentTopic?.status && !alertVote" type="warning" message="Topic này đã đóng, vui lòng trở lại sau" />
+            <UiAlert v-if="!common.loading && !isVotingOpen && !alertVote" type="warning" message="Topic này đã đóng, vui lòng trở lại sau" />
             <UiAlert v-if="alertVote" :type="(alertVoteType as 'success' | 'error')" :message="alertVote" />
           </div>
-          <form-create-option v-if="currentTopic?.link && currentTopic?.status" :id="id.toString()" :options="options" :topic-state="currentTopic" />
+          <form-create-option v-if="currentTopic?.link && isVotingOpen" :id="id.toString()" :options="options" :topic-state="currentTopic" />
         </div>
 
         <!-- Options Grid -->
@@ -76,7 +76,7 @@
     <UiDialog v-model="dialog" title="Danh sách vote">
       <div class="max-h-[300px] overflow-y-auto space-y-2">
         <div v-for="user in listVoteBy" :key="user.username" class="flex items-center gap-2">
-          <UiAvatar :src="user.avatar" :fallback="user.username" size="sm" />
+          <UiAvatar :src="avatarUrlFromEmail(user.email)" :fallback="user.username" size="sm" />
           <span class="font-sans text-sm text-ink">{{ user.username }}</span>
         </div>
       </div>
@@ -85,27 +85,28 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineAsyncComponent, onMounted, ref } from 'vue'
+import { computed, defineAsyncComponent, onMounted, onUnmounted, ref } from 'vue'
 import { useCollection, useDocument } from 'vuefire'
 import dayjs from 'dayjs'
 import { debounce } from 'lodash'
 
 import { UiAlert, UiAvatar, UiButton, UiDialog, UiEventCard, UiRankItem, UiTopCard } from '@/components/ui'
-import { ETopicTeam } from '@/core/constants/enum'
 import useCommon from '@/core/hooks/useCommon'
 import type { IOption } from '@/core/interfaces/model/option'
 import type { ITopic } from '@/core/interfaces/model/topic'
 import type { IUser } from '@/core/interfaces/model/user'
-import { getAccountById } from '@/services/account.service'
+import { requireAuthAccount } from '@/services/auth.service'
 import {
   getOptionsRefById,
   handleMultipleVote,
   handleSingleVote,
   getRankByTopicId
 } from '@/services/option.service'
-import { getTopicRef, updateTopic } from '@/services/topic.service'
+import { getTopicRef } from '@/services/topic.service'
 import { useCommonStore } from '@/stores'
 import { isSameVoter, uniqueVoters } from '@/core/utils/voter'
+import { avatarUrlFromEmail } from '@/core/utils/avatar'
+import { isTopicVotingOpen, topicDeadlineMs } from '@/core/utils/topicTime'
 import OptionCard from './OptionCard.vue'
 
 const FormCreateOption = defineAsyncComponent(() => import('./FormCreateOption.vue'))
@@ -154,18 +155,19 @@ const optionRankMap = computed(() => {
   return map
 })
 
+const isVotingOpen = computed(() => isTopicVotingOpen(currentTopic.value, currentTime.value))
+
 const timeRemaining = computed(() => {
-  if (currentTopic.value?.date) {
-    const difference = new Date((currentTopic.value?.date as any)?.seconds * 1000).getTime() - currentTime.value
-    if (difference <= 0) { update(); return { days: 0, hours: 0, minutes: 0, seconds: 0 } }
-    return {
-      days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-      hours: Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
-      minutes: Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60)),
-      seconds: Math.floor((difference % (1000 * 60)) / 1000)
-    }
+  const deadlineMs = topicDeadlineMs(currentTopic.value?.date)
+  if (!deadlineMs) return { days: -1, hours: -1, minutes: -1, seconds: -1 }
+  const difference = deadlineMs - currentTime.value
+  if (difference <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0 }
+  return {
+    days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+    hours: Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+    minutes: Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60)),
+    seconds: Math.floor((difference % (1000 * 60)) / 1000)
   }
-  return { days: -1, hours: -1, minutes: -1, seconds: -1 }
 })
 
 const countdown = computed(() => {
@@ -178,14 +180,8 @@ const countdown = computed(() => {
   return parts.join(', ')
 })
 
-const update = async () => {
-  const topicInfo = currentTopic.value ?? { id: '', name: '', description: '', date: new Date(), status: true, link: true, option: true, team: ETopicTeam.ALL }
-  topicInfo.status = false
-  updateTopic(topicInfo.id, topicInfo)
-}
-
 const handleChangeVote = debounce(async (optionIndex: number) => {
-  if (!currentTopic.value?.status) { showAlert('Topic này đã đóng!', 'error'); return }
+  if (!isVotingOpen.value) { showAlert('Topic này đã đóng!', 'error'); return }
   try {
     showOverlay.value = true
     const optionId = options.value[optionIndex].id
@@ -210,16 +206,20 @@ const onClickSeeMore = (option: IOption) => {
   dialog.value = true
 }
 
+let countdownTick: ReturnType<typeof setInterval>
 onMounted(async () => {
-  const isResetAccount = localStorage.getItem('isResetAccount')
-  if (isResetAccount !== 'true') {
-    localStorage.clear()
-    localStorage.setItem('isResetAccount', 'true')
+  // Local clock only — does not hit Firestore.
+  countdownTick = setInterval(() => { currentTime.value = Date.now() }, 1000)
+  const account = await requireAuthAccount()
+  if (!account) {
     handleRouter.pushPath('/')
+    return
   }
-  setInterval(() => { currentTime.value = new Date().getTime() }, 1000)
-  const accountId = localStorage.getItem('account_info')
-  if (!accountId) { handleRouter.pushPath('/'); return }
-  currentAccount.value = await getAccountById(accountId!)
+  currentAccount.value = { ...account, avatar: avatarUrlFromEmail(account.email) }
+  localStorage.setItem('account_info', account.id)
+  localStorage.setItem('account_avatar', currentAccount.value.avatar ?? '')
+  localStorage.setItem('account_username', account.username ?? '')
+  localStorage.setItem('account_team', account.team ?? '')
 })
+onUnmounted(() => clearInterval(countdownTick))
 </script>

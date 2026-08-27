@@ -1,4 +1,4 @@
-import { DEFAULT_EMPTY } from '@/core/constants/app'
+import { ALLOWED_EMAIL_DOMAIN, DEFAULT_EMPTY } from '@/core/constants/app'
 
 /**
  * Common regex
@@ -22,6 +22,12 @@ export const isValidEmail = (mail?: string) => {
   // Check Email format
   if (!mail) return true
   return REG_URL_FORMAT.test(mail)
+}
+
+/** Company emails only: *@runsystem.net (case-insensitive). */
+export const isAllowedEmailDomain = (email: string): boolean => {
+  const normalized = email.trim().toLowerCase()
+  return normalized.endsWith(`@${ALLOWED_EMAIL_DOMAIN}`)
 }
 
 // Regex check phone number. 0XXXXXXXXX | 0XXXXXXXXXX
